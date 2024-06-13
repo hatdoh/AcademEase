@@ -1,22 +1,21 @@
-import './App.css';
+import React from 'react';
+import './index.css'; // Import Tailwind CSS
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Sidebar from './components/Sidebar';
+// import Dashboard from './pages/Dashboard';
+import Sections from './pages/Sections';
 
 function App() {
   return (
-    <div className="bg-red-300">
-      <header className="App-header">
-        <p>
-          hello hatdog
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <div className="flex min-h-screen">
+        <Sidebar />
+        <Routes>
+          {/*<Route path="/" element={<Dashboard />} /> */}
+          <Route path='/sections' element={<Sections />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
   );
 }
 
