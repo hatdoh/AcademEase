@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 // import Dashboard from './pages/Dashboard';
 import Sections from './pages/Sections';
+import CreateQuestions from './pages/CreateQuestions';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Routes>
           {/*<Route path="/" element={<Dashboard />} /> */}
           <Route path='/sections' element={<Sections />} />
+          <Route path='/create-questions' element={<CreateQuestions />} />
         </Routes>
       </div>
     </BrowserRouter>
