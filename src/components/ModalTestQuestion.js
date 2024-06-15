@@ -1,8 +1,12 @@
-// Modal.js
 import React from 'react';
 
-function ModalTestQuestion({ isOpen, onClose, children }) {
+function ModalTestQuestion({ isOpen, onClose, onSave, children }) {
   if (!isOpen) return null;
+
+  const handleSave = () => {
+    onSave();
+    onClose();
+  };
 
   return (
     <div className="fixed z-20 inset-0 overflow-y-auto">
@@ -11,20 +15,26 @@ function ModalTestQuestion({ isOpen, onClose, children }) {
           <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
         </div>
 
-        <span className="ml-60 hidden sm:inline-block sm:align-top sm:h-screen" aria-hidden="true">&#8203;</span>
-
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-top sm:max-w-2xl sm:w-full">
-          <div className="bg-blue h-96">
-            {children}
-          </div>
-          <div className="mb-10 bg-gray-20 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        
+        <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-5 text-left overflow-hidden shadow-xl transform transition-all sm:my-2 sm:align-middle sm:max-w-3xl sm:w-full sm:p-6">
+          {children}
+          <div className="mb-5 mt-5 sm:mt-6 sm:flex sm:flex-row-reverse">
             <button
-              onClick={onClose}
               type="button"
-              className="mt-20 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+              className="mt-3 mb-5 mr-24 px-20 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm"
+              onClick={onClose}
             >
-              Close
+              Cancel
             </button>
+            <button
+              type="button"
+              className="mr-8 mb-5 ml-4 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+              onClick={handleSave}
+            >
+              Save
+            </button>
+
           </div>
         </div>
       </div>
