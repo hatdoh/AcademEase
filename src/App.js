@@ -5,6 +5,7 @@ import Sidebar from './components/Sidebar';
 // import Dashboard from './pages/Dashboard';
 import Sections from './pages/Sections';
 import CreateQuestions from './pages/CreateQuestions';
+import Dashboard from './pages/Dashboard';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Sidebar />
         <Routes>
           {/*<Route path="/" element={<Dashboard />} /> */}
+          <Route path='/' element={<Dashboard />} />
           <Route path='/sections' element={<Sections />} />
           <Route path='/create-questions' element={<CreateQuestions />} />
         </Routes>

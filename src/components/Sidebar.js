@@ -13,6 +13,7 @@ function Sidebar() {
         { title: "SF2", icon: "calendar", link: "/sf2" },
         { title: "Item Analysis", icon: "search", link: "/item-analysis" },
         { title: "Create Test Questions", icon: "chart", link: "/create-questions" },
+        { title: "Admin", icon: "user", link: "/account" },
     ];
 
     // Update selectedMenu state based on current URL pathname
@@ -40,7 +41,7 @@ function Sidebar() {
                 </div>
                 <ul className='pt-6'>
                     {Menus.map((menu, index) => (
-                        <li key={index} className={`text-gray-300 text-md flex items-center gap-x-4 cursor-pointer p-2 mt-4 hover:bg-light-white rounded-md ${menu.link === location.pathname && "bg-light-white"}`}>
+                        <li key={index} className={`text-white text-md flex items-center gap-x-4 cursor-pointer p-2 mt-4 hover:bg-light-white rounded-md ${menu.link === location.pathname && "bg-light-white"}`}>
                             <Link to={menu.link} className="flex items-center" onClick={() => handleMenuClick(menu.title)}>
                                 <img src={require(`../res/img/${menu.icon}.png`)} alt={menu.title} className="h-6 w-6" />
                                 <span className={`ml-2 ${!open && 'hidden'} duration-200`}>{menu.title}</span>
@@ -52,8 +53,6 @@ function Sidebar() {
 
             <div className='p-7 text-2xl font-semibold flex-1 h-screen'>
                 <h1>{selectedMenu}</h1>
-
-                {/* This is where the content from Dashboard.js will be displayed */}
             </div>
         </div>
     );
