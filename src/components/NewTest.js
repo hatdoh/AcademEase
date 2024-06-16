@@ -1,7 +1,4 @@
 import React, { useState } from 'react';
-import edit from '../res/img/edit-icon.png';
-import print from '../res/img/print-icon.jpg';
-import trash from '../res/img/trash-icon.jpg';
 import add from '../res/img/add.webp'; // Import the add icon
 import ModalTestQuestion from './ModalTestQuestion'; // Import the Modal component
 
@@ -13,6 +10,7 @@ function NewTest(props) {
   const [itemsInput, setItemsInput] = useState([]);
   const [answerSheet, setAnswerSheet] = useState([]);
   const [savedTests, setSavedTests] = useState([]);
+  const [editIndex, setEditIndex] = useState(null); // State to track the index of the test being edited
 
   const openModal = () => {
     setIsModalOpen(true);
@@ -20,12 +18,30 @@ function NewTest(props) {
 
   const closeModal = () => {
     setIsModalOpen(false);
+    setEditIndex(null); // Reset edit index when modal is closed
+    resetForm(); // Reset form fields
+  };
+
+  const resetForm = () => {
+    setTestName('');
+    setSelectedDate('');
+    setSelectedOption('');
+    setItemsInput([]);
+    setAnswerSheet([]);
   };
 
   const handleDropdownChange = (e) => {
     const count = parseInt(e.target.value);
     setSelectedOption(count);
-    setItemsInput(Array.from({ length: count }, (_, index) => `Question ${index + 1}`));
+    setItemsInput(Array.from({ length: count }, (_, index) => ({
+      question: `Question ${index + 1}`,
+      choices: [
+        { id: 0, text: '' },
+        { id: 1, text: '' },
+        { id: 2, text: '' },
+        { id: 3, text: '' }
+      ]
+    })));
     const answerSet = Array.from({ length: count }, () => ['A', 'B', 'C', 'D']);
     setAnswerSheet(answerSet.map(answer => ({ selected: null, options: answer })));
   };
@@ -49,15 +65,83 @@ function NewTest(props) {
 
   const handleSave = () => {
     const newTest = { name: testName, date: selectedDate, items: selectedOption };
-    setSavedTests([newTest, ...savedTests]); // Prepend the new test
+
+    if (editIndex !== null) {
+      // Edit existing test
+      setSavedTests(prevTests => {
+        const updatedTests = [...prevTests];
+        updatedTests[editIndex] = newTest;
+        return updatedTests;
+      });
+    } else {
+      // Save new test
+      setSavedTests([newTest, ...savedTests]);
+    }
+
+    // Update answer sheet based on current itemsInput
+    const answerSet = itemsInput.map(item => Array.from({ length: item.choices.length }, (_, i) => String.fromCharCode(65 + i)));
+    setAnswerSheet(answerSet.map(answer => ({ selected: null, options: answer })));
+
     closeModal();
-  };  
+  };
+
+  const handleDelete = (index) => {
+    setSavedTests(prevTests => prevTests.filter((_, i) => i !== index));
+  };
+
+  const handleEdit = (index) => {
+    const test = savedTests[index];
+    setTestName(test.name);
+    setSelectedDate(test.date);
+    setSelectedOption(test.items);
+    setItemsInput(Array.from({ length: test.items }, (_, i) => ({
+      question: `Question ${i + 1}`,
+      choices: [
+        { id: 0, text: '' },
+        { id: 1, text: '' },
+        { id: 2, text: '' },
+        { id: 3, text: '' }
+      ]
+    })));
+    setAnswerSheet(Array.from({ length: test.items }, () => ({ selected: null, options: ['A', 'B', 'C', 'D'] })));
+    setEditIndex(index);
+    openModal();
+  };
+
+  const handleAddChoice = (questionIndex) => {
+    const newItemsInput = [...itemsInput];
+    newItemsInput[questionIndex].choices.push({ id: newItemsInput[questionIndex].choices.length, text: '' });
+    setItemsInput(newItemsInput);
+  
+    // Update answer sheet when adding a choice
+    setAnswerSheet(prevAnswerSheet =>
+      prevAnswerSheet.map((answer, index) => ({
+        ...answer,
+        options: index === questionIndex ? [...answer.options, String.fromCharCode(65 + answer.options.length)] : answer.options
+      }))
+    );
+  };
+  
+  const handleRemoveChoice = (questionIndex) => {
+    const newItemsInput = [...itemsInput];
+    newItemsInput[questionIndex].choices.pop();
+    setItemsInput(newItemsInput);
+
+    // Update answer sheet when removing a choice
+    setAnswerSheet(prevAnswerSheet =>
+      prevAnswerSheet.map((answer, index) => ({
+        ...answer,
+        options: index === questionIndex ? answer.options.slice(0, -1) : answer.options
+      }))
+    );
+  };
+  
 
   return (
     <div className='flex flex-col px-10 w-full mr-20 mb-20 mt-40 bg-dark-purple'>
       <div className='flex flex-nowrap items-center'>
         <button className='mb-3 w-40 ml-5 text-center shadow-sm px-4 py-2 mt-10 rounded-md bg-blue-900 font-medium text-2xl text-white hover:bg-blue-700 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-blue-500 sm:ml-4 sm:text-sm' onClick={openModal}>
-        <img src={add} alt="Add" className="flex-1 bg-blue-300 w-6 h-6 mr-5 rounded-full" />
+          <img src={add} alt="Add" className="flex-1 bg-blue-300 w-6 h-6 mr-5 rounded-full" />
           New Test
         </button>
       </div>
@@ -66,22 +150,21 @@ function NewTest(props) {
           {savedTests.map((test, index) => (
             <div key={index} className='outline outline-offset-1 outline-1 flex flex-wrap py-2'>
               <div className='truncate ml-10 mt-1 flex-1'>
-                <h2 className='truncate text-wrap flex space-x-4 grid grid-flow-col auto-cols-max text-1xl font-semibold flex-1'>
+                <h2 className='uppercase truncate text-wrap flex space-x-4 grid grid-flow-col auto-cols-max text-1xl font-semibold flex-1'>
                   Test: {test.name}
                 </h2>
-                <h2 className='text-wrap flex space-x-4 grid grid-flow-col auto-cols-max text-1xl font-semibold flex-1'>
-                  Date: {test.date} 
+                <h2 className='uppercase text-wrap flex space-x-4 grid grid-flow-col auto-cols-max text-1xl font-semibold flex-1'>
+                  Date: {test.date}
                 </h2>
-                <h2 className='text-wrap flex space-x-4 grid grid-flow-col auto-cols-max text-1xl font-semibold flex-1'>
+                <h2 className='uppercase text-wrap flex space-x-4 grid grid-flow-col auto-cols-max text-1xl font-semibold flex-1'>
                   Items: {test.items}
-                </h2> 
+                </h2>
               </div>
               <div className="flex justify-end mt-2 py-4">
                 <button
-                  onClick={() => {/* handleEdit */}}
+                  onClick={() => handleEdit(index)}
                   type="button"
                   className="h-10 mb-1 mr-2 text-center inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-sky-600 text-base font-medium text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-4 sm:text-sm"
-                
                 >
                   Edit
                 </button>
@@ -93,7 +176,7 @@ function NewTest(props) {
                   Print
                 </button>
                 <button
-                  onClick={() => {/* handleDelete */}}
+                  onClick={() => handleDelete(index)}
                   type="button"
                   className="h-10 mb-1 mr-2 text-center inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-4 sm:text-sm"
                 >
@@ -105,64 +188,115 @@ function NewTest(props) {
         </div>
       )}
 
-      {/* Use the Modal component */}
       <ModalTestQuestion isOpen={isModalOpen} onClose={closeModal} onSave={handleSave}>
         <div className="flex justify-center items-center mt-10">
-          <div className="flex flex-col items-center mx-4">
-            <h3 className="text-lg font-bold">Test Name*</h3>
-            <input value={testName} onChange={handleNameChange} className='text-center w-64 mt-1 block border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm' placeholder='Input Here' />
+          <div className="flex flex-col items-center">
+            <label className="text-lg font-bold mb-2">Test Name</label>
+            <input
+              className="pl-10 uppercase w-64 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              placeholder="Input Here"
+              value={testName}
+              onChange={handleNameChange}
+            />
           </div>
-          <div className="flex flex-col items-center mx-4">
-            <h3 className="text-lg font-bold">Date*</h3>
-            <input type="date" value={selectedDate} onChange={handleDateChange} className="text-center w-64 mt-1 block border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-          </div>
-        </div>
-        <div className="flex justify-center my-4">
-          <div className="flex flex-col items-center mx-4">
-            <h3 className="text-center text-lg font-bold">Select No. Items*</h3>
-            <select value={selectedOption} onChange={handleDropdownChange} className="text-center w-64 justify-items-center w-24 h-10 mt-1 block border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-              <option value="10">10 Items</option>
-              <option value="15">15 Items</option>
-              <option value="20">20 Items</option>
-              <option value="25">25 Items</option>
-              <option value="30">30 Items</option>
-            </select>
+          <div className="flex flex-col items-center">
+
+          <label className="text-lg font-bold mb-2">Test Date</label>
+            <input type="date" value={selectedDate} onChange={handleDateChange} className="uppercase pl-20 ml-2 mt-2 w-64 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
           </div>
         </div>
-        
-        {/* Display the input items */}
-        <div className="mr-20 flex flex-col items-left max-h-64 overflow-y-auto">
-          {itemsInput.map((item, index) => (
-            <div key={index} className="flex flex-col w-full mt-4">
-              <div className="flex items-center">
-                <span className="mr-3 ml-40 ms-24">{index + 1}</span>
-                <input className="w-40 text-center w-full block border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder={item} />
-              </div>
+        <div className="flex flex-col items-center mt-5">
+          <label className="text-lg font-bold mb-2">Select Number of Items</label>
+          <select value={selectedOption} onChange={handleDropdownChange} className="text-center w-64 justify-items-center w-24 h-10 mt-1 block border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            <option value="">Select</option>
+            <option value="10">10 Items</option>
+            <option value="20">20 Items</option>
+            <option value="30">30 Items</option>
+            <option value="40">40 Items</option>
+            <option value="50">50 Items</option>
+          </select>
+        </div>
+        <div className="grid grid-cols-2 gap-4 justify-center mt-4">
+        {itemsInput.map((item, index) => (
+        <div key={index} className="flex flex-col items-center m-1 ">
+          <label className="uppercase text-lg font-bold mb-2">Question {index + 1}</label>
+          <div className="flex items-center">
+          <input
+              className="text-left pl-5 uppercase ml-2 w-64 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              placeholder={`Input Here ${index + 1}`} // Placeholder for the question input
+              value={item.question}
+              onChange={(e) => {
+                const newItemsInput = [...itemsInput];
+                newItemsInput[index].question = e.target.value;
+                setItemsInput(newItemsInput);
+              }}
+            />
+          </div>
+          {item.choices.map((choice, choiceIndex) => (
+            <div key={choice.id} className="flex items-center mt-2">
+              <input
+                className="uppercase text-center w-64 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                placeholder={`Answer ${String.fromCharCode(65 + choiceIndex)}`}
+                value={choice.text}
+                onChange={(e) => {
+                  const newItemsInput = [...itemsInput];
+                  newItemsInput[index].choices[choiceIndex].text = e.target.value;
+                  setItemsInput(newItemsInput);
+                }}
+              />
             </div>
           ))}
-          <div className="flex justify-center my-4">
-            <h3 className="text-lg font-bold ml-24">Answer Sheet*</h3>
+          <div className="flex mt-2">
+            <button
+              onClick={() => {
+                handleAddChoice(index);
+              }}
+              className="mb-10 mr-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Add Choice
+            </button>
+            {item.choices.length > 1 && (
+              <button
+                onClick={() => {
+                  handleRemoveChoice(index);
+                }}
+                className="mb-10 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+              >
+                Remove Choice
+              </button>
+            )}
           </div>
-          <div className="flex flex-col items-center mx-4">
-            {answerSheet.map((answer, index) => (
-              <div key={index} className="ml-24 flex justify-center">
-                <h3 className="text-lg">{index + 1}</h3> {/* Add label */}
-                {answer.options.map((letter, letterIndex) => (
-                  <button 
-                    key={letterIndex} 
-                    className={`mb-2 ml-5 mx-2 p-3 rounded-full w-full block border-2 border-indigo-200 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${answer.selected === letterIndex ? 'bg-indigo-500' : 'bg-indigo-300 shadow-sm'}`}
-                    onClick={() => handleAnswerClick(index, letterIndex)}
+        </div>
+      ))}
+      </div>
+        {itemsInput.length > 0 && (
+          <div className="flex flex-col items-center mt-4">
+            <h3 className="text-lg font-bold">Answer Sheet</h3>
+            {answerSheet.map((answer, answerIndex) => (
+              <div key={answerIndex} className="mr-10 flex items-center mb-2">
+                <span className="mr-10">{answerIndex + 1}.</span>
+                {answer.options.map((option, optionIndex) => (
+                  <button
+                    key={optionIndex}
+                    onClick={() => handleAnswerClick(answerIndex, optionIndex)}
+                    className={`mr-2 px-4 py-2 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
+                      answer.selected === optionIndex
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-indigo-200 text-indigo-600'
+                    }`}
                   >
-                    {letter}
+                    {option}
                   </button>
                 ))}
               </div>
             ))}
           </div>
-        </div>
+        )}
+
       </ModalTestQuestion>
     </div>
   );
 }
 
 export default NewTest;
+

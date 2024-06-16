@@ -18,7 +18,9 @@ function ModalTestQuestion({ isOpen, onClose, onSave, children }) {
         <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
         
         <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-5 text-left overflow-hidden shadow-xl transform transition-all sm:my-2 sm:align-middle sm:max-w-3xl sm:w-full sm:p-6">
-          {children}
+          <div className="max-h-96 overflow-y-auto">
+            {children}
+          </div>
           <div className="mb-5 mt-5 sm:mt-6 sm:flex sm:flex-row-reverse">
             <button
               type="button"
@@ -28,13 +30,12 @@ function ModalTestQuestion({ isOpen, onClose, onSave, children }) {
               Cancel
             </button>
             <button
-              type="button"
-              className="mr-8 mb-5 ml-4 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
-              onClick={handleSave}
-            >
-              Save
-            </button>
-
+            type="button"
+            className="mr-8 mb-5 ml-4 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+            onClick={handleSave}
+          >
+            Save
+          </button>
           </div>
         </div>
       </div>
