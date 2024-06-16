@@ -95,7 +95,7 @@ function NewTest(props) {
     setSelectedDate(test.date);
     setSelectedOption(test.items);
     setItemsInput(Array.from({ length: test.items }, (_, i) => ({
-      question: `Question ${i + 1}`,
+      question: '', // Ensure this is set correctly based on your logic
       choices: [
         { id: 0, text: '' },
         { id: 1, text: '' },
@@ -107,6 +107,7 @@ function NewTest(props) {
     setEditIndex(index);
     openModal();
   };
+  
 
   const handleAddChoice = (questionIndex) => {
     const newItemsInput = [...itemsInput];
@@ -114,7 +115,7 @@ function NewTest(props) {
     setItemsInput(newItemsInput);
   
     // Update answer sheet when adding a choice
-    setAnswerSheet(prevAnswerSheet =>
+    setAnswerSheet(prevAnswerSheet => 
       prevAnswerSheet.map((answer, index) => ({
         ...answer,
         options: index === questionIndex ? [...answer.options, String.fromCharCode(65 + answer.options.length)] : answer.options
@@ -202,7 +203,7 @@ function NewTest(props) {
           <div className="flex flex-col items-center">
 
           <label className="text-lg font-bold mb-2">Test Date</label>
-            <input type="date" value={selectedDate} onChange={handleDateChange} className="uppercase pl-20 ml-2 mt-2 w-64 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+            <input type="date" value={selectedDate} onChange={handleDateChange} className="uppercase pl-20 ml-2 w-64 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
           </div>
         </div>
         <div className="flex flex-col items-center mt-5">
@@ -218,20 +219,18 @@ function NewTest(props) {
         </div>
         <div className="grid grid-cols-2 gap-4 justify-center mt-4">
         {itemsInput.map((item, index) => (
-        <div key={index} className="flex flex-col items-center m-1 ">
+        <div key={index} className="flex flex-col items-center m-1">
           <label className="uppercase text-lg font-bold mb-2">Question {index + 1}</label>
-          <div className="flex items-center">
           <input
-              className="text-left pl-5 uppercase ml-2 w-64 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder={`Input Here ${index + 1}`} // Placeholder for the question input
-              value={item.question}
-              onChange={(e) => {
-                const newItemsInput = [...itemsInput];
-                newItemsInput[index].question = e.target.value;
-                setItemsInput(newItemsInput);
-              }}
-            />
-          </div>
+            className="uppercase text-center w-64 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            placeholder={`Input Here ${index + 1}`}
+            value={item.question}
+            onChange={(e) => {
+              const newItemsInput = [...itemsInput];
+              newItemsInput[index].question = e.target.value;
+              setItemsInput(newItemsInput);
+            }}
+          />
           {item.choices.map((choice, choiceIndex) => (
             <div key={choice.id} className="flex items-center mt-2">
               <input
@@ -268,12 +267,15 @@ function NewTest(props) {
           </div>
         </div>
       ))}
+
+
       </div>
+      <h3 className="text-center text-lg font-bold">Answer Sheet</h3>
         {itemsInput.length > 0 && (
-          <div className="flex flex-col items-center mt-4">
-            <h3 className="text-lg font-bold">Answer Sheet</h3>
+          <div className="divide-y divide-dashed grid grid-cols-2 gap-4 items-center mt-4">
+            
             {answerSheet.map((answer, answerIndex) => (
-              <div key={answerIndex} className="mr-10 flex items-center mb-2">
+              <div key={answerIndex} className="pb-1 flex flex-wrap mr-10 flex items-center mb-2">
                 <span className="mr-10">{answerIndex + 1}.</span>
                 {answer.options.map((option, optionIndex) => (
                   <button
