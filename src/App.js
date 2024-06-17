@@ -13,7 +13,6 @@ function App() {
       <div className="flex min-h-screen">
         <Sidebar />
         <Routes>
-          {/*<Route path="/" element={<Dashboard />} /> */}
           <Route path='/' element={<Dashboard />} />
           <Route path='/sections' element={<Sections />} />
           <Route path='/create-questions' element={<CreateQuestions />} />
