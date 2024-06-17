@@ -6,16 +6,16 @@ function AttendanceTable() {
         present: [
             { id: 1, name: 'Xenia Angelica D. Velacruz', image: 'xenia' },
             { id: 2, name: 'Wyndel S. Albos', image: 'wyndel' },
-            { id: 3, name: 'Wyndel S. Albos', image: 'wyndel' },
+            { id: 3, name: 'John Homer S. Dar', image: 'homer' },
             { id: 4, name: 'Wyndel S. Albos', image: 'wyndel' },
         ],
         late: [
-            { id: 5, name: 'Xenia Angelica D. Velacruz', image: 'xenia' },
-            { id: 6, name: 'Xenia Angelica D. Velacruz', image: 'xenia' },
+            { id: 5, name: 'Wyndel S. Albos', image: 'xenia' },
+            { id: 6, name: 'John Homer S. Dar', image: 'homer' },
         ],
         absent: [
             { id: 7, name: 'Xenia Angelica D. Velacruz', image: 'xenia' },
-            { id: 8, name: 'Xenia Angelica D. Velacruz', image: 'xenia' },
+            { id: 8, name: 'Wyndel S. Albos', image: 'wyndel' },
         ],
     };
 
