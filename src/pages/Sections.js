@@ -3,7 +3,11 @@ import React from 'react';
 
 function Sections() {
     return (
-            <h1></h1>
+            <>
+            <div>
+                <h1>Sections</h1>
+            </div>
+            </>
 
     );
 }

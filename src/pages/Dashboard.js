@@ -1,11 +1,13 @@
 import React from "react";
-import UserTable from "../components/UserTable";
+import AttendanceTable from "../components/AttendanceTable";
 
 function Dashboard() {
     return (
-        <div className='px-10 w-full mr-20 mb-20 mt-40 bg-dark-purple'>
-            <UserTable />
+        <>
+        <div className='px-10 w-screen mr-20 mb-20 mt-10 ml-6'>
+            <AttendanceTable />
         </div>
+        </>
     );
 }
 
