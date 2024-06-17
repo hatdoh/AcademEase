@@ -6,6 +6,8 @@ import Sidebar from './components/Sidebar';
 import Sections from './pages/Sections';
 import CreateQuestions from './pages/CreateQuestions';
 import Dashboard from './pages/Dashboard';
+import ItemAnalysis from './pages/ItemAnalysis';
+import Admin from './pages/Admin';
 
 function App() {
   return (
@@ -17,6 +19,8 @@ function App() {
           <Route path='/' element={<Dashboard />} />
           <Route path='/sections' element={<Sections />} />
           <Route path='/create-questions' element={<CreateQuestions />} />
+          <Route path='/item-analysis' element={<ItemAnalysis />} />
+          <Route path='/account' element={<Admin />} />
         </Routes>
       </div>
     </BrowserRouter>
