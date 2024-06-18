@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MdAdd } from "react-icons/md";
+import { MdAdd, MdDelete } from "react-icons/md";
 import { Link } from 'react-router-dom';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
@@ -56,7 +56,6 @@ function AddSectionModal({ isOpen, closeModal, onAddSection }) {
     const [sectionName, setSectionName] = useState('');
 
     const handleSave = () => {
-        // Assuming you validate sectionName before adding
         if (sectionName.trim() === '') {
             alert('Please enter a section name.');
             return;
@@ -64,6 +63,7 @@ function AddSectionModal({ isOpen, closeModal, onAddSection }) {
         onAddSection(sectionName);
         closeModal();
     };
+
     return (
         <Transition appear show={isOpen} as={Fragment}>
             <Dialog as="div" className="relative z-10" onClose={closeModal}>
@@ -98,7 +98,15 @@ function AddSectionModal({ isOpen, closeModal, onAddSection }) {
                                     <form className="space-y-4">
                                         <div>
                                             <label htmlFor="sectionName" className="block text-sm font-medium text-gray-700">Section Name</label>
-                                            <input type="text" name="sectionName" id="sectionName" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                                            <input
+                                                type="text"
+                                                name="sectionName"
+                                                id="sectionName"
+                                                value={sectionName}
+                                                placeholder='Enter Section Name'
+                                                onChange={(e) => setSectionName(e.target.value)}
+                                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                            />
                                         </div>
                                         <div>
                                             <label htmlFor="time" className="block text-sm font-medium text-gray-700">Time</label>
@@ -116,17 +124,17 @@ function AddSectionModal({ isOpen, closeModal, onAddSection }) {
                                         </div>
                                     </form>
                                 </div>
-                                <div className="flex mt-4">
+                                <div className="flex items-center mt-4">
                                     <button
                                         type="button"
                                         className="inline-flex justify-center rounded-md border-2 border-blue-700 bg-blue-500 px-4 py-2 mr-3 text-sm font-medium text-white hover:bg-blue-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                                        onClick={closeModal}
+                                        onClick={handleSave}
                                     >
                                         Save
                                     </button>
                                     <button
                                         type="button"
-                                        className="inline-block rounded border-2 border-neutral-400 bg-neutral-100 px-6 pb-2 pt-2.5 text-xs font-medium uppercase leading-normal text-neutral-600 shadow-light-3 transition duration-150 ease-in-out hover:bg-neutral-200 hover:shadow-light-2 focus:bg-neutral-200 focus:shadow-light-2 focus:outline-none focus:ring-0 active:bg-neutral-200 active:shadow-light-2 motion-reduce:transition-none dark:shadow-black/30 dark:hover:shadow-dark-strong dark:focus:shadow-dark-strong dark:active:shadow-dark-strong"
+                                        className="inline-block rounded border-2 border-neutral-400 bg-neutral-100 px-4 py-2 mr-3 text-xs font-medium leading-normal text-neutral-600 shadow-light-3 transition duration-150 ease-in-out hover:bg-neutral-200 hover:shadow-light-2 focus:bg-neutral-200 focus:shadow-light-2 focus:outline-none focus:ring-0 active:bg-neutral-200 active:shadow-light-2 motion-reduce:transition-none dark:shadow-black/30 dark:hover:shadow-dark-strong dark:focus:shadow-dark-strong dark:active:shadow-dark-strong"
                                         onClick={closeModal}
                                     >
                                         Cancel
@@ -162,21 +170,34 @@ function Section() {
         setSectionList(prev => [...prev, sectionName]);
     };
 
+    const deleteSection = (sectionName) => {
+        if (sectionName === 'All') return; // Prevent deletion of 'All' section
+        setSectionList(prev => prev.filter(section => section !== sectionName));
+        if (selectedSection === sectionName) setSelectedSection('All'); // Reset to 'All' if current section is deleted
+    };
+
     const filteredStudents = students.filter(student =>
         selectedSection === 'All' || student.section === selectedSection
     );
 
-    const sectionCounts = {
-        A: filteredStudents.filter(student => student.section === 'A').length,
-        B: filteredStudents.filter(student => student.section === 'B').length,
-        C: filteredStudents.filter(student => student.section === 'C').length,
+    const sectionCounts = sectionList.reduce((counts, section) => {
+        counts[section] = students.filter(student => student.section === section).length;
+        return counts;
+    }, {});
+
+    const getImagePath = (imageName) => {
+        try {
+            return require(`../res/img/${imageName}.png`);
+        } catch (e) {
+            return '';
+        }
     };
 
     return (
         <div className="container mx-auto p-4">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-4">
-                    <h2 className="text-2xl ml-2 font-semibold text-gray-800">Section {selectedSection}</h2>
+                    <h2 className="text-2xl ml-2 font-semibold text-gray-800">Section ({selectedSection})</h2>
                 </div>
                 <div className="flex items-center space-x-4">
                     <label className="block text-sm font-medium text-gray-800">Select Section:</label>
@@ -185,11 +206,19 @@ function Section() {
                         value={selectedSection}
                         onChange={(e) => handleSectionChange(e.target.value)}
                     >
-                        <option value="All">All Sections</option>
-                        <option value="A">Section A</option>
-                        <option value="B">Section B</option>
-                        <option value="C">Section C</option>
+                        {sectionList.map((section) => (
+                            <option key={section} value={section}>{section === 'All' ? 'All Sections' : `Section ${section}`}</option>
+                        ))}
                     </select>
+                    {selectedSection !== 'All' && (
+                            <button
+                                onClick={() => deleteSection(selectedSection)}
+                                className="flex items-center right-0 top-0 mt-1 mr-1 px-2 py-1 bg-red-600 text-white text-xs rounded-full hover:bg-red-700 focus:outline-none"
+                            >
+                                <MdDelete />
+                            </button>
+                        )}
+
                     <button
                         className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
                         onClick={openModal}
@@ -216,7 +245,7 @@ function Section() {
                                 <tr key={student.id} className='hover:bg-gray-100'>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center space-x-3">
-                                            <img className="h-10 w-10 rounded-full" src={require(`../res/img/${student.image}.png`)} alt={student.name} />
+                                            <img className="h-10 w-10 rounded-full" src={getImagePath(student.image)} alt={student.name} />
                                             <Link to={`/profile/${student.id}`} className="text-blue-600 hover:underline">
                                                 <span>{student.name}</span>
                                             </Link>
@@ -232,9 +261,9 @@ function Section() {
                         <tfoot className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
                             <tr>
                                 <td className="px-6 py-3 text-left" colSpan="5">
-                                    <span className="mr-2">{sectionCounts.A} Section A</span>
-                                    <span className="mr-2">{sectionCounts.B} Section B</span>
-                                    <span>{sectionCounts.C} Section C</span>
+                                    {Object.entries(sectionCounts).map(([section, count]) => (
+                                        section !== 'All' && <span key={section} className="mr-2">{count} Section {section}</span>
+                                    ))}
                                 </td>
                             </tr>
                         </tfoot>
@@ -242,7 +271,7 @@ function Section() {
                 </div>
             </div>
 
-            <AddSectionModal isOpen={isModalOpen} closeModal={closeModal} />
+            <AddSectionModal isOpen={isModalOpen} closeModal={closeModal} onAddSection={addSection} />
         </div>
     );
 }
