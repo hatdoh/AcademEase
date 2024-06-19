@@ -1,7 +1,7 @@
 
 function ItemAnalysis() {
     return(
-        <div className='flex flex-col px-10 w-full mr-20 mb-20 mt-40 ml-6 bg-dark-purple'>
+        <div className='flex flex-col px-10 w-full mr-20 mb-20 mt-10 ml-6 bg-dark-purple rounded-md'>
             <div className='flex flex-nowrap items-center'>
                 <button className='mb-3 w-40 ml-5 text-center shadow-sm px-4 py-2 mt-10 rounded-md bg-blue-900 font-medium text-2xl text-white hover:bg-blue-700 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-blue-500 sm:ml-4 sm:text-sm' onClick={''}>
                 New Test

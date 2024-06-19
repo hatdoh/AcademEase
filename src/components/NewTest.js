@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import add from '../res/img/add.webp'; // Import the add icon
 import ModalTestQuestion from './ModalTestQuestion'; // Import the Modal component
-
+import { FaPrint } from "react-icons/fa";
+import { MdDelete } from "react-icons/md";
+import { FaEdit } from "react-icons/fa";
 function NewTest(props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState('');
@@ -138,19 +140,30 @@ function NewTest(props) {
   };
   
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTestType, setSelectedTestType] = useState('');
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
-  
+
+  const handleTestTypeFilterChange = (e) => {
+    setSelectedTestType(e.target.value);
+  };
+
   const filteredTests = savedTests.filter((test) =>
-    test.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    test.date.includes(searchTerm) ||
-    test.items.toString() === searchTerm
+    test.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (selectedTestType === '' || test.name === selectedTestType)
   );
   
-  // Update the return statement to include the search bar
-  return (
+// State to store the selected test type for filtering
+
+// Function to handle the test type filter change
+
+
+// Get unique test types from savedTests
+const testTypes = [...new Set(savedTests.map(test => test.name))];
+
+return (
     <div className='ml-3'>
       <div className="flex items-center">
         <button className='ml-10 w-40 h-10 text-center shadow-sm py-2 mt-20 rounded-md bg-blue-500 font-medium text-2xl text-white hover:bg-blue-700 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-blue-500 sm:ml-4 sm:text-sm' onClick={openModal}>
@@ -161,20 +174,27 @@ function NewTest(props) {
           placeholder="Search..."
           value={searchTerm}
           onChange={handleSearch}
-          className="w-80 h-10 pl-3 pr-10 mt-20 ml-96 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-indigo-500 sm:text-sm"
+          className="w-80 h-10 pl-3 pr-10 mt-20 ml-80 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-indigo-500 sm:text-sm"
         />
-
+        <select
+          value={selectedTestType}
+          onChange={handleTestTypeFilterChange}
+          className="w-48 h-10 pl-3 pr-10 mt-20 ml-4 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-indigo-500 sm:text-sm"
+        >
+          <option value="">Test Type</option>
+          {testTypes.map((testType, index) => (
+            <option key={index} value={testType}>{testType}</option>
+          ))}
+        </select>
       </div>
-      <div className='flex flex-col mr-4 mb-40 mt-5 ml-6 bg-white rounded-md shadow-md'>
+      <div className='h-96 flex flex-col mr-4 mb-40 mt-5 ml-6 bg-white rounded-md shadow-md'>
+        <div className='flex justify-center items-center bg-gray-200 py-2'>
+          <h2 className='text-center uppercase font-semibold flex-1'>Test Type</h2>
+          <h2 className='text-right mr-20 uppercase font-semibold flex-1'>Date</h2>
+          <h2 className='text-center mr-80 uppercase font-semibold flex-1'>No. Items</h2>
+        </div>
         {filteredTests.length > 0 && (
           <div className='flex flex-col rounded-lg text-center bg-white shadow-md border-sky-600 overflow-y-auto' style={{ maxHeight: '350px' }}>
-            {/* Header for Test Type, Date, No. Items */}
-            <div className='flex justify-center items-center bg-gray-200 py-2'>
-              <h2 className='text-center uppercase font-semibold flex-1'>Test Type</h2>
-              <h2 className='text-right mr-20 uppercase font-semibold flex-1'>Date</h2>
-              <h2 className='text-center mr-80 uppercase font-semibold flex-1'>No. Items</h2>
-            </div>
-  
             {/* List of Filtered Saved Tests */}
             {filteredTests.map((test, index) => (
               <div key={index} className='shadow-md flex flex-nowrap py-2'>
@@ -197,33 +217,29 @@ function NewTest(props) {
                 </div>
                 <div className="flex justify-end flex-1">
                   <button
-                    onClick={() => handleEdit(index)}
-                    type="button"
-                    className="h-10 mb-1 mr-2 text-center inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-sky-600 text-base font-medium text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-4 sm:text-sm"
-                  >
-                    Edit
-                  </button>
-                  <button
                     onClick={() => {/* handlePrint */}}
                     type="button"
                     className="h-10 mb-1 mr-2 text-center inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-emerald-600 text-base font-medium text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-4 sm:text-sm"
                   >
-                    Print
+                    Print <FaPrint className='ml-2 w-4 h-5'/>
+                  </button>
+                  <button
+                    onClick={() => handleEdit(index)}
+                    type="button"
+                    className="h-10 mb-1 mr-2 text-center inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-sky-600 text-base font-medium text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-4 sm:text-sm"
+                  >
+                    <FaEdit className='h-5 w-5'/>
                   </button>
                   <button
                     onClick={() => handleDelete(index)}
                     type="button"
                     className="h-10 mb-1 mr-2 text-center inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-4 sm:text-sm"
                   >
-                    Delete
+                    <MdDelete className='h-5 w-5'/> 
                   </button>
                 </div>
               </div>
             ))}
-  
-            {/* Separate line or border for the buttons */}
-            <div className="border-t border-gray-300 mt-2" />
-  
           </div>
         )}
       </div>
