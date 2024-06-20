@@ -9,7 +9,7 @@ function Sidebar() {
     const Menus = [
         { title: "Dashboard", icon: "chart_fill", link: "/" },
         { title: "Sections", icon: "chat", link: "/sections" },
-        { title: "Attendance Summary", icon: "user", link: "/attendance" },
+        { title: "Attendance Summary", icon: "user", link: "/attendance-summary" },
         { title: "SF2", icon: "calendar", link: "/sf2" },
         { title: "Item Analysis", icon: "search", link: "/item-analysis" },
         { title: "Create Test Questions", icon: "chart", link: "/create-questions" },

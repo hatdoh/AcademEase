@@ -8,6 +8,7 @@ import CreateQuestions from './pages/CreateQuestions';
 import Dashboard from './pages/Dashboard';
 import ItemAnalysis from './pages/ItemAnalysis';
 import Admin from './pages/Admin';
+import AttendanceSummary from './pages/AttendanceSummary';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Routes>
           <Route path='/' element={<Dashboard />} />
           <Route path='/sections' element={<Sections />} />
+          <Route path='/attendance-summary' element={<AttendanceSummary />} />
           <Route path='/create-questions' element={<CreateQuestions />} />
           <Route path='/item-analysis' element={<ItemAnalysis />} />
           <Route path='/account' element={<Admin />} />
