@@ -1,8 +1,6 @@
 import React from 'react';
-import './index.css'; // Import Tailwind CSS
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
-// import Dashboard from './pages/Dashboard';
 import Sections from './pages/Sections';
 import CreateQuestions from './pages/CreateQuestions';
 import Dashboard from './pages/Dashboard';
@@ -10,25 +8,34 @@ import ItemAnalysis from './pages/ItemAnalysis';
 import Admin from './pages/Admin';
 import AttendanceSummary from './pages/AttendanceSummary';
 import SchoolFormTwo from './pages/SF2';
-import LoginForm from './components/LoginForm';
+import LoginForm from './pages/LoginForm';
+import AdminDetails from './pages/AdminDetails'; // Import the new page
+import PrivateRoute from './components/PrivateRoute';
+import SignupForm from './pages/SignupForm';
+import './index.css'; // Import Tailwind CSS
 
 function App() {
+  const location = useLocation();
+  const isLoginRoute = location.pathname === '/login';
+  const isSignUpRoute = location.pathname === '/signup';
+
   return (
-    <BrowserRouter>
-      <div className="flex min-h-screen">
-        <Sidebar />
-        <Routes>
-          <Route path='/' element={<Dashboard />} />
-          <Route path='/sections' element={<Sections />} />
-          <Route path='/attendance-summary' element={<AttendanceSummary />} />
-          <Route path='/create-questions' element={<CreateQuestions />} />
-          <Route path='/item-analysis' element={<ItemAnalysis />} />
-          <Route path='/sf2' element={<SchoolFormTwo />} />
-          <Route path='/account' element={<Admin />} />
-          <Route path='/login' element={<LoginForm />} />
-        </Routes>
-      </div>
-    </BrowserRouter>
+    <div className="flex min-h-screen">
+      {/* Render Sidebar if it's not the login or signup route */}
+      {!isLoginRoute && !isSignUpRoute && <Sidebar />}
+      <Routes>
+        <Route path="/login" element={<LoginForm />} />
+        <Route path='/signup' element={<SignupForm />} />
+        <Route path="/" element={<PrivateRoute element={<Dashboard />} />} />
+        <Route path="/sections" element={<PrivateRoute element={<Sections />} />} />
+        <Route path="/attendance-summary" element={<PrivateRoute element={<AttendanceSummary />} />} />
+        <Route path="/create-questions" element={<PrivateRoute element={<CreateQuestions />} />} />
+        <Route path="/item-analysis" element={<PrivateRoute element={<ItemAnalysis />} />} />
+        <Route path="/sf2" element={<PrivateRoute element={<SchoolFormTwo />} />} />
+        <Route path="/account" element={<PrivateRoute element={<Admin />} />} />
+        <Route path="/admin-details" element={<PrivateRoute element={<AdminDetails />} />} />
+      </Routes>
+    </div>
   );
 }
 

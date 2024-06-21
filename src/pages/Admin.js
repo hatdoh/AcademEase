@@ -4,7 +4,7 @@ function Admin() {
   return (
     <div className='flex flex-col px-10 h-96 w-full mr-4 mb-20 mt-20 ml-6 bg-white rounded-md shadow-md'>
       <h2 className='text-2xl font-bold mb-4'>Update Account</h2>
-      <form className='ml-40 mt-5 grid grid-cols-2 gap-2 flex flex-col flex-wrap gap-2 item-center'>
+      <form className='ml-40 mt-5 grid grid-cols-2 gap-2 flex-col flex-wrap item-center'>
         <label className='flex flex-col'>
           <span className='mb-2 font-medium'>Profile</span>
           <input 
