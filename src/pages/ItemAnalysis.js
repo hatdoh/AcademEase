@@ -1,34 +1,17 @@
 import React, { useState } from 'react';
-import { MdAdd, MdDelete } from "react-icons/md";
-import { Link } from 'react-router-dom';
-import { Dialog, Transition } from '@headlessui/react';
-import { Fragment } from 'react';
+import { MdDelete } from "react-icons/md";
 
 // Your students data...
+const students = [
+    // ... your students data
+];
 
-function AddSectionModal({ isOpen, closeModal, onAddSection }) {
-    // Modal content...
-}
-
-function Section() {
+function ItemAnalysis() {
     const [selectedSection, setSelectedSection] = useState('All');
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const [sectionList, setSectionList] = useState(['All', 'A', 'B', 'C']); // Initial section list
 
     const handleSectionChange = (section) => {
         setSelectedSection(section);
-    };
-
-    const openModal = () => {
-        setIsModalOpen(true);
-    };
-
-    const closeModal = () => {
-        setIsModalOpen(false);
-    };
-
-    const addSection = (sectionName) => {
-        setSectionList(prev => [...prev, sectionName]);
     };
 
     const deleteSection = (sectionName) => {
@@ -37,16 +20,30 @@ function Section() {
         if (selectedSection === sectionName) setSelectedSection('All'); // Reset to 'All' if current section is deleted
     };
 
-    // Filtered students and other logic...
+    const filteredStudents = students.filter(student =>
+        selectedSection === 'All' || student.section === selectedSection
+    );
+
+    const sectionCounts = sectionList.reduce((counts, section) => {
+        counts[section] = students.filter(student => student.section === section).length;
+        return counts;
+    }, {});
+
+    const getImagePath = (imageName) => {
+        try {
+            return require(`../res/img/${imageName}.png`);
+        } catch (e) {
+            return '';
+        }
+    };
 
     return (
         <div className="container mx-auto p-4">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-4">
-                    <h2 className="text-2xl font-semibold text-gray-800">Section ({selectedSection})</h2>
+                    <h2 className="text-2xl ml-2 font-semibold text-gray-800">Section ({selectedSection})</h2>
                 </div>
                 <div className="flex items-center space-x-4">
-                    <label className="block text-sm font-medium text-gray-800">Select Section:</label>
                     <select
                         className="mt-1 block w-40 px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                         value={selectedSection}
@@ -71,21 +68,23 @@ function Section() {
                 <div className="overflow-y-auto max-h-screen"> {/* Container to make the table scrollable */}
                     <table className="min-w-full bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden">
                         <thead className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
-                            {/* Table header... */}
+                            <tr>
+                                <th className="px-6 py-3 text-left uppercase">Question</th>
+                                <th className="px-6 py-3 text-left uppercase">No.</th>
+                                <th className="px-6 py-3 text-left uppercase">% Correct Answer A</th>
+                                <th className="px-6 py-3 text-left uppercase">% Correct Answer B</th>
+                                <th className="px-6 py-3 text-left uppercase">% Correct Answer C</th>
+                                <th className="px-6 py-3 text-left uppercase">% Correct Answer D</th>
+                            </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-200">
-                            {/* Table body... */}
+                        <tbody className="text-sm text-gray-700">
+                            {/* Table rows */}
                         </tbody>
-                        <tfoot className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
-                            {/* Table footer... */}
-                        </tfoot>
                     </table>
                 </div>
             </div>
-
-            <AddSectionModal isOpen={isModalOpen} closeModal={closeModal} onAddSection={addSection} />
         </div>
     );
 }
 
-export default Section;
+export default ItemAnalysis;

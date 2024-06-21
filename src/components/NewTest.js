@@ -187,7 +187,7 @@ return (
           ))}
         </select>
       </div>
-      <div className='h-96 w-full flex flex-col mr-4 mt-5 ml-6 bg-white rounded-lg shadow-md'>
+      <div className='h-96 flex flex-col mr-4 mt-5 ml-6 bg-white rounded-lg shadow-md'>
         <div className='flex justify-center items-center bg-gray-200 py-2 rounded-lg'>
           <h2 className='text-center uppercase font-semibold flex-1'>Test Type</h2>
           <h2 className='text-right mr-20 uppercase font-semibold flex-1'>Date</h2>

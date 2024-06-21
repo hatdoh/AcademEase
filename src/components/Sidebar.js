@@ -14,6 +14,7 @@ function Sidebar() {
         { title: "Item Analysis", icon: "search", link: "/item-analysis" },
         { title: "Create Test Questions", icon: "chart", link: "/create-questions" },
         { title: "Admin", icon: "user", link: "/account" },
+        { title: "LogIn", icon: "user", link: "/login" },
     ];
 
     // Update selectedMenu state based on current URL pathname

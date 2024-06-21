@@ -9,6 +9,8 @@ import Dashboard from './pages/Dashboard';
 import ItemAnalysis from './pages/ItemAnalysis';
 import Admin from './pages/Admin';
 import AttendanceSummary from './pages/AttendanceSummary';
+import SchoolFormTwo from './pages/SF2';
+import LoginForm from './components/LoginForm';
 
 function App() {
   return (
@@ -21,7 +23,9 @@ function App() {
           <Route path='/attendance-summary' element={<AttendanceSummary />} />
           <Route path='/create-questions' element={<CreateQuestions />} />
           <Route path='/item-analysis' element={<ItemAnalysis />} />
+          <Route path='/sf2' element={<SchoolFormTwo />} />
           <Route path='/account' element={<Admin />} />
+          <Route path='/login' element={<LoginForm />} />
         </Routes>
       </div>
     </BrowserRouter>
