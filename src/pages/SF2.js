@@ -74,9 +74,9 @@ function SchoolFormTwo() {
     };
 
     return (
-        <div className="container mx-auto p-4">
+        <div className="container mx-auto p-4 grid grid-cols-3 gap-4">
             <h2 className="text-2xl font-semibold mb-4">School Form 2</h2>
-            <div className="mb-4">
+            <div className="mb-1">
                 <label className="block mb-2">School ID</label>
                 <input type="text" value={schoolID} onChange={(e) => setSchoolID(e.target.value)} className="border px-2 py-1 w-full" />
             </div>

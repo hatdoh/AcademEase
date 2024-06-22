@@ -4,6 +4,9 @@ import ModalTestQuestion from './ModalTestQuestion'; // Import the Modal compone
 import { FaPrint } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
 import { FaEdit } from "react-icons/fa";
+import html2pdf from 'html2pdf.js';
+
+
 function NewTest(props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState('');
@@ -154,6 +157,57 @@ function NewTest(props) {
     test.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
     (selectedTestType === '' || test.name === selectedTestType)
   );
+
+  const handlePrint = (test) => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write('<html><head><title>Test Questions and Answer Sheet</title></head><body>');
+  
+      // Test Questions
+      printWindow.document.write('<h1>Test Questions</h1>');
+      if (Array.isArray(test.items)) {
+        test.items.forEach((item, index) => {
+          printWindow.document.write(`<p>${index + 1}. ${item.question}</p>`);
+          printWindow.document.write('<ul>');
+          item.choices.forEach((choice) => {
+            printWindow.document.write(`<li>${choice.text}</li>`);
+          });
+          printWindow.document.write('</ul>');
+        });
+      }
+  
+      // Answer Sheet
+      printWindow.document.write('<h1>Answer Sheet</h1>');
+      if (Array.isArray(test.items)) {
+        test.items.forEach((item, index) => {
+          printWindow.document.write(`<p>${index + 1}. ${item.question}</p>`);
+          printWindow.document.write('<ul>');
+          item.choices.forEach((choice, choiceIndex) => {
+            const option = String.fromCharCode(65 + choiceIndex);
+            const selected = test.answerSheet[index].selected === choiceIndex;
+            const bgColor = selected ? 'background-color: #4CAF50; color: white;' : '';
+            printWindow.document.write(`<li style="${bgColor}">${option}: ${choice.text}</li>`);
+          });
+          printWindow.document.write('</ul>');
+        });
+      }
+  
+      printWindow.document.write('</body></html>');
+      printWindow.document.close();
+  
+      // Convert HTML to PDF and download
+      html2pdf().from(printWindow.document.body).save('test.pdf');
+    } else {
+      alert('Please allow popups for this site');
+    }
+  };
+  
+  
+  
+  
+  
+  
+  
   
 // State to store the selected test type for filtering
 
@@ -217,7 +271,7 @@ return (
                 </div>
                 <div className="flex justify-end flex-1">
                   <button
-                    onClick={() => {/* handlePrint */}}
+                    onClick={() => handlePrint(test)}
                     type="button"
                     className="h-10 mb-1 mr-2 text-center inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-emerald-600 text-base font-medium text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-4 sm:text-sm"
                   >
