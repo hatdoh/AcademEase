@@ -21,20 +21,21 @@ function App() {
 
   return (
     <div className="flex min-h-screen">
-      {/* Render Sidebar if it's not the login or signup route */}
       {!isLoginRoute && !isSignUpRoute && <Sidebar />}
-      <Routes>
-        <Route path="/login" element={<LoginForm />} />
-        <Route path='/signup' element={<SignupForm />} />
-        <Route path="/" element={<PrivateRoute element={<Dashboard />} />} />
-        <Route path="/sections" element={<PrivateRoute element={<Sections />} />} />
-        <Route path="/attendance-summary" element={<PrivateRoute element={<AttendanceSummary />} />} />
-        <Route path="/create-questions" element={<PrivateRoute element={<CreateQuestions />} />} />
-        <Route path="/item-analysis" element={<PrivateRoute element={<ItemAnalysis />} />} />
-        <Route path="/sf2" element={<PrivateRoute element={<SchoolFormTwo />} />} />
-        <Route path="/account" element={<PrivateRoute element={<Admin />} />} />
-        <Route path="/admin-details" element={<PrivateRoute element={<AdminDetails />} />} />
-      </Routes>
+      <div className={`flex-1 ${isLoginRoute || isSignUpRoute ? 'flex justify-center items-center' : ''}`}>
+        <Routes>
+          <Route path="/login" element={<LoginForm />} />
+          <Route path="/signup" element={<SignupForm />} />
+          <Route path="/" element={<PrivateRoute element={<Dashboard />} />} />
+          <Route path="/sections" element={<PrivateRoute element={<Sections />} />} />
+          <Route path="/attendance-summary" element={<PrivateRoute element={<AttendanceSummary />} />} />
+          <Route path="/create-questions" element={<PrivateRoute element={<CreateQuestions />} />} />
+          <Route path="/item-analysis" element={<PrivateRoute element={<ItemAnalysis />} />} />
+          <Route path="/sf2" element={<PrivateRoute element={<SchoolFormTwo />} />} />
+          <Route path="/account" element={<PrivateRoute element={<Admin />} />} />
+          <Route path="/admin-details" element={<PrivateRoute element={<AdminDetails />} />} />
+        </Routes>
+      </div>
     </div>
   );
 }

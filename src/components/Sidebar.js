@@ -23,7 +23,7 @@ function Sidebar() {
     { title: "SF2", icon: <FaRegCalendarMinus size={24} />, link: "/sf2" },
     { title: "Item Analysis", icon: <PiExam size={24} />, link: "/item-analysis" },
     { title: "Create Test Questions", icon: <FaClipboardQuestion size={24} />, link: "/create-questions" },
-    { title: "Admin Details", icon: <GrUserAdmin size={24} />, link: "/admin-details", gap: true },
+    { title: "Account", icon: <GrUserAdmin size={24} />, link: "/admin-details", gap: true },
   ];
 
   // Update selectedMenu state based on current URL pathname
@@ -45,13 +45,15 @@ function Sidebar() {
     <div className='flex'>
       <div className={`${open ? 'w-80' : 'w-20'} duration-300 h-screen p-5 pt-8 bg-dark-purple relative`}>
         <img src={require("../res/img/control.png")} className={`absolute cursor-pointer rounded-full -right-3 top-9 w-7 border-2 border-dark-purple ${!open && 'rotate-180'}`} onClick={() => setOpen(!open)} />
+        <Link to={"/"}>
         <div className='flex gap-x-4 items-center'>
           <img src={require("../res/img/logo.png")} className={`cursor-pointer duration-500 ${open && "rotate-[360deg]"}`} alt="Logo" />
           <h1 className={`text-white origin-left font-medium text-xl duration-300 ${!open && 'scale-0'}`}>AcademEase</h1>
         </div>
+        </Link>
         <ul className='pt-6'>
           {Menus.map((menu, index) => (
-            <li key={index} className={`text-white text-md flex items-center gap-x-4 cursor-pointer p-2 mt-4 hover:bg-light-white rounded-md ${menu.gap ? "mt-36" : "mt-2"} ${menu.link === location.pathname && "bg-light-white"}`}>
+            <li key={index} className={`text-white text-md flex items-center gap-x-4 cursor-pointer p-2 mt-4 hover:bg-light-white rounded-md ${menu.gap ? "mt-32" : "mt-2"} ${menu.link === location.pathname && "bg-light-white"}`}>
               <Link to={menu.link} className="flex items-center" onClick={() => handleMenuClick(menu.title)}>
                 {React.cloneElement(menu.icon, { className: 'icon', size: '1em' })}
                 <span className={`ml-2 ${!open && 'hidden'} duration-200`}>{menu.title}</span>

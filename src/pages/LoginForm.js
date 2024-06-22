@@ -19,7 +19,7 @@ function LoginForm() {
   };
 
   return (
-      <div className='flex items-center justify-center h-screen'>
+      <div className='items-center justify-center'>
         <div className='bg-white p-8 rounded-md shadow-md w-80'>
           <img src={MorenoLogo} alt="Moreno Logo" className='h-20 w-20 mx-auto mb-4' />
           <h2 className='text-2xl font-bold mb-4 text-center'>Hello Admin</h2>
