@@ -6,7 +6,6 @@ import { MdDelete } from "react-icons/md";
 import { FaEdit } from "react-icons/fa";
 import html2pdf from 'html2pdf.js';
 
-
 function NewTest(props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState('');
@@ -16,6 +15,8 @@ function NewTest(props) {
   const [answerSheet, setAnswerSheet] = useState([]);
   const [savedTests, setSavedTests] = useState([]);
   const [editIndex, setEditIndex] = useState(null); // State to track the index of the test being edited
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTestType, setSelectedTestType] = useState('');
 
   const openModal = () => {
     setIsModalOpen(true);
@@ -112,22 +113,21 @@ function NewTest(props) {
     setEditIndex(index);
     openModal();
   };
-  
 
   const handleAddChoice = (questionIndex) => {
     const newItemsInput = [...itemsInput];
     newItemsInput[questionIndex].choices.push({ id: newItemsInput[questionIndex].choices.length, text: '' });
     setItemsInput(newItemsInput);
-  
+
     // Update answer sheet when adding a choice
-    setAnswerSheet(prevAnswerSheet => 
+    setAnswerSheet(prevAnswerSheet =>
       prevAnswerSheet.map((answer, index) => ({
         ...answer,
         options: index === questionIndex ? [...answer.options, String.fromCharCode(65 + answer.options.length)] : answer.options
       }))
     );
   };
-  
+
   const handleRemoveChoice = (questionIndex) => {
     const newItemsInput = [...itemsInput];
     newItemsInput[questionIndex].choices.pop();
@@ -141,9 +141,6 @@ function NewTest(props) {
       }))
     );
   };
-  
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTestType, setSelectedTestType] = useState('');
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -163,30 +160,35 @@ function NewTest(props) {
     if (printWindow) {
       printWindow.document.write('<html><head><title>Test Questions and Answer Sheet</title></head><body>');
   
-      // Test Questions
-      printWindow.document.write('<h1>Test Questions</h1>');
+      // Test Name and Date
+      printWindow.document.write(`<h1>${test.name}</h1>`);
+      printWindow.document.write(`<p>Date: ${test.date}</p>`);
+  
+      // Number of Items
+      printWindow.document.write(`<p>Number of Items: ${test.items.length}</p>`);
+  
+      // Test Questions and Answer Choices
       if (Array.isArray(test.items)) {
         test.items.forEach((item, index) => {
-          printWindow.document.write(`<p>${index + 1}. ${item.question}</p>`);
+          printWindow.document.write(`<p><strong>Question ${index + 1}:</strong> ${item.question}</p>`);
           printWindow.document.write('<ul>');
-          item.choices.forEach((choice) => {
-            printWindow.document.write(`<li>${choice.text}</li>`);
+          item.choices.forEach((choice, choiceIndex) => {
+            printWindow.document.write(`<li>${String.fromCharCode(65 + choiceIndex)}. ${choice.text}</li>`);
           });
           printWindow.document.write('</ul>');
         });
       }
   
       // Answer Sheet
-      printWindow.document.write('<h1>Answer Sheet</h1>');
-      if (Array.isArray(test.items)) {
-        test.items.forEach((item, index) => {
-          printWindow.document.write(`<p>${index + 1}. ${item.question}</p>`);
+      printWindow.document.write('<h2>Answer Sheet</h2>');
+      if (Array.isArray(test.answerSheet)) {
+        test.answerSheet.forEach((answer, index) => {
+          printWindow.document.write(`<p><strong>Question ${index + 1}:</strong></p>`);
           printWindow.document.write('<ul>');
-          item.choices.forEach((choice, choiceIndex) => {
-            const option = String.fromCharCode(65 + choiceIndex);
-            const selected = test.answerSheet[index].selected === choiceIndex;
+          answer.options.forEach((option, optionIndex) => {
+            const selected = answer.selected === optionIndex;
             const bgColor = selected ? 'background-color: #4CAF50; color: white;' : '';
-            printWindow.document.write(`<li style="${bgColor}">${option}: ${choice.text}</li>`);
+            printWindow.document.write(`<li style="${bgColor}">${String.fromCharCode(65 + optionIndex)}. ${option.text}</li>`);
           });
           printWindow.document.write('</ul>');
         });
@@ -203,12 +205,6 @@ function NewTest(props) {
   };
   
   
-  
-  
-  
-  
-  
-  
 // State to store the selected test type for filtering
 
 // Function to handle the test type filter change
@@ -221,7 +217,7 @@ return (
     <div className='ml-3'>
       <div className="flex items-center">
         <button className='ml-10 w-40 h-10 mt-5 text-center shadow-sm py-2 rounded-md bg-blue-500 font-medium text-2xl text-white hover:bg-blue-700 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-blue-500 sm:ml-4 sm:text-sm' onClick={openModal}>
-          New Test
+          New Quiz
         </button>
         <input
           type="text"

@@ -1,131 +1,100 @@
 import React, { useState } from 'react';
 import { jsPDF } from 'jspdf';
+import Modal from 'react-modal';
+
+// Import statements remain the same
+
+// Import statements remain the same
 
 function SchoolFormTwo() {
-    const [schoolID, setSchoolID] = useState('');
-    const [schoolYear, setSchoolYear] = useState('');
-    const [schoolName, setSchoolName] = useState('');
-    const [reportMonth, setReportMonth] = useState('');
-    const [gradeLevel, setGradeLevel] = useState('');
-    const [section, setSection] = useState('');
-    const [learners, setLearners] = useState([{ lastName: '', firstName: '', middleName: '', attendance: Array(31).fill('') }]);
-    const [totalAbsences, setTotalAbsences] = useState(0);
-    const [totalTardies, setTotalTardies] = useState(0);
+    const [modalIsOpen, setModalIsOpen] = useState(false);
+    const [formData, setFormData] = useState({
+        schoolID: '',
+        schoolYear: '',
+        schoolName: '',
+        gradeLevel: '',
+        section: '',
+        month: '',
+        nameOfLearner: '',
+        date: '',
+        totalDaysAbsent: '',
+        totalDaysTardy: '',
+        remarks: ''
+    });
 
-    const handleLearnerChange = (index, field, value) => {
-        const newLearners = [...learners];
-        newLearners[index][field] = value;
-        setLearners(newLearners);
+    const handleInputChange = (field, value) => {
+        setFormData({ ...formData, [field]: value });
     };
 
-    const handleAttendanceChange = (learnerIndex, dayIndex, value) => {
-        const newLearners = [...learners];
-        newLearners[learnerIndex].attendance[dayIndex] = value;
-        setLearners(newLearners);
+    const openModal = () => {
+        setModalIsOpen(true);
     };
 
-    const calculateTotals = () => {
-        let absences = 0;
-        let tardies = 0;
-        learners.forEach(learner => {
-            learner.attendance.forEach(day => {
-                if (day === 'x') absences++;
-                if (day === '/') tardies++;
-            });
-        });
-        setTotalAbsences(absences);
-        setTotalTardies(tardies);
+    const closeModal = () => {
+        setModalIsOpen(false);
     };
 
-    const generatePDF = () => {
-        const doc = new jsPDF();
-        doc.setFontSize(10);
-
-        // Header
-        doc.text(`School Form 2 (SF2) Daily Attendance Report of Learners`, 20, 10);
-        doc.text(`School ID: ${schoolID}`, 20, 20);
-        doc.text(`School Year: ${schoolYear}`, 20, 30);
-        doc.text(`School Name: ${schoolName}`, 20, 40);
-        doc.text(`Report for the Month of: ${reportMonth}`, 20, 50);
-        doc.text(`Grade Level: ${gradeLevel}`, 20, 60);
-        doc.text(`Section: ${section}`, 20, 70);
-
-        // Learners Table
-        let y = 80;
-        doc.text(`Learners Name`, 20, y);
-        for (let i = 1; i <= 31; i++) {
-            doc.text(`${i}`, 70 + (i * 5), y);
-        }
-        y += 10;
-        learners.forEach(learner => {
-            doc.text(`${learner.lastName}, ${learner.firstName} ${learner.middleName}`, 20, y);
-            learner.attendance.forEach((day, index) => {
-                doc.text(day, 70 + ((index + 1) * 5), y);
-            });
-            y += 10;
-        });
-
-        // Totals
-        doc.text(`Total for the Month - Absences: ${totalAbsences}`, 20, y);
-        doc.text(`Total for the Month - Tardies: ${totalTardies}`, 20, y + 10);
-
-        // Save PDF
-        doc.save('SchoolForm2.pdf');
+    const saveData = () => {
+        closeModal();
+        // You can process or save the form data here
     };
 
     return (
-        <div className="container mx-auto p-4 grid grid-cols-3 gap-4">
-            <h2 className="text-2xl font-semibold mb-4">School Form 2</h2>
-            <div className="mb-1">
-                <label className="block mb-2">School ID</label>
-                <input type="text" value={schoolID} onChange={(e) => setSchoolID(e.target.value)} className="border px-2 py-1 w-full" />
-            </div>
-            <div className="mb-4">
-                <label className="block mb-2">School Year</label>
-                <input type="text" value={schoolYear} onChange={(e) => setSchoolYear(e.target.value)} className="border px-2 py-1 w-full" />
-            </div>
-            <div className="mb-4">
-                <label className="block mb-2">School Name</label>
-                <input type="text" value={schoolName} onChange={(e) => setSchoolName(e.target.value)} className="border px-2 py-1 w-full" />
-            </div>
-            <div className="mb-4">
-                <label className="block mb-2">Report for the Month of</label>
-                <input type="text" value={reportMonth} onChange={(e) => setReportMonth(e.target.value)} className="border px-2 py-1 w-full" />
-            </div>
-            <div className="mb-4">
-                <label className="block mb-2">Grade Level</label>
-                <input type="text" value={gradeLevel} onChange={(e) => setGradeLevel(e.target.value)} className="border px-2 py-1 w-full" />
-            </div>
-            <div className="mb-4">
-                <label className="block mb-2">Section</label>
-                <input type="text" value={section} onChange={(e) => setSection(e.target.value)} className="border px-2 py-1 w-full" />
-            </div>
+<div className="container mx-auto p-4">
+    <h2 className="text-2xl font-semibold mb-4">School Form 2 (SF2) Daily Attendance Report of Learners</h2>
+        <button onClick={openModal} className='ml-10 w-40 h-10 mt-5 text-center shadow-sm py-2 rounded-md bg-blue-500 font-medium text-2xl text-white hover:bg-blue-700 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-blue-500 sm:ml-4 sm:text-sm'>
+            Create SF2
+        </button>
 
-            <h3 className="text-xl font-semibold mt-4 mb-2">Learners</h3>
-            {learners.map((learner, learnerIndex) => (
-                <div key={learnerIndex} className="mb-4">
-                    <div className="flex mb-2">
-                        <input type="text" value={learner.lastName} onChange={(e) => handleLearnerChange(learnerIndex, 'lastName', e.target.value)} placeholder="Last Name" className="border px-2 py-1 mr-2 w-1/3" />
-                        <input type="text" value={learner.firstName} onChange={(e) => handleLearnerChange(learnerIndex, 'firstName', e.target.value)} placeholder="First Name" className="border px-2 py-1 mr-2 w-1/3" />
-                        <input type="text" value={learner.middleName} onChange={(e) => handleLearnerChange(learnerIndex, 'middleName', e.target.value)} placeholder="Middle Name" className="border px-2 py-1 w-1/3" />
+        <Modal
+            isOpen={modalIsOpen}
+            onRequestClose={closeModal}
+            contentLabel="Modal"
+            className="fixed inset-0 flex items-center justify-center z-50 overflow-y-auto"
+            overlayClassName="fixed inset-0 bg-gray-500 bg-opacity-25"
+        >   
+            <div className="bg-white rounded-lg p-8 h-96 w-120 border-solid border-2 border-indigo-600">
+                <form className='flex justify-center'>
+                    <div className="flex flex-col mr-10">
+                        <label className="block mb-2">School ID</label>
+                        <input type="number" value={formData.schoolID} onChange={(e) => handleInputChange('schoolID', e.target.value)} className="border px-2 py-1 w-40 mb-4" />
                     </div>
-                    <div className="flex flex-wrap">
-                        {learner.attendance.map((day, dayIndex) => (
-                            <input key={dayIndex} type="text" value={day} onChange={(e) => handleAttendanceChange(learnerIndex, dayIndex, e.target.value)} placeholder={dayIndex + 1} className="border px-2 py-1 m-1 w-10 text-center" />
-                        ))}
+                    <div className="flex flex-col">
+                        <label className="block mb-2">School Year</label>
+                        <input type="number" value={formData.schoolYear} onChange={(e) => handleInputChange('schoolYear', e.target.value)} className="border px-2 py-1 w-40 mb-4" />
                     </div>
-                </div>
-            ))}
+                    <div className="flex flex-col ml-10">
+                        <label className="block mb-2">Report for the Month of</label>
+                        <input type="text" value={formData.month} onChange={(e) => handleInputChange('month', e.target.value)} className="border px-2 py-1 w-40 mb-4" />
+                    </div>
+                </form>
+                <form className='flex justify-center'>
+                    <div className="flex flex-col mr-10">
+                        <label className="block mb-2">School Name</label>
+                        <input type="text" value={formData.schoolName} onChange={(e) => handleInputChange('schoolName', e.target.value)} className="border px-2 py-1 w-80 mb-4" />
+                    </div>
+                    <div className="flex flex-col">
+                        <label className="block mb-2">Grade Level</label>
+                        <input type="number" value={formData.gradeLevel} onChange={(e) => handleInputChange('gradeLevel', e.target.value)} className="border px-2 py-1 w-20 mb-4" />
+                    </div>
+                    <div className="flex flex-col ml-10">
+                        <label className="block mb-2">Section</label>
+                        <input type="text" value={formData.section} onChange={(e) => handleInputChange('section', e.target.value)} className="border px-2 py-1 w-60 mb-4" />
+                    </div>
+                </form>
 
-            <button onClick={calculateTotals} className="bg-blue-500 text-white px-4 py-2 rounded mt-4">Calculate Totals</button>
-            <button onClick={generatePDF} className="bg-green-500 text-white px-4 py-2 rounded mt-4 ml-2">Download PDF</button>
-
-            <div className="mt-4">
-                <div>Total for the Month - Absences: {totalAbsences}</div>
-                <div>Total for the Month - Tardies: {totalTardies}</div>
+                <button onClick={saveData} className="bg-blue-500 text-white px-4 py-2 rounded mt-4">Save</button>
             </div>
-        </div>
+
+            
+        </Modal>
+
+        {/* Your existing table rendering logic */}
+        {/* ... */}
+    </div>
+
     );
 }
 
 export default SchoolFormTwo;
+
