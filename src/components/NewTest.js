@@ -271,7 +271,7 @@ return (
                     type="button"
                     className="h-10 mb-1 mr-2 text-center inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-emerald-600 text-base font-medium text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-4 sm:text-sm"
                   >
-                    Print <FaPrint className='ml-2 w-4 h-5'/>
+                    Print <FaPrint className='ml-2 w-4 h-5 text-blue-600'/>
                   </button>
                   <button
                     onClick={() => handleEdit(index)}
