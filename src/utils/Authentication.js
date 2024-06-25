@@ -9,7 +9,7 @@ const hashPassword = (password) => {
 
 // Function to sign up a new user
 export const signup = async (userData) => {
-  const { fullName, dob, gender, email, phoneNumber, username, password } = userData;
+  const { LName, FName, MName, dob, gender, email, phoneNumber, username, password } = userData;
 
   // Check if username already exists
   if (users.some(user => user.username === username)) {
@@ -21,7 +21,9 @@ export const signup = async (userData) => {
 
   // Save user details
   const newUser = {
-    fullName,
+    LName,
+    FName,
+    MName,
     dob,
     gender,
     email,
