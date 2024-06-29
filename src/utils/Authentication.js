@@ -1,3 +1,6 @@
+// src/utils/Authentication.js
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+
 // Initialize users from local storage (replace with actual initialization logic)
 let users = JSON.parse(localStorage.getItem('users')) || [];
 
@@ -11,32 +14,34 @@ const hashPassword = (password) => {
 export const signup = async (userData) => {
   const { LName, FName, MName, dob, gender, email, phoneNumber, username, password } = userData;
 
-  // Check if username already exists
-  if (users.some(user => user.username === username)) {
-    throw new Error('Username already exists');
+  const auth = getAuth();
+
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    // Store additional user data in local storage or your database
+    const newUser = {
+      uid: user.uid,
+      LName,
+      FName,
+      MName,
+      dob,
+      gender,
+      email,
+      phoneNumber,
+      username,
+      password: hashPassword(password)
+    };
+
+    users.push(newUser);
+    localStorage.setItem('users', JSON.stringify(users)); // Store in local storage or database
+    localStorage.setItem('adminDetails', JSON.stringify(newUser)); // Store admin details
+
+    return newUser; // Return the new user object
+  } catch (error) {
+    throw new Error(error.message);
   }
-
-  // Hash password before saving (replace with actual hashing)
-  const hashedPassword = hashPassword(password);
-
-  // Save user details
-  const newUser = {
-    LName,
-    FName,
-    MName,
-    dob,
-    gender,
-    email,
-    phoneNumber,
-    username,
-    password: hashedPassword
-  };
-
-  users.push(newUser);
-  localStorage.setItem('users', JSON.stringify(users)); // Store in local storage or database
-  localStorage.setItem('adminDetails', JSON.stringify(newUser)); // Store admin details
-
-  return newUser; // Return the new user object
 };
 
 // Function to simulate getting admin details (replace with actual admin details retrieval)
@@ -45,25 +50,34 @@ export const getAdminDetails = () => {
 };
 
 // Function to simulate login (replace with actual authentication)
-export const login = (username, password) => {
-  const user = users.find(user => user.username === username && user.password === hashPassword(password));
-  if (user) {
-    localStorage.setItem('currentUser', JSON.stringify(user));
-    localStorage.setItem('adminDetails', JSON.stringify(user)); // Store admin details
+export const login = async (email, password) => {
+  const auth = getAuth();
 
-    return user; //binago kkooo
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    const storedUser = users.find(u => u.uid === user.uid);
+    
+    localStorage.setItem('currentUser', JSON.stringify(storedUser));
+    localStorage.setItem('adminDetails', JSON.stringify(storedUser));
+
+    return storedUser;
+  } catch (error) {
+    throw new Error('Invalid username or password');
   }
-  return false;
 };
 
 // Function to simulate logout (replace with actual logout logic)
 export const logout = () => {
+  const auth = getAuth();
+  auth.signOut();
   localStorage.removeItem('currentUser');
 };
 
 // Function to check if user is authenticated (replace with actual authentication logic)
 export const isAuthenticated = () => {
-  return localStorage.getItem('currentUser') !== null;
+  const auth = getAuth();
+  return auth.currentUser !== null;
 };
 
 // Initialize users from local storage (replace with actual initialization logic)
