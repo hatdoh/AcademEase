@@ -1,7 +1,6 @@
-// AdminDetails.js
-
+// src/pages/AdminDetails.js
 import React, { useState, useEffect } from 'react';
-import { getAdminDetails, logout } from '../utils/Authentication';
+import { getAdminDetails, updateAdminDetails, logout } from '../utils/Authentication';
 import { useNavigate } from 'react-router-dom';
 
 function AdminDetails() {
@@ -10,7 +9,13 @@ function AdminDetails() {
 
   useEffect(() => {
     const details = getAdminDetails();
-    setAdmin(details);
+    if (details) {
+      setAdmin({
+        username: details.username || details.email,
+        name: `${details.FName || ''} ${details.MName || ''} ${details.LName || ''}`.trim(),
+        email: details.email
+      });
+    }
   }, []);
 
   const handleInputChange = (e) => {
@@ -22,7 +27,7 @@ function AdminDetails() {
   };
 
   const handleSave = () => {
-    localStorage.setItem('adminDetails', JSON.stringify(admin));
+    updateAdminDetails(admin);
     alert('Details updated successfully!');
   };
 
@@ -59,6 +64,7 @@ function AdminDetails() {
           value={admin.email}
           onChange={handleInputChange}
           className='mb-4 p-2 border border-gray-300 rounded-md'
+          disabled
         />
         <button
           onClick={handleSave}

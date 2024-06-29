@@ -1,26 +1,20 @@
 // src/utils/Authentication.js
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 
-// Initialize users from local storage (replace with actual initialization logic)
 let users = JSON.parse(localStorage.getItem('users')) || [];
 
-// Function to securely hash passwords (you can use a library like bcrypt)
 const hashPassword = (password) => {
-  // Simulated hashing
-  return password + '_hashed'; // Replace with actual hashing logic
+  return password + '_hashed';
 };
 
-// Function to sign up a new user
 export const signup = async (userData) => {
   const { LName, FName, MName, dob, gender, email, phoneNumber, username, password } = userData;
-
   const auth = getAuth();
 
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    // Store additional user data in local storage or your database
     const newUser = {
       uid: user.uid,
       LName,
@@ -35,21 +29,20 @@ export const signup = async (userData) => {
     };
 
     users.push(newUser);
-    localStorage.setItem('users', JSON.stringify(users)); // Store in local storage or database
-    localStorage.setItem('adminDetails', JSON.stringify(newUser)); // Store admin details
+    localStorage.setItem('users', JSON.stringify(users));
+    localStorage.setItem('adminDetails', JSON.stringify(newUser));
+    localStorage.setItem('currentUser', JSON.stringify(newUser)); // Also store the current user
 
-    return newUser; // Return the new user object
+    return newUser;
   } catch (error) {
     throw new Error(error.message);
   }
 };
 
-// Function to simulate getting admin details (replace with actual admin details retrieval)
 export const getAdminDetails = () => {
   return JSON.parse(localStorage.getItem('adminDetails')) || {};
 };
 
-// Function to simulate login (replace with actual authentication)
 export const login = async (email, password) => {
   const auth = getAuth();
 
@@ -57,7 +50,7 @@ export const login = async (email, password) => {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
     const storedUser = users.find(u => u.uid === user.uid);
-    
+
     localStorage.setItem('currentUser', JSON.stringify(storedUser));
     localStorage.setItem('adminDetails', JSON.stringify(storedUser));
 
@@ -67,20 +60,30 @@ export const login = async (email, password) => {
   }
 };
 
-// Function to simulate logout (replace with actual logout logic)
 export const logout = () => {
   const auth = getAuth();
   auth.signOut();
   localStorage.removeItem('currentUser');
+  localStorage.removeItem('adminDetails');
 };
 
-// Function to check if user is authenticated (replace with actual authentication logic)
 export const isAuthenticated = () => {
   const auth = getAuth();
   return auth.currentUser !== null;
 };
 
-// Initialize users from local storage (replace with actual initialization logic)
+export const updateAdminDetails = (updatedDetails) => {
+  const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+  if (currentUser) {
+    const updatedUser = { ...currentUser, ...updatedDetails };
+    localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+    localStorage.setItem('adminDetails', JSON.stringify(updatedUser));
+
+    users = users.map(user => user.uid === updatedUser.uid ? updatedUser : user);
+    localStorage.setItem('users', JSON.stringify(users));
+  }
+};
+
 const storedUsers = localStorage.getItem('users');
 if (storedUsers) {
   users = JSON.parse(storedUsers);
