@@ -1,10 +1,14 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, browserSessionPersistence, setPersistence } from "firebase/auth";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyDIu4AVozrEkyKEA_DYHxOZs0__OW2mObc",
   authDomain: "academease-c5a42.firebaseapp.com",
+
+  databaseURL: "https://academease-c5a42-default-rtdb.asia-southeast1.firebasedatabase.app",
+
   projectId: "academease-c5a42",
   storageBucket: "academease-c5a42.appspot.com",
   messagingSenderId: "576932492833",
@@ -13,12 +17,3 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
-// Set persistence
-setPersistence(auth, browserSessionPersistence)
-  .catch((error) => {
-    console.error('Error setting persistence:', error);
-  });
-
-export { auth };
