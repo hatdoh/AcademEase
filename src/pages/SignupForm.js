@@ -1,3 +1,4 @@
+// src/components/SignupForm.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signup } from '../utils/Authentication';
@@ -17,6 +18,7 @@ function SignupForm() {
 
   const handleSignup = async (e) => {
     e.preventDefault();
+
     try {
       await signup({
         LName,
