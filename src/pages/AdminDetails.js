@@ -1,4 +1,3 @@
-// src/pages/AdminDetails.js
 import React, { useState, useEffect } from 'react';
 import { getAdminDetails, updateAdminDetails, logout } from '../utils/Authentication';
 import { useNavigate } from 'react-router-dom';

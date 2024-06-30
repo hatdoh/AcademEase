@@ -1,4 +1,3 @@
-// src/utils/Authentication.js
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 
 let users = JSON.parse(localStorage.getItem('users')) || [];
@@ -51,12 +50,14 @@ export const login = async (email, password) => {
     const user = userCredential.user;
     const storedUser = users.find(u => u.uid === user.uid);
 
-    localStorage.setItem('currentUser', JSON.stringify(storedUser));
-    localStorage.setItem('adminDetails', JSON.stringify(storedUser));
+    if (storedUser) {
+      localStorage.setItem('currentUser', JSON.stringify(storedUser));
+      localStorage.setItem('adminDetails', JSON.stringify(storedUser));
+    }
 
     return storedUser;
   } catch (error) {
-    throw new Error('Invalid username or password');
+    throw new Error('Invalid email or password');
   }
 };
 
