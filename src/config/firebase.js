@@ -1,5 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -7,6 +8,9 @@ import { initializeApp } from "firebase/app";
 const firebaseConfig = {
   apiKey: "AIzaSyDIu4AVozrEkyKEA_DYHxOZs0__OW2mObc",
   authDomain: "academease-c5a42.firebaseapp.com",
+
+  databaseURL: "https://academease-c5a42-default-rtdb.asia-southeast1.firebasedatabase.app",
+
   projectId: "academease-c5a42",
   storageBucket: "academease-c5a42.appspot.com",
   messagingSenderId: "576932492833",
@@ -15,3 +19,6 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+export default app;

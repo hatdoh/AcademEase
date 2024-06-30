@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
-import add from '../res/img/add.webp'; // Import the add icon
+import React, { useState, useEffect } from 'react';
 import ModalTestQuestion from './ModalTestQuestion'; // Import the Modal component
-import { FaPrint } from "react-icons/fa";
-import { MdDelete } from "react-icons/md";
-import { FaEdit } from "react-icons/fa";
+import { FaPrint, FaEdit } from "react-icons/fa";
+import { MdDelete, MdAdd } from "react-icons/md";
+
+
 import html2pdf from 'html2pdf.js';
+
+import app from "../config/firebase";
+import { getDatabase, ref, set, push, remove, onValue } from "firebase/database";
 
 function NewTest(props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -14,9 +17,23 @@ function NewTest(props) {
   const [itemsInput, setItemsInput] = useState([]);
   const [answerSheet, setAnswerSheet] = useState([]);
   const [savedTests, setSavedTests] = useState([]);
-  const [editIndex, setEditIndex] = useState(null); // State to track the index of the test being edited
+  const [editIndex, setEditIndex] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTestType, setSelectedTestType] = useState('');
+
+  const db = getDatabase(app);
+
+  // Load saved tests from Firebase on component mount
+  useEffect(() => {
+    const testsRef = ref(db, 'data/tests');
+    onValue(testsRef, (snapshot) => {
+      const tests = [];
+      snapshot.forEach((childSnapshot) => {
+        tests.push({ id: childSnapshot.key, ...childSnapshot.val() });
+      });
+      setSavedTests(tests.reverse()); // Reverse to show latest first
+    });
+  }, []);
 
   const openModal = () => {
     setIsModalOpen(true);
@@ -70,29 +87,49 @@ function NewTest(props) {
   };
 
   const handleSave = () => {
-    const newTest = { name: testName, date: selectedDate, items: selectedOption };
-
+    const newTest = {
+      name: testName,
+      date: selectedDate,
+      items: selectedOption,
+      questions: itemsInput,
+      answerSheet: answerSheet
+    };
+  
     if (editIndex !== null) {
       // Edit existing test
-      setSavedTests(prevTests => {
-        const updatedTests = [...prevTests];
-        updatedTests[editIndex] = newTest;
-        return updatedTests;
-      });
+      const editRef = ref(db, `data/tests/${savedTests[editIndex].id}`);
+      set(editRef, newTest)
+        .then(() => {
+          alert("Test updated successfully");
+        })
+        .catch((error) => {
+          alert("Error: " + error.message);
+        });
     } else {
       // Save new test
-      setSavedTests([newTest, ...savedTests]);
+      push(ref(db, 'data/tests'), newTest)
+        .then(() => {
+          alert("Test saved successfully");
+        })
+        .catch((error) => {
+          alert("Error: " + error.message);
+        });
     }
-
-    // Update answer sheet based on current itemsInput
-    const answerSet = itemsInput.map(item => Array.from({ length: item.choices.length }, (_, i) => String.fromCharCode(65 + i)));
-    setAnswerSheet(answerSet.map(answer => ({ selected: null, options: answer })));
-
-    closeModal();
+  
+    closeModal(); // Close modal after saving or editing
   };
+  
 
-  const handleDelete = (index) => {
-    setSavedTests(prevTests => prevTests.filter((_, i) => i !== index));
+  const handleDelete = (index, testId) => {
+    const testRef = ref(db, `data/tests/${testId}`);
+
+    remove(testRef)
+      .then(() => {
+        alert("Test deleted successfully");
+      })
+      .catch((error) => {
+        alert("Error: " + error.message);
+      });
   };
 
   const handleEdit = (index) => {
@@ -100,16 +137,11 @@ function NewTest(props) {
     setTestName(test.name);
     setSelectedDate(test.date);
     setSelectedOption(test.items);
-    setItemsInput(Array.from({ length: test.items }, (_, i) => ({
-      question: '', // Ensure this is set correctly based on your logic
-      choices: [
-        { id: 0, text: '' },
-        { id: 1, text: '' },
-        { id: 2, text: '' },
-        { id: 3, text: '' }
-      ]
+    setItemsInput(test.questions.map(q => ({
+      question: q.question,
+      choices: q.choices
     })));
-    setAnswerSheet(Array.from({ length: test.items }, () => ({ selected: null, options: ['A', 'B', 'C', 'D'] })));
+    setAnswerSheet(test.answerSheet);
     setEditIndex(index);
     openModal();
   };
@@ -150,23 +182,18 @@ function NewTest(props) {
     setSelectedTestType(e.target.value);
   };
 
-  const filteredTests = savedTests.filter((test) =>
-    test.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (selectedTestType === '' || test.name === selectedTestType)
-  );
-
   const handlePrint = (test) => {
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write('<html><head><title>Test Questions and Answer Sheet</title></head><body>');
-  
+
       // Test Name and Date
       printWindow.document.write(`<h1>${test.name}</h1>`);
       printWindow.document.write(`<p>Date: ${test.date}</p>`);
-  
+
       // Number of Items
       printWindow.document.write(`<p>Number of Items: ${test.items.length}</p>`);
-  
+
       // Test Questions and Answer Choices
       if (Array.isArray(test.items)) {
         test.items.forEach((item, index) => {
@@ -178,7 +205,7 @@ function NewTest(props) {
           printWindow.document.write('</ul>');
         });
       }
-  
+
       // Answer Sheet
       printWindow.document.write('<h2>Answer Sheet</h2>');
       if (Array.isArray(test.answerSheet)) {
@@ -193,32 +220,29 @@ function NewTest(props) {
           printWindow.document.write('</ul>');
         });
       }
-  
+
       printWindow.document.write('</body></html>');
       printWindow.document.close();
-  
+
       // Convert HTML to PDF and download
       html2pdf().from(printWindow.document.body).save('test.pdf');
     } else {
       alert('Please allow popups for this site');
     }
   };
-  
-  
-// State to store the selected test type for filtering
 
-// Function to handle the test type filter change
+  const filteredTests = savedTests.filter((test) =>
+    test.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (selectedTestType === '' || test.name === selectedTestType)
+  );
 
-
-// Get unique test types from savedTests
-const testTypes = [...new Set(savedTests.map(test => test.name))];
-
-return (
+  return (
     <div className='ml-3'>
       <div className="flex items-center">
-        <button className='ml-10 w-40 h-10 mt-5 text-center shadow-sm py-2 rounded-md bg-blue-500 font-medium text-2xl text-white hover:bg-blue-700 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-blue-500 sm:ml-4 sm:text-sm' onClick={openModal}>
-          New Quiz
-        </button>
+      <button className='flex items-center w-40 h-10 mt-5 text-center shadow-sm py-2 rounded-md bg-blue-500 font-medium text-2xl text-white hover:bg-blue-700 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-blue-500 sm:ml-4 sm:text-sm' onClick={openModal}>
+        <span className="ml-10">New Quiz</span>
+        <MdAdd className='h-6 w-6' />
+      </button>
         <input
           type="text"
           placeholder="Search..."
@@ -229,70 +253,58 @@ return (
         <select
           value={selectedTestType}
           onChange={handleTestTypeFilterChange}
-          className="w-48 h-10 pl-3 pr-10 ml-4 mt-5 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-indigo-500 sm:text-sm"
+          className="w-48 h-10 pl-3 pr-10 mt-5 ml-8 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-indigo-500 sm:text-sm"
         >
-          <option value="">Test Type</option>
-          {testTypes.map((testType, index) => (
-            <option key={index} value={testType}>{testType}</option>
+          <option value="">All Test Types</option>
+          {savedTests.map((test, index) => (
+            <option key={index} value={test.name}>{test.name}</option>
           ))}
         </select>
       </div>
-      <div className='h-96 flex flex-col mr-4 mt-5 ml-6 bg-white rounded-lg shadow-md'>
-        <div className='flex justify-center items-center bg-gray-200 py-2 rounded-lg'>
-          <h2 className='text-center uppercase font-semibold flex-1'>Test Type</h2>
-          <h2 className='text-right mr-20 uppercase font-semibold flex-1'>Date</h2>
-          <h2 className='text-center mr-80 uppercase font-semibold flex-1'>No. Items</h2>
-        </div>
-        {filteredTests.length > 0 && (
-          <div className='flex flex-col rounded-lg text-center bg-white shadow-md border-sky-600 overflow-y-auto' style={{ maxHeight: '350px' }}>
-            {/* List of Filtered Saved Tests */}
+
+      {/* Display saved tests in a scrollable table */}
+      <div className="mt-8 mr-5 w-12/12 h-96 overflow-x-scroll overflow-y-scroll rounded-lg">
+        <table className="w-full h-full bg-white shadow-md rounded-lg">
+          <thead className="bg-gray-200 text-gray-700 uppercase">
+            <tr>
+              <th className="py-3 px-6 text-left">Test Name</th>
+              <th className="py-3 px-6 text-center">Date</th>
+              <th className="py-3 px-6 text-center">Number of Items</th>
+              <th className="py-3 px-6 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
             {filteredTests.map((test, index) => (
-              <div key={index} className='shadow-md flex flex-nowrap py-2'>
-                <div className='grid grid-cols-3 divide-x'>
-                  <div className='w-60 overflow-auto ml-7 mt-1'>
-                    <h2 className='mt-2 text-center uppercase text-nowrap flex space-x-4 grid grid-flow-col auto-cols-max text-1xl font-semibold flex-1'>
-                      {test.name}
-                    </h2>
-                  </div>
-                  <div className='w-40 mr-80 overflow-auto ml-10 mt-1'>
-                    <h2 className='mt-2 ml-14 uppercase text-nowrap flex space-x-4 grid grid-flow-col auto-cols-max text-1xl font-semibold flex-1'>
-                      {test.date}
-                    </h2>
-                  </div>
-                  <div className='w-60 mr-80 overflow-auto mt-1'>
-                    <h2 className='mt-2 ml-24 uppercase text-nowrap flex space-x-4 grid grid-flow-col auto-cols-max text-1xl font-semibold flex-1'>
-                      {test.items}
-                    </h2>
-                  </div>
-                </div>
-                <div className="flex justify-end flex-1">
+              <tr key={index}>
+                <td className="py-4 px-6 text-left whitespace-nowrap trucant">{test.name}</td>
+                <td className="py-4 px-6 text-center">{test.date}</td>
+                <td className="py-4 px-6 text-center">{test.items}</td>
+                <td className="py-4 px-6 text-center">
                   <button
                     onClick={() => handlePrint(test)}
-                    type="button"
-                    className="h-10 mb-1 mr-2 text-center inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-emerald-600 text-base font-medium text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-4 sm:text-sm"
+                    className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full mr-2"
                   >
-                    Print <FaPrint className='ml-2 w-4 h-5 text-blue-600'/>
+                    <FaPrint />
                   </button>
                   <button
                     onClick={() => handleEdit(index)}
-                    type="button"
-                    className="h-10 mb-1 mr-2 text-center inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-sky-600 text-base font-medium text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-4 sm:text-sm"
+                    className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-full mr-2"
                   >
-                    <FaEdit className='h-5 w-5'/>
+                    <FaEdit />
                   </button>
                   <button
-                    onClick={() => handleDelete(index)}
-                    type="button"
-                    className="h-10 mb-1 mr-2 text-center inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-4 sm:text-sm"
+                    onClick={() => handleDelete(index, test.id)}
+                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full"
                   >
-                    <MdDelete className='h-5 w-5'/> 
+                    <MdDelete />
                   </button>
-                </div>
-              </div>
+                </td>
+              </tr>
             ))}
-          </div>
-        )}
+          </tbody>
+        </table>
       </div>
+
       <ModalTestQuestion isOpen={isModalOpen} onClose={closeModal} onSave={handleSave}>
         <div className="flex justify-center items-center mt-10">
           <div className="flex flex-col items-center">

@@ -1,3 +1,7 @@
+import React, {useState} from "react";
+import app from "../config/firebase";
+import {getDatabase, ref, push} from "firebase/database";
+
 function ModalTestQuestion({ isOpen, onClose, onSave, children, itemsInput, answerSheet }) {
   if (!isOpen) return null;
 
