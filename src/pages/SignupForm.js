@@ -1,39 +1,48 @@
-// src/components/SignupForm.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signup } from '../utils/Authentication';
 
 function SignupForm() {
-  const [LName, setLName] = useState('');
-  const [FName, setFName] = useState('');
-  const [MName, setMName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [middleName, setMiddleName] = useState('');
   const [dob, setDob] = useState('');
   const [gender, setGender] = useState('');
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSignup = async (e) => {
     e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
 
     try {
       await signup({
-        LName,
-        FName,
-        MName,
+        lastName,
+        firstName,
+        middleName,
         dob,
         gender,
-        email,
         phoneNumber,
-        username,
+        email,
         password
       });
       navigate('/login');
     } catch (error) {
-      setError('Failed to sign up. Please try again.');
+      setError(error.message || 'Failed to sign up. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -48,8 +57,8 @@ function SignupForm() {
             type='text' 
             className='px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 transition duration-300'
             placeholder='Last Name'
-            value={LName}
-            onChange={(e) => setLName(e.target.value)}
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
             required
           />
         </label>
@@ -59,8 +68,8 @@ function SignupForm() {
             type='text' 
             className='px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 transition duration-300'
             placeholder='First Name'
-            value={FName}
-            onChange={(e) => setFName(e.target.value)}
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
             required
           />
         </label>
@@ -70,8 +79,8 @@ function SignupForm() {
             type='text' 
             className='px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 transition duration-300'
             placeholder='Middle Name'
-            value={MName}
-            onChange={(e) => setMName(e.target.value)}
+            value={middleName}
+            onChange={(e) => setMiddleName(e.target.value)}
             required
           />
         </label>
@@ -80,7 +89,6 @@ function SignupForm() {
           <input 
             type='date' 
             className='px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 transition duration-300'
-            placeholder='Date of Birth'
             value={dob}
             onChange={(e) => setDob(e.target.value)}
             required
@@ -101,17 +109,6 @@ function SignupForm() {
           </select>
         </label>
         <label className='flex flex-col'>
-          <span className='mb-2 font-medium'>Email</span>
-          <input 
-            type='email' 
-            className='px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 transition duration-300'
-            placeholder='Email'
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </label>
-        <label className='flex flex-col'>
           <span className='mb-2 font-medium'>Phone Number</span>
           <input 
             type='tel' 
@@ -123,13 +120,13 @@ function SignupForm() {
           />
         </label>
         <label className='flex flex-col'>
-          <span className='mb-2 font-medium'>Username</span>
+          <span className='mb-2 font-medium'>Email</span>
           <input 
-            type='text' 
+            type='email' 
             className='px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 transition duration-300'
-            placeholder='Username'
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            placeholder='Email'
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
         </label>
@@ -144,12 +141,24 @@ function SignupForm() {
             required
           />
         </label>
+        <label className='flex flex-col'>
+          <span className='mb-2 font-medium'>Confirm Password</span>
+          <input 
+            type='password' 
+            className='px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 transition duration-300'
+            placeholder='Confirm Password'
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+          />
+        </label>
         <div className='col-span-3 flex justify-center'>
           <button 
             type='submit' 
-            className='mt-5 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition duration-300'
+            className={`mt-5 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition duration-300 ${loading ? 'cursor-not-allowed' : ''}`}
+            disabled={loading}
           >
-            Sign Up
+            {loading ? 'Signing Up...' : 'Sign Up'}
           </button>
         </div>
       </form>

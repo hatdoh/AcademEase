@@ -1,13 +1,15 @@
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import bcrypt from 'bcryptjs';
 
 let users = JSON.parse(localStorage.getItem('users')) || [];
 
 const hashPassword = (password) => {
-  return password + '_hashed';
+  const salt = bcrypt.genSaltSync(10);
+  return bcrypt.hashSync(password, salt);
 };
 
 export const signup = async (userData) => {
-  const { LName, FName, MName, dob, gender, email, phoneNumber, username, password } = userData;
+  const { lastName, firstName, middleName, dob, gender, phoneNumber, email, password } = userData;
   const auth = getAuth();
 
   try {
@@ -16,25 +18,28 @@ export const signup = async (userData) => {
 
     const newUser = {
       uid: user.uid,
-      LName,
-      FName,
-      MName,
+      lastName,
+      firstName,
+      middleName,
       dob,
       gender,
       email,
       phoneNumber,
-      username,
       password: hashPassword(password)
     };
 
     users.push(newUser);
     localStorage.setItem('users', JSON.stringify(users));
     localStorage.setItem('adminDetails', JSON.stringify(newUser));
-    localStorage.setItem('currentUser', JSON.stringify(newUser)); // Also store the current user
+    localStorage.setItem('currentUser', JSON.stringify(newUser));
 
     return newUser;
   } catch (error) {
-    throw new Error(error.message);
+    let errorMessage = 'Failed to sign up. Please try again.';
+    if (error.code === 'auth/email-already-in-use') {
+      errorMessage = 'Email already in use.';
+    }
+    throw new Error(errorMessage);
   }
 };
 
