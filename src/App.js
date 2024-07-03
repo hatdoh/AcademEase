@@ -15,6 +15,7 @@ import LoginForm from './pages/LoginForm';
 import AdminDetails from './pages/AdminDetails'; 
 import PrivateRoute from './components/PrivateRoute';
 import SignupForm from './pages/SignupForm';
+import AddAccount from './super-admin/AddAccount';
 import './index.css'; 
 
 function App() {
@@ -56,6 +57,7 @@ function App() {
           <Route path="/sf2" element={<PrivateRoute authenticated={authenticated} element={<SchoolFormTwo />} />} />
           <Route path="/account" element={<PrivateRoute authenticated={authenticated} element={<Admin />} />} />
           <Route path="/admin-details" element={<PrivateRoute authenticated={authenticated} element={<AdminDetails />} />} />
+          <Route path="/add-account" element={<PrivateRoute authenticated={authenticated} element={<AddAccount />} />} />
         </Routes>
       </div>
     </div>

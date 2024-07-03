@@ -1,16 +1,26 @@
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
-import bcrypt from 'bcryptjs';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { doc, setDoc, getDoc, query, where, getDocs } from "firebase/firestore"; // Adjusted import
+import { auth, db } from "../config/firebase";
+import { useHistory } from "react-router-dom";
 
-let users = JSON.parse(localStorage.getItem('users')) || [];
+const superAdminEmail = 'academease@gmail.com';
 
-const hashPassword = (password) => {
-  const salt = bcrypt.genSaltSync(10);
-  return bcrypt.hashSync(password, salt);
+export const getCurrentUser = () => {
+  return auth.currentUser;
 };
 
-export const signup = async (userData) => {
+export const isAdminLoggedIn = () => {
+  const currentUser = auth.currentUser;
+  return currentUser && currentUser.email !== superAdminEmail;
+};
+
+export const isSuperAdminLoggedIn = () => {
+  const currentUser = auth.currentUser;
+  return currentUser && currentUser.email === superAdminEmail;
+};
+
+export const addAccount = async (userData) => {
   const { lastName, firstName, middleName, dob, gender, phoneNumber, email, password } = userData;
-  const auth = getAuth();
 
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -23,19 +33,16 @@ export const signup = async (userData) => {
       middleName,
       dob,
       gender,
-      email,
       phoneNumber,
-      password: hashPassword(password)
+      email,
+      role: email === superAdminEmail ? 'superAdmin' : 'admin'
     };
 
-    users.push(newUser);
-    localStorage.setItem('users', JSON.stringify(users));
-    localStorage.setItem('adminDetails', JSON.stringify(newUser));
-    localStorage.setItem('currentUser', JSON.stringify(newUser));
+    await setDoc(doc(db, "teachers-info", user.uid), newUser);
 
     return newUser;
   } catch (error) {
-    let errorMessage = 'Failed to sign up. Please try again.';
+    let errorMessage = 'Failed to add account. Please try again.';
     if (error.code === 'auth/email-already-in-use') {
       errorMessage = 'Email already in use.';
     }
@@ -43,54 +50,65 @@ export const signup = async (userData) => {
   }
 };
 
-export const getAdminDetails = () => {
-  return JSON.parse(localStorage.getItem('adminDetails')) || {};
+export const getAdminDetails = async (uid) => {
+  try {
+    const docRef = doc(db, "teachers-info", uid);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      return { uid, ...docSnap.data() }; // Include uid in returned data
+    } else {
+      throw new Error('Admin details not found');
+    }
+  } catch (error) {
+    throw new Error('Failed to fetch admin details');
+  }
+};
+
+export const getSuperAdmin = async () => {
+  try {
+    const q = query(db.collection("teachers-info"), where("role", "==", "superAdmin"));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      return querySnapshot.docs[0].data();
+    } else {
+      throw new Error('Super admin not found');
+    }
+  } catch (error) {
+    throw new Error('Failed to fetch super admin');
+  }
 };
 
 export const login = async (email, password) => {
-  const auth = getAuth();
-
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    const storedUser = users.find(u => u.uid === user.uid);
 
-    if (storedUser) {
-      localStorage.setItem('currentUser', JSON.stringify(storedUser));
-      localStorage.setItem('adminDetails', JSON.stringify(storedUser));
-    }
+    const userDoc = await getAdminDetails(user.uid);
 
-    return storedUser;
+    return userDoc;
   } catch (error) {
     throw new Error('Invalid email or password');
   }
 };
 
 export const logout = () => {
-  const auth = getAuth();
-  auth.signOut();
-  localStorage.removeItem('currentUser');
-  localStorage.removeItem('adminDetails');
+  signOut(auth).then(() => {
+    window.location.href = "/login"; // Redirect to login page on logout
+  });
 };
 
 export const isAuthenticated = () => {
-  const auth = getAuth();
-  return auth.currentUser !== null;
+  const currentUser = auth.currentUser;
+  return currentUser !== null;
 };
 
-export const updateAdminDetails = (updatedDetails) => {
-  const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-  if (currentUser) {
-    const updatedUser = { ...currentUser, ...updatedDetails };
-    localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-    localStorage.setItem('adminDetails', JSON.stringify(updatedUser));
-
-    users = users.map(user => user.uid === updatedUser.uid ? updatedUser : user);
-    localStorage.setItem('users', JSON.stringify(users));
+export const updateAdminDetails = async (uid, updatedDetails) => {
+  try {
+    const docRef = doc(db, "teachers-info", uid);
+    await setDoc(docRef, updatedDetails, { merge: true });
+  } catch (error) {
+    throw new Error('Failed to update admin details');
   }
 };
-
-const storedUsers = localStorage.getItem('users');
-if (storedUsers) {
-  users = JSON.parse(storedUsers);
-}

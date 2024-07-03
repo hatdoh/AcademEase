@@ -57,9 +57,6 @@ function LoginForm() {
           >
             Login
           </button>
-          <p className="text-sm mt-2">
-            Don't have an account? <Link to="/signup" className="text-blue-500 hover:underline">Sign up here</Link>
-          </p>
         </form>
       </div>
     </div>

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-//import { signup } from '../utils/Authentication';
+import { addAccount, isSuperAdminLoggedIn } from '../utils/Authentication'; 
+import Swal from 'sweetalert2';
 
-function SignupForm() {
+function AddAccount() {
   const [lastName, setLastName] = useState('');
   const [firstName, setFirstName] = useState('');
   const [middleName, setMiddleName] = useState('');
@@ -16,10 +17,16 @@ function SignupForm() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSignup = async (e) => {
+  const handleAddAccount = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    if (!isSuperAdminLoggedIn()) {
+      setError('Only super admin can add accounts.');
+      setLoading(false);
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
@@ -27,29 +34,51 @@ function SignupForm() {
       return;
     }
 
-   // try {
-   //   await signup({
-   //     lastName,
-   //     firstName,
-   //     middleName,
-   //     dob,
-   //     gender,
-   //     phoneNumber,
-   //     email,
-   //     password
-   //   });
-   //   navigate('/login');
-   // } catch (error) {
-   //   setError(error.message || 'Failed to sign up. Please try again.');
-   // } finally {
-   //   setLoading(false);
-  //  }
+    const confirmResult = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Do you want to add this account?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, add it!'
+    });
+
+    if (confirmResult.isConfirmed) {
+      try {
+        await addAccount({
+          lastName,
+          firstName,
+          middleName,
+          dob,
+          gender,
+          phoneNumber,
+          email,
+          password
+        });
+        setLoading(false);
+        Swal.fire({
+          title: 'Account Added!',
+          text: 'The account has been successfully added.',
+          icon: 'success',
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: 'OK'
+        }).then(() => {
+          navigate('/'); // Redirect to admin details after adding account
+        });
+      } catch (error) {
+        setError(error.message || 'Failed to add account. Please try again.');
+        setLoading(false);
+      }
+    } else {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className='flex flex-col px-5 py-10 h-auto w-full max-w-3xl mx-auto bg-white rounded-md shadow-md'>
-      <form className='grid grid-cols-1 md:grid-cols-3 gap-6' onSubmit={handleSignup}>
-        <h2 className='col-span-3 text-2xl font-bold mb-4 text-center'>Sign Up</h2>
+    <div className='p-5'>
+      <form className='grid grid-cols-1 md:grid-cols-3 gap-6' onSubmit={handleAddAccount}>
+        <h2 className='col-span-3 text-2xl font-bold mb-4'>Add Account</h2>
         {error && <p className='col-span-3 text-red-500 text-center'>{error}</p>}
         <label className='flex flex-col'>
           <span className='mb-2 font-medium'>Last Name</span>
@@ -152,18 +181,18 @@ function SignupForm() {
             required
           />
         </label>
-        <div className='col-span-3 flex justify-center'>
-          <button 
-            type='submit' 
-            className={`mt-5 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition duration-300 ${loading ? 'cursor-not-allowed' : ''}`}
-            disabled={loading}
-          >
-            {loading ? 'Signing Up...' : 'Sign Up'}
-          </button>
+        <div className='col-span-3 flex'>
+        <button
+          type='submit'
+          className='mt-3 px-4 col-span-3 bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition duration-300'
+          disabled={loading}
+        >
+          {loading ? 'Adding...' : 'Add Account'}
+        </button>
         </div>
       </form>
     </div>
   );
 }
 
-export default SignupForm;
+export default AddAccount;

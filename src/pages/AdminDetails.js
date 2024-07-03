@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getAdminDetails, updateAdminDetails, logout } from '../utils/Authentication';
+import { getAdminDetails, updateAdminDetails, logout, getCurrentUser, isSuperAdminLoggedIn } from '../utils/Authentication';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
@@ -17,19 +17,28 @@ function AdminDetails() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const details = getAdminDetails();
-    if (details) {
-      setAdmin({
-        name: `${details.firstName || ''} ${details.middleName || ''} ${details.lastName || ''}`.trim(),
-        email: details.email,
-        lastName: details.lastName || '',
-        firstName: details.firstName || '',
-        middleName: details.middleName || '',
-        dob: details.dob || '',
-        gender: details.gender || '',
-        phoneNumber: details.phoneNumber || ''
-      });
-    }
+    const fetchAdminData = async () => {
+      try {
+        const currentUser = getCurrentUser();
+        if (currentUser) {
+          const adminDetails = await getAdminDetails(currentUser.uid);
+          setAdmin({
+            name: `${adminDetails.firstName || ''} ${adminDetails.middleName || ''} ${adminDetails.lastName || ''}`.trim(),
+            email: adminDetails.email,
+            lastName: adminDetails.lastName || '',
+            firstName: adminDetails.firstName || '',
+            middleName: adminDetails.middleName || '',
+            dob: adminDetails.dob || '',
+            gender: adminDetails.gender || '',
+            phoneNumber: adminDetails.phoneNumber || ''
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch admin details:', error.message);
+      }
+    };
+
+    fetchAdminData();
   }, []);
 
   const handleInputChange = (e) => {
@@ -40,17 +49,33 @@ function AdminDetails() {
     }));
   };
 
-  const handleSave = () => {
-    updateAdminDetails(admin);
-    Swal.fire ({
-      title:'Saved',
-      text: "Details updated successfully!",
-      icon: 'success',
-      confirmButtonColor: '#3085d6'
-    });
-  };
+  const handleSave = async () => {
+    try {
+      await updateAdminDetails(admin.uid, {
+        firstName: admin.firstName,
+        lastName: admin.lastName,
+        middleName: admin.middleName,
+        dob: admin.dob,
+        gender: admin.gender,
+        phoneNumber: admin.phoneNumber
+      });
 
- 
+      Swal.fire({
+        title: 'Saved',
+        text: "Details updated successfully!",
+        icon: 'success',
+        confirmButtonColor: '#3085d6'
+      });
+    } catch (error) {
+      console.error('Failed to update admin details:', error.message);
+      Swal.fire({
+        title: 'Error',
+        text: "Failed to update details. Please try again.",
+        icon: 'error',
+        confirmButtonColor: '#3085d6'
+      });
+    }
+  };
 
   const handleLogout = () => {
     Swal.fire({
@@ -68,6 +93,10 @@ function AdminDetails() {
       }
     });
   };
+
+  //if (isSuperAdminLoggedIn()) {
+  //  return null;
+ // }
 
   return (
     <div className='p-5'>
