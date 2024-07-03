@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import Modal from 'react-modal';
 import { FaPrint } from "react-icons/fa";
-import { MdDelete } from "react-icons/md";
+import { MdDelete, MdDateRange } from "react-icons/md";
 import { FaEdit } from "react-icons/fa";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+
 
 function SchoolFormTwo() {
     const [modalIsOpen, setModalIsOpen] = useState(false);
@@ -105,6 +106,7 @@ function SchoolFormTwo() {
         return days;
     };
 
+
     const renderNoDaysOfWeek = () => {
         const daysOfWeek = ['M', 'T', 'W', 'TH', 'F'];
         const firstDayOfMonth = new Date(formData.month.getFullYear(), formData.month.getMonth(), 1);
@@ -133,6 +135,14 @@ function SchoolFormTwo() {
         return days;
     };
 
+    const handleSchoolYearChange = (e) => {
+        const value = e.target.value;
+        if (/^\d{0,4}(-\d{0,4})?$/.test(value)) {
+            setFormData({ ...formData, schoolYear: value });
+        }
+    };
+
+
     return (
         <div className="container mx-auto p-4">
             <h2 className="text-2xl font-semibold mb-4">School Form 2 (SF2) Daily Attendance Report of Learners</h2>
@@ -150,12 +160,14 @@ function SchoolFormTwo() {
                 <div className="bg-white rounded-lg p-8 border-solid border-2 border-indigo-600 w-full max-w-4xl">
                     <form className='flex justify-center mb-4'>
                         <div className="flex flex-col">
-                            <label className="block mb-2">Grade Level</label>
-                            <input type="number" value={formData.gradeLevel} onChange={(e) => handleInputChange('gradeLevel', e.target.value)} className="border px-2 py-1 w-20 mb-4" />
-                        </div>
-                        <div className="flex flex-col ml-10">
-                            <label className="block mb-2">Section</label>
-                            <input type="text" value={formData.section} onChange={(e) => handleInputChange('section', e.target.value)} className="border px-2 py-1 w-60 mb-4" />
+                            <label className="block mb-2">School Year</label>
+                            <input
+                                type="text"
+                                className="border px-2 py-1 w-40 mb-4"
+                                placeholder="YYYY-YYYY"
+                                value={formData.schoolYear}
+                                onChange={handleSchoolYearChange}
+                            />
                         </div>
                         <div className="flex flex-col ml-10">
                             <label className="block mb-2">Report for the Month of</label>
@@ -168,28 +180,88 @@ function SchoolFormTwo() {
                             />
                         </div>
                     </form>
+                    <form className='flex justify-center mb-4'>
+                        <div className="flex flex-col">
+                            <label className="block mb-2">Grade Level</label>
+                            <select
+                                value={formData.gradeLevel}
+                                onChange={(e) => handleInputChange('gradeLevel', e.target.value)}
+                                className="border px-2 py-1 pl-6 w-20 mb-4"
+                            >
+                                {[...Array(12)].map((_, index) => (
+                                    <option key={index + 1} value={index + 1}>{index + 1}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex flex-col ml-10">
+                            <label className="block mb-2">Section</label>
+                            <input type="text" value={formData.section} onChange={(e) => handleInputChange('section', e.target.value)} className="border px-2 py-1 w-60 mb-4" />
+                        </div>
+                    </form>
                     <div className='overflow-x-auto'>
                         <div className="overflow-y-auto max-h-96">
                             <table className="min-w-full bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden">
                                 <thead className='text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400'>
                                     <tr>
-                                        <th className="w-24 py-2 px-20"></th>
+                                        <th className="w-24 px-20"></th>
                                         {renderNoDaysOfWeek()}
                                         <th className='p-2'></th>
                                         <th className='p-2'></th>
                                         <th className='p-2'></th>
                                     </tr>
                                     <tr>
-                                        <th className="w-24 py-3 text-center uppercase">LEARNER'S NAME <br />(Last Name, First Name, Middle Name)</th>
+                                        <th className="w-24 text-center uppercase">LEARNER'S NAME <br />(Last Name, First Name, Middle Name)</th>
                                         {renderDaysOfWeek()}
                                         <th className='p-2'>ABSENT</th>
                                         <th className='p-2'>TARDY</th>
                                         <th className='p-2'>REMARKS</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody className='bg-white h-80'>
                                     <td></td>
                                 </tbody>
+                            </table>
+                            <table className='mt-10'>
+                                <thead className='text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400'>   
+                                    <tr>
+                                        <th className='py-3 pr-10 text-center'>Month: <br></br> No of Days of Classes:</th>
+                                        <th className='py-3 px-4'>M</th>
+                                        <th className='py-3 px-4'>F</th>
+                                        <th className='py-3 px-8'>Total</th>
+                                    </tr>
+                                    <tr>
+                                        <th className='bg-white py-2 px-10'>* Enrolment as of (1st Friday of June)</th>
+                                        
+                                    </tr>
+                                    <tr>
+                                        <th className='bg-white py-2 px-10'>Late Enrollment during the month (beyond cut-off)</th>
+                                    </tr>
+                                    <tr>
+                                        <th className='bg-white py-2 px-10'>Registered Learners as of end of the month</th>
+                                    </tr>
+                                    <tr>
+                                        <th className='bg-white py-2 px-10'>Percentage of Enrolment as of end of the month</th>
+                                    </tr>
+                                    <tr>
+                                        <th className='bg-white py-2 px-10'>Average Daily Attendance</th>
+                                    </tr>
+                                    <tr>
+                                        <th className='bg-white py-2 px-10'>Percentage of Attendance for the month</th>
+                                    </tr>
+                                    <tr>
+                                        <th className='bg-white py-2 px-10'>Number of students absent for 5 consecutive days:</th>
+                                    </tr>
+                                    <tr>
+                                        <th className='bg-white py-2 px-10'>Drop out</th>
+                                    </tr>
+                                    <tr>
+                                        <th className='bg-white py-2 px-10'>Transferred out</th>
+                                    </tr>
+                                    <tr>
+                                        <th className='bg-white py-2 px-10'>Transferred in</th>
+                                    </tr>
+
+                                </thead>
                             </table>
                         </div>
                     </div>
