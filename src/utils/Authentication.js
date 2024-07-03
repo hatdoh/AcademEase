@@ -1,5 +1,5 @@
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { doc, setDoc, getDoc, query, where, getDocs } from "firebase/firestore"; // Adjusted import
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, reauthenticateWithCredential, updatePassword as updateFirebasePassword } from "firebase/auth";
+import { doc, setDoc, getDoc, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../config/firebase";
 import { useHistory } from "react-router-dom";
 
@@ -108,7 +108,25 @@ export const updateAdminDetails = async (uid, updatedDetails) => {
   try {
     const docRef = doc(db, "teachers-info", uid);
     await setDoc(docRef, updatedDetails, { merge: true });
+    console.log('Document successfully updated');
   } catch (error) {
+    console.error('Failed to update admin details:', error.message);
     throw new Error('Failed to update admin details');
   }
 };
+
+//export const reauthenticate = async (user, password) => {
+//  try {
+//    const auth = getAuth();
+//    const credential = signInWithEmailAndPassword(auth, user.email, password);
+//    await reauthenticateWithCredential(user, credential);
+//  } catch (error) {
+//    throw new Error('Failed to reauthenticate user');
+//  }
+//};
+
+//export const updatePassword = async (user, newPassword) => {
+//  await updateFirebasePassword(user, newPassword);
+//};
+
+//HALT MUNA 2

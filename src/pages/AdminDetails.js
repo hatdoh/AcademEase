@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { getAdminDetails, updateAdminDetails, logout, getCurrentUser, isSuperAdminLoggedIn } from '../utils/Authentication';
+import { getAdminDetails, updateAdminDetails, logout, getCurrentUser } from '../utils/Authentication';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
 function AdminDetails() {
   const [admin, setAdmin] = useState({
-    name: '',
+    uid: '',
     email: '',
     lastName: '',
     firstName: '',
@@ -23,7 +23,7 @@ function AdminDetails() {
         if (currentUser) {
           const adminDetails = await getAdminDetails(currentUser.uid);
           setAdmin({
-            name: `${adminDetails.firstName || ''} ${adminDetails.middleName || ''} ${adminDetails.lastName || ''}`.trim(),
+            uid: currentUser.uid,
             email: adminDetails.email,
             lastName: adminDetails.lastName || '',
             firstName: adminDetails.firstName || '',
@@ -50,6 +50,16 @@ function AdminDetails() {
   };
 
   const handleSave = async () => {
+    if (!/^09\d{9}$/.test(admin.phoneNumber)) {
+      Swal.fire({
+        title: 'Error',
+        text: "Phone number must be exactly 11 digits and start with '09'.",
+        icon: 'error',
+        confirmButtonColor: '#3085d6'
+      });
+      return;
+    }
+
     try {
       await updateAdminDetails(admin.uid, {
         firstName: admin.firstName,
@@ -94,22 +104,42 @@ function AdminDetails() {
     });
   };
 
-  //if (isSuperAdminLoggedIn()) {
-  //  return null;
- // }
-
   return (
     <div className='p-5'>
       <h2 className='text-2xl font-bold mb-4'>Admin Details</h2>
       <div className='flex flex-col'>
-        <label className='mb-2 font-medium'>Name</label>
-        <input
-          type='text'
-          name='name'
-          value={admin.name}
-          onChange={handleInputChange}
-          className='mb-4 p-2 border border-gray-300 rounded-md'
-        />
+        <div className='flex mb-4'>
+          <div className='flex-1 mr-2'>
+            <label className='mb-2 font-medium'>Last Name</label>
+            <input
+              type='text'
+              name='lastName'
+              value={admin.lastName}
+              onChange={handleInputChange}
+              className='p-2 border border-gray-300 rounded-md w-full'
+            />
+          </div>
+          <div className='flex-1 mx-2'>
+            <label className='mb-2 font-medium'>First Name</label>
+            <input
+              type='text'
+              name='firstName'
+              value={admin.firstName}
+              onChange={handleInputChange}
+              className='p-2 border border-gray-300 rounded-md w-full'
+            />
+          </div>
+          <div className='flex-1 ml-2'>
+            <label className='mb-2 font-medium'>Middle Name</label>
+            <input
+              type='text'
+              name='middleName'
+              value={admin.middleName}
+              onChange={handleInputChange}
+              className='p-2 border border-gray-300 rounded-md w-full'
+            />
+          </div>
+        </div>
         <label className='mb-2 font-medium'>Email</label>
         <input
           type='email'
@@ -119,7 +149,6 @@ function AdminDetails() {
           className='mb-4 p-2 border border-gray-300 rounded-md'
           disabled
         />
-
         <label className='mb-2 font-medium'>Date of Birth</label>
         <input
           type='date'
@@ -147,6 +176,7 @@ function AdminDetails() {
           value={admin.phoneNumber}
           onChange={handleInputChange}
           className='mb-4 p-2 border border-gray-300 rounded-md'
+          maxLength='11'
         />
         <div className='flex items-center'>
           <button
@@ -168,3 +198,4 @@ function AdminDetails() {
 }
 
 export default AdminDetails;
+
