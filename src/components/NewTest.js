@@ -322,7 +322,7 @@ function NewTest(props) {
             <input type="date" value={selectedDate} onChange={handleDateChange} className="uppercase pl-20 ml-2 w-64 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
           </div>
         </div>
-        <div className="flex flex-col items-center mt-5">
+        <div className="flex flex-col items-center mt-5 ">
           <label className="text-lg font-bold mb-2">Select Number of Items</label>
           <select value={selectedOption} onChange={handleDropdownChange} className="text-center w-64 justify-items-center w-24 h-10 mt-1 block border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
             <option value="">Select</option>
@@ -333,12 +333,12 @@ function NewTest(props) {
             <option value="50">50 Items</option>
           </select>
         </div>
-        <div className="grid grid-cols-2 gap-4 justify-center mt-4">
+        <div className="gap-4 justify-center mt-4">
         {itemsInput.map((item, index) => (
-        <div key={index} className="flex flex-col items-center m-1">
-          <label className="uppercase text-lg font-bold mb-2">Question {index + 1}</label>
+        <div key={index} className="flex flex-col items-center m-1 mt-5 shadow-blue-500/50 shadow-xl">
+          <label className="uppercase text-lg font-bold mt-5 mb-2">Question {index + 1}</label>
           <input
-            className="uppercase text-center w-64 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="uppercase text-left px-8 w-5/6 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             placeholder={`Input Here ${index + 1}`}
             value={item.question}
             onChange={(e) => {
@@ -347,10 +347,25 @@ function NewTest(props) {
               setItemsInput(newItemsInput);
             }}
           />
+          {/* Inside the mapping of itemsInput.map((item, index)) */}
           {item.choices.map((choice, choiceIndex) => (
-            <div key={choice.id} className="flex items-center mt-2">
+            <div key={choice.id} className="flex items-center px-8 mt-2 w-full">
               <input
-                className="uppercase text-center w-64 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                type="checkbox"
+                checked={choice.checked || false}
+                onChange={(e) => {
+                  const newItemsInput = [...itemsInput];
+                  // Uncheck all other choices in the same question
+                  newItemsInput[index].choices.forEach((ch, idx) => {
+                    if (choiceIndex !== idx) ch.checked = false;
+                  });
+                  // Toggle current choice
+                  newItemsInput[index].choices[choiceIndex].checked = e.target.checked;
+                  setItemsInput(newItemsInput);
+                }}
+              />
+              <input
+                className="uppercase text-left ml-4 px-10 w-11/12 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 placeholder={`Answer ${String.fromCharCode(65 + choiceIndex)}`}
                 value={choice.text}
                 onChange={(e) => {
@@ -361,23 +376,24 @@ function NewTest(props) {
               />
             </div>
           ))}
+
           <div className="flex mt-2">
             <button
               onClick={() => {
                 handleAddChoice(index);
               }}
-              className="mb-10 mr-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+              className="flex items-center mb-10 mr-2 shadow-xl text-blue-500 font-bold py-2 px-4 rounded"
             >
-              Add Choice
+              <span >New Answer</span><MdAdd className='h-6 w-6' />
             </button>
             {item.choices.length > 1 && (
               <button
                 onClick={() => {
                   handleRemoveChoice(index);
                 }}
-                className="mb-10 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                className="flex items-center mb-10 shadow-xl text-red-700 font-bold py-2 px-4 rounded"
               >
-                Remove Choice
+                <span>Remove</span> <MdDelete className='h-6 w-6'/>
               </button>
             )}
           </div>
@@ -386,30 +402,6 @@ function NewTest(props) {
 
 
       </div>
-      <h3 className="text-center text-lg font-bold">Answer Sheet</h3>
-        {itemsInput.length > 0 && (
-          <div className="divide-y divide-dashed grid grid-cols-2 gap-4 items-center mt-4">
-            
-            {answerSheet.map((answer, answerIndex) => (
-              <div key={answerIndex} className="pb-1 flex flex-wrap mr-10 flex items-center mb-2">
-                <span className="mr-10">{answerIndex + 1}.</span>
-                {answer.options.map((option, optionIndex) => (
-                  <button
-                    key={optionIndex}
-                    onClick={() => handleAnswerClick(answerIndex, optionIndex)}
-                    className={`mr-2 px-4 py-2 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
-                      answer.selected === optionIndex
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-indigo-200 text-indigo-600'
-                    }`}
-                  >
-                    {option}
-                  </button>
-                ))}
-              </div>
-            ))}
-          </div>
-        )}
 
       </ModalTestQuestion>
     </div>
