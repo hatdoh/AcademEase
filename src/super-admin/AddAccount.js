@@ -27,6 +27,16 @@ function AddAccount() {
     setError('');
     setLoading(true);
 
+    if (!/^09\d{9}$/.test(phoneNumber)) {
+      Swal.fire({
+        title: 'Error',
+        text: "Phone number must be exactly at 11 digits and must start with '09'.",
+        icon: 'error',
+        confirmButtonColor: '#3085d6'
+      });
+      return;
+    }
+
     if (!isSuperAdminLoggedIn()) {
       await Swal.fire({
         title: 'Error',
@@ -172,6 +182,7 @@ function AddAccount() {
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
             required
+            maxLength='11'
           />
         </label>
         <label className='flex flex-col'>
@@ -211,9 +222,9 @@ function AddAccount() {
           <button
             type='submit'
             className='mt-3 px-4 col-span-3 bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition duration-300'
-            disabled={loading}
+            onClick={handleAddAccount}
           >
-            {loading ? 'Adding...' : 'Add Account'}
+            Add Account
           </button>
         </div>
       </form>

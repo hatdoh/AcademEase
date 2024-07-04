@@ -1,7 +1,7 @@
 import { getAuth, EmailAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, reauthenticateWithCredential, updatePassword as updateFirebasePassword } from "firebase/auth";
 import { doc, setDoc, getDoc, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../config/firebase";
-import { useHistory } from "react-router-dom";
+// import { useHistory } from "react-router-dom";
 
 const superAdminEmail = 'academease@gmail.com';
 
