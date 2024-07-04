@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, browserSessionPersistence, setPersistence } from "firebase/auth";
 import { getFirestore } from 'firebase/firestore';
 
+
 // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyDIu4AVozrEkyKEA_DYHxOZs0__OW2mObc",
@@ -26,3 +27,4 @@ setPersistence(auth, browserSessionPersistence)
 
 export { auth, db };
 export default app;
+

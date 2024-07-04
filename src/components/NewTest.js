@@ -2,10 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ModalTestQuestion from './ModalTestQuestion'; // Import the Modal component
 import { FaPrint, FaEdit } from "react-icons/fa";
 import { MdDelete, MdAdd } from "react-icons/md";
-
-
 import html2pdf from 'html2pdf.js';
-
 import app from "../config/firebase";
 import { getDatabase, ref, set, push, remove, onValue } from "firebase/database";
 
@@ -39,6 +36,7 @@ function NewTest(props) {
     setIsModalOpen(true);
   };
 
+  
   const closeModal = () => {
     setIsModalOpen(false);
     setEditIndex(null); // Reset edit index when modal is closed
@@ -91,10 +89,13 @@ function NewTest(props) {
       name: testName,
       date: selectedDate,
       items: selectedOption,
-      questions: itemsInput,
-      answerSheet: answerSheet
+      questions: itemsInput.map((item, index) => ({
+        question: item.question,
+        choices: item.choices,
+        correctAnswer: item.choices.findIndex(choice => choice.checked)
+      }))
     };
-  
+
     if (editIndex !== null) {
       // Edit existing test
       const editRef = ref(db, `data/tests/${savedTests[editIndex].id}`);
@@ -115,22 +116,24 @@ function NewTest(props) {
           alert("Error: " + error.message);
         });
     }
-  
+
     closeModal(); // Close modal after saving or editing
   };
-  
 
   const handleDelete = (index, testId) => {
     const testRef = ref(db, `data/tests/${testId}`);
-
+  
     remove(testRef)
       .then(() => {
+        const updatedTests = savedTests.filter((test, idx) => idx !== index);
+        setSavedTests(updatedTests);
         alert("Test deleted successfully");
       })
       .catch((error) => {
         alert("Error: " + error.message);
       });
   };
+  
 
   const handleEdit = (index) => {
     const test = savedTests[index];
@@ -397,12 +400,26 @@ function NewTest(props) {
               </button>
             )}
           </div>
+        
         </div>
       ))}
-
-
+      <div className="mb-5 mt-5 sm:mt-6 sm:flex sm:flex-row-reverse">
+            <button
+              type="button"
+              className="mt-3 mb-5 mr-24 px-20 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm"
+              onClick={closeModal}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="mr-8 mb-5 ml-4 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+              onClick={handleSave}
+            >
+              Save
+            </button>
+          </div>
       </div>
-
       </ModalTestQuestion>
     </div>
   );
