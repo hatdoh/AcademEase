@@ -1,4 +1,4 @@
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, reauthenticateWithCredential, updatePassword as updateFirebasePassword } from "firebase/auth";
+import { getAuth, EmailAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, reauthenticateWithCredential, updatePassword as updateFirebasePassword } from "firebase/auth";
 import { doc, setDoc, getDoc, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../config/firebase";
 import { useHistory } from "react-router-dom";
@@ -115,18 +115,21 @@ export const updateAdminDetails = async (uid, updatedDetails) => {
   }
 };
 
-//export const reauthenticate = async (user, password) => {
-//  try {
-//    const auth = getAuth();
-//    const credential = signInWithEmailAndPassword(auth, user.email, password);
-//    await reauthenticateWithCredential(user, credential);
-//  } catch (error) {
-//    throw new Error('Failed to reauthenticate user');
-//  }
-//};
+export const reauthenticate = async (user, password) => {
+  try {
+    const credential = EmailAuthProvider.credential(user.email, password);
+    await reauthenticateWithCredential(user, credential);
+  } catch (error) {
+    throw new Error('Failed to reauthenticate user');
+  }
+};
 
-//export const updatePassword = async (user, newPassword) => {
-//  await updateFirebasePassword(user, newPassword);
-//};
 
-//HALT MUNA 2
+export const updatePassword = async (user, formerPassword, newPassword) => {
+  try {
+    await reauthenticate(user, formerPassword);
+    await updateFirebasePassword(user, newPassword);
+  } catch (error) {
+    throw new Error('Failed to update password');
+  }
+};

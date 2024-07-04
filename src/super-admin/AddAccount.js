@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { addAccount, isSuperAdminLoggedIn } from '../utils/Authentication'; 
+import { addAccount, isSuperAdminLoggedIn } from '../utils/Authentication';
 import Swal from 'sweetalert2';
 
 function AddAccount() {
@@ -17,19 +17,45 @@ function AddAccount() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const validatePassword = (password) => {
+    const regex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return regex.test(password);
+  };
+
   const handleAddAccount = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     if (!isSuperAdminLoggedIn()) {
-      setError('Only super admin can add accounts.');
+      await Swal.fire({
+        title: 'Error',
+        text: 'Only super admin can add accounts.',
+        icon: 'error',
+        confirmButtonColor: '#3085d6'
+      });
       setLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      await Swal.fire({
+        title: 'Error',
+        text: 'Passwords do not match. Please try again.',
+        icon: 'error',
+        confirmButtonColor: '#3085d6'
+      });
+      setLoading(false);
+      return;
+    }
+
+    if (!validatePassword(password)) {
+      await Swal.fire({
+        title: 'Error',
+        text: 'Password must be at least 8 characters long and contain at least one symbol, one number, and one uppercase letter.',
+        icon: 'error',
+        confirmButtonColor: '#3085d6'
+      });
       setLoading(false);
       return;
     }
@@ -64,7 +90,7 @@ function AddAccount() {
           confirmButtonColor: '#3085d6',
           confirmButtonText: 'OK'
         }).then(() => {
-          navigate('/'); // Redirect to admin details after adding account
+          navigate('/'); // Redirect to dashboard after adding account
         });
       } catch (error) {
         setError(error.message || 'Failed to add account. Please try again.');
@@ -182,13 +208,13 @@ function AddAccount() {
           />
         </label>
         <div className='col-span-3 flex'>
-        <button
-          type='submit'
-          className='mt-3 px-4 col-span-3 bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition duration-300'
-          disabled={loading}
-        >
-          {loading ? 'Adding...' : 'Add Account'}
-        </button>
+          <button
+            type='submit'
+            className='mt-3 px-4 col-span-3 bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition duration-300'
+            disabled={loading}
+          >
+            {loading ? 'Adding...' : 'Add Account'}
+          </button>
         </div>
       </form>
     </div>

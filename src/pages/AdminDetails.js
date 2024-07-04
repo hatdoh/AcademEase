@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { getAdminDetails, updateAdminDetails, logout, getCurrentUser } from '../utils/Authentication';
+import { getAdminDetails, updateAdminDetails, logout, getCurrentUser, updatePassword } from '../utils/Authentication';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import { auth } from '../config/firebase';
 
 function AdminDetails() {
   const [admin, setAdmin] = useState({
@@ -14,6 +15,9 @@ function AdminDetails() {
     gender: '',
     phoneNumber: ''
   });
+  const [formerPassword, setFormerPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -49,11 +53,36 @@ function AdminDetails() {
     }));
   };
 
+  const validatePassword = (password) => {
+    const regex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return regex.test(password);
+  };
+
   const handleSave = async () => {
     if (!/^09\d{9}$/.test(admin.phoneNumber)) {
       Swal.fire({
         title: 'Error',
         text: "Phone number must be exactly 11 digits and start with '09'.",
+        icon: 'error',
+        confirmButtonColor: '#3085d6'
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      Swal.fire({
+        title: 'Error',
+        text: "New password and confirm password do not match.",
+        icon: 'error',
+        confirmButtonColor: '#3085d6'
+      });
+      return;
+    }
+
+    if (newPassword && !validatePassword(newPassword)) {
+      Swal.fire({
+        title: 'Error',
+        text: "Password must be at least 8 characters long and contain at least one uppercase letter, one number, and one symbol.",
         icon: 'error',
         confirmButtonColor: '#3085d6'
       });
@@ -70,23 +99,39 @@ function AdminDetails() {
         phoneNumber: admin.phoneNumber
       });
 
-      Swal.fire({
-        title: 'Saved',
-        text: "Details updated successfully!",
-        icon: 'success',
-        confirmButtonColor: '#3085d6'
-      });
+      if (formerPassword && newPassword) {
+        await updatePassword(auth.currentUser, formerPassword, newPassword);
+
+        Swal.fire({
+          title: 'Saved',
+          text: "Details and password updated successfully!",
+          icon: 'success',
+          confirmButtonColor: '#3085d6'
+        }).then(() => {
+          navigate('/login');
+        });
+      } else {
+        // For non-password updates, just show a success message without redirection
+        Swal.fire({
+          title: 'Saved',
+          text: "Details updated successfully!",
+          icon: 'success',
+          confirmButtonColor: '#3085d6'
+        }).then(() => {
+          // Optionally, refresh the admin details or update the state
+          // setAdmin({ ... }); // Update state if needed
+        });
+      }
     } catch (error) {
       console.error('Failed to update admin details:', error.message);
       Swal.fire({
         title: 'Error',
-        text: "Failed to update details. Please try again.",
+        text: error.message,
         icon: 'error',
         confirmButtonColor: '#3085d6'
       });
     }
   };
-
   const handleLogout = () => {
     Swal.fire({
       title: 'Logout',
@@ -149,35 +194,77 @@ function AdminDetails() {
           className='mb-4 p-2 border border-gray-300 rounded-md'
           disabled
         />
-        <label className='mb-2 font-medium'>Date of Birth</label>
-        <input
-          type='date'
-          name='dob'
-          value={admin.dob}
-          onChange={handleInputChange}
-          className='mb-4 p-2 border border-gray-300 rounded-md'
-        />
-        <label className='mb-2 font-medium'>Gender</label>
-        <select
-          name='gender'
-          value={admin.gender}
-          onChange={handleInputChange}
-          className='mb-4 p-2 border border-gray-300 rounded-md'
-        >
-          <option value=''>Select Gender</option>
-          <option value='male'>Male</option>
-          <option value='female'>Female</option>
-          <option value='other'>Other</option>
-        </select>
-        <label className='mb-2 font-medium'>Phone Number</label>
-        <input
-          type='tel'
-          name='phoneNumber'
-          value={admin.phoneNumber}
-          onChange={handleInputChange}
-          className='mb-4 p-2 border border-gray-300 rounded-md'
-          maxLength='11'
-        />
+        <div className='flex mb-4'>
+          <div className='mr-2'>
+            <label className='mb-2 mr-2 font-medium'>Date of Birth</label>
+            <input
+              type='date'
+              name='dob'
+              value={admin.dob}
+              onChange={handleInputChange}
+              className='mb-4 p-2 border border-gray-300 rounded-md w-full'
+            />
+          </div>
+          <div className='mx-2'>
+            <label className='mb-2 mr-2 font-medium'>Gender</label>
+            <select
+              name='gender'
+              value={admin.gender}
+              onChange={handleInputChange}
+              className='mb-4 p-2 border border-gray-300 rounded-md w-full'
+            >
+              <option value=''>Select Gender</option>
+              <option value='male'>Male</option>
+              <option value='female'>Female</option>
+              <option value='other'>Other</option>
+            </select>
+          </div>
+          <div className='ml-2'>
+            <label className='mb-2 mr-2 font-medium'>Phone Number</label>
+            <input
+              type='tel'
+              name='phoneNumber'
+              value={admin.phoneNumber}
+              onChange={handleInputChange}
+              className='mb-4 p-2 border border-gray-300 rounded-md w-full'
+              maxLength='11'
+            />
+          </div>
+        </div>
+
+        <div className='flex mb-4'>
+          <div className='mr-2'>
+            <label className='mb-2 font-medium'>Former Password</label>
+            <input
+              type='password'
+              name='formerPassword'
+              value={formerPassword}
+              onChange={(e) => setFormerPassword(e.target.value)}
+              className='mb-4 p-2 border border-gray-300 rounded-md w-full'
+            />
+          </div>
+          <div className='mx-2'>
+            <label className='mb-2 font-medium'>New Password</label>
+            <input
+              type='password'
+              name='newPassword'
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className='mb-4 p-2 border border-gray-300 rounded-md w-full'
+            />
+          </div>
+          <div className='ml-2'>
+            <label className='mb-2 font-medium'>Confirm Password</label>
+            <input
+              type='password'
+              name='confirmPassword'
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className='mb-4 p-2 border border-gray-300 rounded-md w-full'
+            />
+          </div>
+        </div>
+
         <div className='flex items-center'>
           <button
             onClick={handleSave}
@@ -198,4 +285,3 @@ function AdminDetails() {
 }
 
 export default AdminDetails;
-
