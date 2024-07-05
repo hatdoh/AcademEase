@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; 
 import { login } from '../utils/Authentication';
 import MorenoLogo from '../res/img/moreno-logo.jpg';
 import { auth } from '../config/firebase';
@@ -22,7 +22,12 @@ function LoginForm() {
     }
   };
 
-   return (
+  const handleInputChange = (setter) => (e) => {
+    setter(e.target.value);
+    setError(''); // Clears the error message
+  };
+
+  return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="bg-white p-8 rounded-md shadow-md w-80">
         <img src={MorenoLogo} alt="Moreno Logo" className="h-20 w-20 mx-auto mb-4" />
@@ -36,7 +41,7 @@ function LoginForm() {
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 transition duration-300"
               value={email}
               placeholder="Email"
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={handleInputChange(setEmail)}
               required
             />
           </label>
@@ -47,7 +52,7 @@ function LoginForm() {
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 transition duration-300"
               value={password}
               placeholder="Password"
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={handleInputChange(setPassword)}
               required
             />
           </label>

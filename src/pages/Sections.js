@@ -1,153 +1,85 @@
 import React, { useState } from 'react';
 import { MdAdd, MdDelete } from "react-icons/md";
 import { Link } from 'react-router-dom';
-import { Dialog, Transition } from '@headlessui/react';
-import { Fragment } from 'react';
+import AddSectionModal from '../components/AddSectionModal';
 
 const students = [
     {
         id: 1,
-        name: 'Xenia Angelica D. Velacruz',
+        LName: 'Velacruz',
+        FName: 'Xenia Angelica',
+        MName: 'De Guzman',
         gender: 'Female',
+        dateOfBirth: '06-04-2002',
+        age: '22',
         address: 'Purok 8 Brgy. VIII, Daet, Camarines Norte',
+        emailAddress: 'xeniavelacruz1@gmail.com',
         contactNumber: '0956-961-0529',
-        image: 'xenia',
+        grade: '9',
         section: 'A',
+        image: 'xenia',
     },
     {
         id: 2,
-        name: 'Wyndel S. Albos',
+        LName: 'Albos',
+        FName: 'Wyndel',
+        MName: 'S.',
         gender: 'Male',
+        dateOfBirth: '06-04-2002',
+        age: '22',
         address: 'Brgy. Camambugan, Daet, Camarines Norte',
+        emailAddress: 'wyndel@gmail.com',
         contactNumber: '0956-961-0529',
-        image: 'wyndel',
+        grade: '9',
         section: 'B',
+        image: 'wyndel',
     },
     {
         id: 3,
-        name: 'John Homer S. Dar',
+        LName: 'Dar',
+        FName: 'John Homer',
+        MName: 'S.',
         gender: 'Male',
+        dateOfBirth: '06-04-2002',
+        age: '21',
         address: 'Brgy. Cobangbang, Daet, Camarines Norte',
+        emailAddress: 'homer@gmail.com',
         contactNumber: '0956-961-0529',
-        image: 'homer',
+        grade: '9',
         section: 'A',
+        image: 'homer',
     },
     {
         id: 4,
-        name: 'John Homer S. Dar',
+        LName: 'Dar',
+        FName: 'John Homer',
+        MName: 'S.',
         gender: 'Male',
+        dateOfBirth: '06-04-2002',
+        age: '22',
         address: 'Paracale, Camarines Norte',
+        emailAddress: 'homer@gmail.com',
         contactNumber: '0956-961-0529',
-        image: 'homer',
+        grade: '9',
         section: 'C',
+        image: 'homer',
     },
     {
         id: 5,
-        name: 'Xenia Angelica D. Velacruz',
+        LName: 'Velacruz',
+        FName: 'Xenia Angelica',
+        MName: 'D.',
         gender: 'Female',
+        dateOfBirth: '06-04-2002',
+        age: '21',
         address: 'Brgy. Hatdog, Daet, Camarines Norte',
+        emailAddress: 'xeniavelacruz@gmail.com',
         contactNumber: '0956-961-0529',
-        image: 'xenia',
+        grade: '9',
         section: 'B',
+        image: 'xenia',
     },
 ];
-
-function AddSectionModal({ isOpen, closeModal, onAddSection }) {
-    const [sectionName, setSectionName] = useState('');
-
-    const handleSave = () => {
-        if (sectionName.trim() === '') {
-            alert('Please enter a section name.');
-            return;
-        }
-        onAddSection(sectionName);
-        closeModal();
-    };
-
-    return (
-        <Transition appear show={isOpen} as={Fragment}>
-            <Dialog as="div" className="relative z-10" onClose={closeModal}>
-                <Transition.Child
-                    as={Fragment}
-                    enter="ease-out duration-300"
-                    enterFrom="opacity-0"
-                    enterTo="opacity-100"
-                    leave="ease-in duration-200"
-                    leaveFrom="opacity-100"
-                    leaveTo="opacity-0"
-                >
-                    <div className="fixed inset-0 bg-black bg-opacity-25" />
-                </Transition.Child>
-
-                <div className="fixed inset-0 overflow-y-auto">
-                    <div className="flex min-h-full items-center justify-center p-4 text-center">
-                        <Transition.Child
-                            as={Fragment}
-                            enter="ease-out duration-300"
-                            enterFrom="opacity-0 scale-95"
-                            enterTo="opacity-100 scale-100"
-                            leave="ease-in duration-200"
-                            leaveFrom="opacity-100 scale-100"
-                            leaveTo="opacity-0 scale-95"
-                        >
-                            <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                                <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
-                                    Add Section
-                                </Dialog.Title>
-                                <div className="mt-2">
-                                    <form className="space-y-4">
-                                        <div>
-                                            <label htmlFor="sectionName" className="block text-sm font-medium text-gray-700">Section Name</label>
-                                            <input
-                                                type="text"
-                                                name="sectionName"
-                                                id="sectionName"
-                                                value={sectionName}
-                                                placeholder='Enter Section Name'
-                                                onChange={(e) => setSectionName(e.target.value)}
-                                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label htmlFor="time" className="block text-sm font-medium text-gray-700">Time</label>
-                                            <input type="time" name="time" id="time" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-                                        </div>
-                                        <div>
-                                            <label htmlFor="day" className="block text-sm font-medium text-gray-700">Day</label>
-                                            <select name="day" id="day" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                                <option value="Monday">Monday</option>
-                                                <option value="Tuesday">Tuesday</option>
-                                                <option value="Wednesday">Wednesday</option>
-                                                <option value="Thursday">Thursday</option>
-                                                <option value="Friday">Friday</option>
-                                            </select>
-                                        </div>
-                                    </form>
-                                </div>
-                                <div className="flex items-center mt-4">
-                                    <button
-                                        type="button"
-                                        className="inline-flex justify-center rounded-md border-2 border-blue-700 bg-blue-500 px-4 py-2 mr-3 text-sm font-medium text-white hover:bg-blue-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                                        onClick={handleSave}
-                                    >
-                                        Save
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="inline-block rounded border-2 border-neutral-400 bg-neutral-100 px-4 py-2 mr-3 text-xs font-medium leading-normal text-neutral-600 shadow-light-3 transition duration-150 ease-in-out hover:bg-neutral-200 hover:shadow-light-2 focus:bg-neutral-200 focus:shadow-light-2 focus:outline-none focus:ring-0 active:bg-neutral-200 active:shadow-light-2 motion-reduce:transition-none dark:shadow-black/30 dark:hover:shadow-dark-strong dark:focus:shadow-dark-strong dark:active:shadow-dark-strong"
-                                        onClick={closeModal}
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-                            </Dialog.Panel>
-                        </Transition.Child>
-                    </div>
-                </div>
-            </Dialog>
-        </Transition>
-    );
-}
 
 function Section() {
     const [selectedSection, setSelectedSection] = useState('All');
@@ -193,6 +125,10 @@ function Section() {
         }
     };
 
+    const getFullName = (student) => {
+        return `${student.LName}, ${student.FName} ${student.MName}`;
+    };
+
     return (
         <div className="container mx-auto p-4">
             <div className="flex items-center justify-between mb-4">
@@ -210,14 +146,13 @@ function Section() {
                         ))}
                     </select>
                     {selectedSection !== 'All' && (
-                            <button
-                                onClick={() => deleteSection(selectedSection)}
-                                className="flex items-center right-0 top-0 mt-1 mr-1 px-2 py-1 bg-red-600 text-white text-xs rounded-full hover:bg-red-700 focus:outline-none"
-                            >
-                                <MdDelete />
-                            </button>
-                        )}
-
+                        <button
+                            onClick={() => deleteSection(selectedSection)}
+                            className="flex items-center right-0 top-0 mt-1 mr-1 px-2 py-1 bg-red-600 text-white text-xs rounded-full hover:bg-red-700 focus:outline-none"
+                        >
+                            <MdDelete />
+                        </button>
+                    )}
                     <button
                         className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
                         onClick={openModal}
@@ -233,10 +168,10 @@ function Section() {
                         <thead className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
                             <tr>
                                 <th className="px-6 py-3 text-left uppercase">Name</th>
-                                <th className="px-6 py-3 text-left uppercase">Section</th>
-                                <th className="px-6 py-3 text-left uppercase">Gender</th>
-                                <th className="px-6 py-3 text-left uppercase">Address</th>
-                                <th className="px-6 py-3 text-left uppercase">Contact Number</th>
+                                <th className="px-6 py-3 text-center uppercase">Grade</th>
+                                <th className="px-6 py-3 text-center uppercase">Section</th>
+                                <th className="px-6 py-3 text-center uppercase">Gender</th>
+                                <th className="px-6 py-3 text-center uppercase">Contact Number</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
@@ -244,16 +179,16 @@ function Section() {
                                 <tr key={student.id} className='hover:bg-gray-100'>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center space-x-3">
-                                            <img className="h-10 w-10 rounded-full" src={getImagePath(student.image)} alt={student.name} />
+                                            <img className="h-10 w-10 rounded-full" src={getImagePath(student.image)} alt={student.FName} />
                                             <Link to={`/profile/${student.id}`} className="text-blue-600 hover:underline">
-                                                <span>{student.name}</span>
+                                                <span>{getFullName(student)}</span>
                                             </Link>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">{student.section}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">{student.gender}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">{student.address}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">{student.contactNumber}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-center">{student.grade}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-center">{student.section}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-center">{student.gender}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-center">{student.contactNumber}</td>
                                 </tr>
                             ))}
                         </tbody>
