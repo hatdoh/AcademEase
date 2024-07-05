@@ -1,90 +1,56 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MdAdd, MdDelete } from "react-icons/md";
 import { Link } from 'react-router-dom';
 import AddSectionModal from '../components/AddSectionModal';
-
-const students = [
-    {
-        id: 1,
-        LName: 'Velacruz',
-        FName: 'Xenia Angelica',
-        MName: 'De Guzman',
-        gender: 'Female',
-        dateOfBirth: '06-04-2002',
-        age: '22',
-        address: 'Purok 8 Brgy. VIII, Daet, Camarines Norte',
-        emailAddress: 'xeniavelacruz1@gmail.com',
-        contactNumber: '0956-961-0529',
-        grade: '9',
-        section: 'A',
-        image: 'xenia',
-    },
-    {
-        id: 2,
-        LName: 'Albos',
-        FName: 'Wyndel',
-        MName: 'S.',
-        gender: 'Male',
-        dateOfBirth: '06-04-2002',
-        age: '22',
-        address: 'Brgy. Camambugan, Daet, Camarines Norte',
-        emailAddress: 'wyndel@gmail.com',
-        contactNumber: '0956-961-0529',
-        grade: '9',
-        section: 'B',
-        image: 'wyndel',
-    },
-    {
-        id: 3,
-        LName: 'Dar',
-        FName: 'John Homer',
-        MName: 'S.',
-        gender: 'Male',
-        dateOfBirth: '06-04-2002',
-        age: '21',
-        address: 'Brgy. Cobangbang, Daet, Camarines Norte',
-        emailAddress: 'homer@gmail.com',
-        contactNumber: '0956-961-0529',
-        grade: '9',
-        section: 'A',
-        image: 'homer',
-    },
-    {
-        id: 4,
-        LName: 'Dar',
-        FName: 'John Homer',
-        MName: 'S.',
-        gender: 'Male',
-        dateOfBirth: '06-04-2002',
-        age: '22',
-        address: 'Paracale, Camarines Norte',
-        emailAddress: 'homer@gmail.com',
-        contactNumber: '0956-961-0529',
-        grade: '9',
-        section: 'C',
-        image: 'homer',
-    },
-    {
-        id: 5,
-        LName: 'Velacruz',
-        FName: 'Xenia Angelica',
-        MName: 'D.',
-        gender: 'Female',
-        dateOfBirth: '06-04-2002',
-        age: '21',
-        address: 'Brgy. Hatdog, Daet, Camarines Norte',
-        emailAddress: 'xeniavelacruz@gmail.com',
-        contactNumber: '0956-961-0529',
-        grade: '9',
-        section: 'B',
-        image: 'xenia',
-    },
-];
+import { collection, getDocs } from "firebase/firestore";
+import { db } from '../config/firebase';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 function Section() {
     const [selectedSection, setSelectedSection] = useState('All');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [sectionList, setSectionList] = useState(['All', 'A', 'B', 'C']); // Initial section list
+    const [sectionList, setSectionList] = useState(['All']); // Initial section list
+    const [students, setStudents] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        const auth = getAuth();
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                setUser(user);
+            } else {
+                setUser(null);
+            }
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    useEffect(() => {
+        if (user) {
+            const fetchStudentsAndSections = async () => {
+                try {
+                    const studentsCollection = collection(db, "students");
+                    const studentSnapshot = await getDocs(studentsCollection);
+                    const studentList = studentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    setStudents(studentList);
+
+                    // Extract unique sections from students
+                    const sections = ['All', ...new Set(studentList.map(student => student.section))];
+                    setSectionList(sections);
+
+                    setLoading(false);
+                } catch (error) {
+                    console.error("Error fetching students and sections:", error);
+                }
+            };
+
+            fetchStudentsAndSections();
+        } else {
+            setLoading(false);
+        }
+    }, [user]);
 
     const handleSectionChange = (section) => {
         setSelectedSection(section);
@@ -129,6 +95,14 @@ function Section() {
         return `${student.LName}, ${student.FName} ${student.MName}`;
     };
 
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+
+    if (!user) {
+        return <div>Please log in to view the student data.</div>;
+    }
+
     return (
         <div className="container mx-auto p-4">
             <div className="flex items-center justify-between mb-4">
@@ -163,7 +137,7 @@ function Section() {
             </div>
 
             <div className="overflow-x-auto">
-                <div className="overflow-y-auto max-h-screen"> {/* Container to make the table scrollable */}
+                <div className="overflow-y-auto max-h-screen">
                     <table className="min-w-full bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden">
                         <thead className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
                             <tr>
