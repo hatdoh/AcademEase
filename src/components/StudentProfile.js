@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { db, storage } from '../config/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import Swal from 'sweetalert2';
+import { MdEdit } from "react-icons/md";
 
 function StudentProfile() {
     const { id } = useParams();
-    const navigate = useNavigate();
     const [student, setStudent] = useState({});
+    const [imageFile, setImageFile] = useState(null);
+    const [isEditingImage, setIsEditingImage] = useState(false);
 
     useEffect(() => {
         const fetchStudent = async () => {
@@ -38,11 +41,16 @@ function StudentProfile() {
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            setImageFile(file);
             setStudent((prevStudent) => ({
                 ...prevStudent,
                 image: URL.createObjectURL(file),
             }));
         }
+    };
+
+    const handleImageEditToggle = () => {
+        setIsEditingImage(true); // Set editing mode to true to show the file input
     };
 
     const handleSubmit = async (e) => {
@@ -58,32 +66,47 @@ function StudentProfile() {
                 throw new Error('Age should be a valid number.');
             }
 
+            // Upload image to Firebase Storage if there's a new file selected
+            let imageUrl = student.image;
+            if (imageFile) {
+                const storageRef = ref(storage, `students/${id}/${imageFile.name}`);
+                await uploadBytes(storageRef, imageFile);
+                imageUrl = await getDownloadURL(storageRef);
+            }
+
+            const updatedStudent = {
+                ...student,
+                image: imageUrl,
+            };
+
             const docRef = doc(db, "students", id);
-            await updateDoc(docRef, student);
+            await updateDoc(docRef, updatedStudent);
             Swal.fire('Success', 'Student details updated successfully', 'success');
+            setIsEditingImage(false); // Close editing mode after successful update
         } catch (error) {
             console.error("Error updating student:", error.message);
             Swal.fire('Error', error.message, 'error');
         }
     };
 
-    const getImagePath = (imagePath) => {
-        try {
-            return require(`../res/img/${imagePath}`);
-        } catch (e) {
-            return '';
-        }
-    };
-
     return (
         <div className="container mx-auto p-5">
-            <h2 className="text-2xl font-bold mb-4">Student Profile</h2>
             <div className="">
-                <div className="mb-4">
-                    <label className="mb-2 font-medium">Image</label>
-                    <input type="file" onChange={handleImageChange} className="mt-1 block w-full" />
-                    {student.image && <img src={getImagePath(student.image)} alt={student.FName} className="mt-2 h-15 w-15 object-cover" />}
+                <h2 className='text-2xl font-bold mb-2'> Student Profile</h2>
+                <div className="mb-4 flex items-center">
+                    {student.image && !isEditingImage ? (
+                        <>
+                            <img src={student.image} alt={student.FName} className="mt-2 h-[110px] w-[110px] object-cover rounded-full" />
+                            <div className="ml-2">
+                                <p className="font-bold text-lg">{`${student.FName} ${student.MName} ${student.LName}`}</p>
+                                <button onClick={handleImageEditToggle} className="flex items-center border-2 border-gray-600 bg-neutral-100 text-black px-2 py-1 rounded-md mt-1"><MdEdit className='mr-1'/>Edit</button>
+                            </div>
+                        </>
+                    ) : (
+                        <input type="file" onChange={handleImageChange} className="mt-1 block w-full" />
+                    )}
                 </div>
+
                 <form onSubmit={handleSubmit}>
                     <div className="grid grid-cols-3 gap-4">
                         <div>
@@ -126,7 +149,7 @@ function StudentProfile() {
                         </div>
                         <div>
                             <label className="mb-2 font-medium">Contact Number</label>
-                            <input type="text" name="contactNumber" value={student.contactNumber || ''} onChange={handleInputChange} className="p-2 border border-gray-300 rounded-md w-full" maxLength='11'/>
+                            <input type="text" name="contactNumber" value={student.contactNumber || ''} onChange={handleInputChange} className="p-2 border border-gray-300 rounded-md w-full" maxLength='11' />
                         </div>
                     </div>
 

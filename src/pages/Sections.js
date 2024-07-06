@@ -83,14 +83,6 @@ function Section() {
         return counts;
     }, {});
 
-    const getImagePath = (imageName) => {
-        try {
-            return require(`../res/img/${imageName}.png`);
-        } catch (e) {
-            return '';
-        }
-    };
-
     const getFullName = (student) => {
         return `${student.LName}, ${student.FName} ${student.MName}`;
     };
@@ -153,7 +145,9 @@ function Section() {
                                 <tr key={student.id} className='hover:bg-gray-100'>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center space-x-3">
-                                            <img className="h-10 w-10 rounded-full" src={getImagePath(student.image)} alt={student.FName} />
+                                            {student.image && (
+                                                <img className="h-10 w-10 rounded-full" src={student.image} alt={student.FName} />
+                                            )}
                                             <Link to={`/profile/${student.id}`} className="text-blue-600 hover:underline">
                                                 <span>{getFullName(student)}</span>
                                             </Link>
