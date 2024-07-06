@@ -41,6 +41,11 @@ function StudentProfile() {
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            if (!file.type.startsWith('image/')) {
+                Swal.fire('Error', 'Please upload an image file (JPEG, PNG, GIF)', 'error');
+                return;
+            }
+
             setImageFile(file);
             setStudent((prevStudent) => ({
                 ...prevStudent,
@@ -99,7 +104,7 @@ function StudentProfile() {
                             <img src={student.image} alt={student.FName} className="mt-2 h-[110px] w-[110px] object-cover rounded-full" />
                             <div className="ml-2">
                                 <p className="font-bold text-lg">{`${student.FName} ${student.MName} ${student.LName}`}</p>
-                                <button onClick={handleImageEditToggle} className="flex items-center border-2 border-gray-600 bg-neutral-100 text-black px-2 py-1 rounded-md mt-1"><MdEdit className='mr-1'/>Edit</button>
+                                <button onClick={handleImageEditToggle} className="flex items-center border-2 border-gray-600 bg-neutral-100 text-black px-2 py-1 rounded-md mt-1"><MdEdit className='mr-1' />Edit</button>
                             </div>
                         </>
                     ) : (
