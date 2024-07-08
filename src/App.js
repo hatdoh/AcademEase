@@ -1,4 +1,3 @@
-// App.js
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -17,6 +16,7 @@ import PrivateRoute from './components/PrivateRoute';
 import SignupForm from './pages/SignupForm';
 import AddAccount from './super-admin/AddAccount';
 import StudentProfile from './components/StudentProfile';
+import AddSection from './components/AddSection';
 import './index.css'; 
 
 function App() {
@@ -52,6 +52,7 @@ function App() {
           <Route path="/signup" element={<SignupForm />} />
           <Route path="/" element={<PrivateRoute authenticated={authenticated} element={<Dashboard />} />} />
           <Route path="/sections" element={<PrivateRoute authenticated={authenticated} element={<Sections />} />} />
+          <Route path="/add-section" element={<PrivateRoute authenticated={authenticated} element={<AddSection />} />} />
           <Route path="/profile/:id" element={<StudentProfile />} />
           <Route path="/attendance-summary" element={<PrivateRoute authenticated={authenticated} element={<AttendanceSummary />} />} />
           <Route path="/create-questions" element={<PrivateRoute authenticated={authenticated} element={<CreateQuestions />} />} />
