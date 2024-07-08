@@ -1,11 +1,12 @@
 // CreateQuestions.js
 import React from 'react';
 import NewTest from '../components/NewTest';
+import FileReaderComponent from '../components/FileReaderComponent'
 
 function CreateQuestions() {
     return (
         <>
-        <NewTest name='Spongebob' date='july, 07 2024'/>
+        <NewTest/>
         
         </>
     )

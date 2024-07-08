@@ -1,12 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import ModalTestQuestion from './ModalTestQuestion'; // Import the Modal component
-import { FaPrint, FaEdit } from "react-icons/fa";
+import { FaPrint, FaEdit, FaDownload } from "react-icons/fa";
 import { MdDelete, MdAdd } from "react-icons/md";
 import html2pdf from 'html2pdf.js';
 import app from "../config/firebase";
 import { getDatabase, ref, set, push, remove, onValue } from "firebase/database";
 
+import * as pdfjsLib from 'pdfjs-dist';
+import mammoth from 'mammoth';
+import * as XLSX from 'xlsx';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.js`;
+
 function NewTest(props) {
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [fileContent, setFileContent] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
@@ -239,6 +247,59 @@ function NewTest(props) {
     (selectedTestType === '' || test.name === selectedTestType)
   );
 
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const fileType = file.name.split('.').pop().toLowerCase();
+      let content = '';
+
+      if (fileType === 'pdf') {
+        content = await readPdfFile(file);
+      } else if (fileType === 'docx') {
+        content = await readDocxFile(file);
+      } else if (fileType === 'xlsx' || fileType === 'xls') {
+        content = await readExcelFile(file);
+      }
+
+      setFileContent(content);
+    }
+  };
+
+  const readPdfFile = async (file) => {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+    let text = '';
+
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const textContent = await page.getTextContent();
+      textContent.items.forEach(item => {
+        text += item.str + ' ';
+      });
+    }
+
+    return text;
+  };
+
+  const readDocxFile = async (file) => {
+    const arrayBuffer = await file.arrayBuffer();
+    const { value } = await mammoth.extractRawText({ arrayBuffer });
+    return value;
+  };
+
+  const readExcelFile = async (file) => {
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data, { type: 'array' });
+    let text = '';
+
+    workbook.SheetNames.forEach(sheetName => {
+      const worksheet = workbook.Sheets[sheetName];
+      text += XLSX.utils.sheet_to_csv(worksheet);
+    });
+
+    return text;
+  };
+
   return (
     <div className='ml-3'>
       <div className="flex items-center">
@@ -279,15 +340,15 @@ function NewTest(props) {
           <tbody className="divide-y divide-gray-200">
             {filteredTests.map((test, index) => (
               <tr key={index}>
-                <td className="py-4 px-6 text-left whitespace-nowrap trucant">{test.name}</td>
-                <td className="py-4 px-6 text-center">{test.date}</td>
-                <td className="py-4 px-6 text-center">{test.items}</td>
-                <td className="py-4 px-6 text-center">
+                <td className="py-3 px-6 text-left">{test.name}</td>
+                <td className="py-3 px-6 text-center">{test.date}</td>
+                <td className="py-3 px-6 text-center">{test.items}</td>
+                <td className="py-3 px-6 text-center">
                   <button
                     onClick={() => handlePrint(test)}
                     className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full mr-2"
                   >
-                    <FaPrint />
+                    <FaDownload />
                   </button>
                   <button
                     onClick={() => handleEdit(index)}
@@ -309,24 +370,34 @@ function NewTest(props) {
       </div>
 
       <ModalTestQuestion isOpen={isModalOpen} onClose={closeModal} onSave={handleSave}>
-        <div className="flex justify-center items-center mt-10">
-          <div className="flex flex-col items-center">
-            <label className="text-lg font-bold mb-2">Test Name</label>
+        <div className="flex justify-left items-left">
+          <div className="flex flex-col items-left">
+            <label className="text-lg font-bold mb-2">Name</label>
             <input
-              className="pl-10 uppercase w-64 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="pl-10 uppercase w-96 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               placeholder="Input Here"
               value={testName}
               onChange={handleNameChange}
             />
+            <label className="text-lg font-bold mt-4 mb-2">Date</label>
+              <input type="date" value={selectedDate} onChange={handleDateChange} className="uppercase pl-20 ml-2 w-64 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
           </div>
-          <div className="flex flex-col items-center">
-
-          <label className="text-lg font-bold mb-2">Test Date</label>
-            <input type="date" value={selectedDate} onChange={handleDateChange} className="uppercase pl-20 ml-2 w-64 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+          <div className="flex flex-col justify-right ml-60 mb-24">
+            <label htmlFor="file-input" className="cursor-pointer">
+            <FaPrint className="h-8 w-10" />
+            </label>
+            <input
+              id="file-input"
+              type="file"
+              accept=".pdf,.docx,.xlsx,.xls"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            <span>{selectedFile ? selectedFile.name : 'No file selected'}</span>
           </div>
         </div>
         <div className="flex flex-col items-center mt-5 ">
-          <label className="text-lg font-bold mb-2">Select Number of Items</label>
+          <label  className="text-lg font-bold mb-2" >Select Number of Items</label>
           <select value={selectedOption} onChange={handleDropdownChange} className="text-center w-64 justify-items-center w-24 h-10 mt-1 block border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
             <option value="">Select</option>
             <option value="10">10 Items</option>
@@ -350,6 +421,7 @@ function NewTest(props) {
               setItemsInput(newItemsInput);
             }}
           />
+          <pre>{fileContent}</pre> {/* Display file content here */}
           {/* Inside the mapping of itemsInput.map((item, index)) */}
           {item.choices.map((choice, choiceIndex) => (
             <div key={choice.id} className="flex items-center px-8 mt-2 w-full">
@@ -387,7 +459,7 @@ function NewTest(props) {
               }}
               className="flex items-center mb-10 mr-2 shadow-xl text-blue-500 font-bold py-2 px-4 rounded"
             >
-              <span >New Answer</span><MdAdd className='h-6 w-6' />
+              <span>New Answer</span><MdAdd className='h-6 w-6' />
             </button>
             {item.choices.length > 1 && (
               <button
@@ -400,9 +472,9 @@ function NewTest(props) {
               </button>
             )}
           </div>
-        
         </div>
       ))}
+
       <div className="mb-5 mt-5 sm:mt-6 sm:flex sm:flex-row-reverse">
             <button
               type="button"
@@ -418,9 +490,10 @@ function NewTest(props) {
             >
               Save
             </button>
-          </div>
+      </div>
       </div>
       </ModalTestQuestion>
+      
     </div>
   );
 }
