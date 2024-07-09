@@ -95,7 +95,7 @@ function StudentProfile() {
     };
 
     return (
-        <div className="container mx-auto p-5">
+        <div className="ml-80 p-4">
             <div className="">
                 <h2 className='text-2xl font-bold mb-2'> Student Profile</h2>
                 <div className="mb-4 flex items-center">
