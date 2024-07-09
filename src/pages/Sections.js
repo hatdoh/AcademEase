@@ -11,6 +11,10 @@ function Section() {
     const [students, setStudents] = useState([]);
     const [user, setUser] = useState(null);
 
+    const [searchAcadYear, setSearchAcadYear] = useState('');
+    const [searchGrade, setSearchGrade] = useState('');
+    const [searchSection, setSearchSection] = useState('');
+
     useEffect(() => {
         const auth = getAuth();
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -58,15 +62,18 @@ function Section() {
         setSelectedSection(section);
     };
 
-   // const deleteSection = (sectionName) => {
-    //    if (sectionName === 'All') return; // Prevent deletion of 'All' section
-    //    setSectionList((prev) => prev.filter((section) => section !== sectionName));
-   //     if (selectedSection === sectionName) setSelectedSection('All'); // Reset to 'All' if current section is deleted
-  //  };
+    const filteredStudents = students.filter((student) => {
+        const acadYear = student.acadYear ? student.acadYear.toLowerCase() : '';
+        const grade = student.grade ? student.grade.toLowerCase() : '';
+        const section = student.section ? student.section.toLowerCase() : '';
 
-    const filteredStudents = students.filter(
-        (student) => selectedSection === 'All' || student.section === selectedSection
-    );
+        return (
+            (selectedSection === 'All' || student.section === selectedSection) &&
+            (acadYear.includes(searchAcadYear.toLowerCase())) &&
+            (grade.includes(searchGrade.toLowerCase())) &&
+            (section.includes(searchSection.toLowerCase()))
+        );
+    });
 
     const sectionCounts = sectionList.reduce((counts, section) => {
         counts[section] = students.filter((student) => student.section === section).length;
@@ -77,7 +84,6 @@ function Section() {
         return `${student.LName}, ${student.FName} ${student.MName}`;
     };
 
-
     if (!user) {
         return <div>Please log in to view the student data.</div>;
     }
@@ -85,13 +91,40 @@ function Section() {
     return (
         <>
             <div className="ml-80 p-4">
+                <div className="flex items-center space-x-4 mb-4">
+                    <h2 className="text-2xl ml-2 font-semibold text-gray-800">Section ({selectedSection})</h2>
+                </div>
                 <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-4">
-                        <h2 className="text-2xl ml-2 font-semibold text-gray-800">Section ({selectedSection})</h2>
-                    </div>
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center">
+                        <label htmlFor="acadYear" className='font-medium mr-1'>AcadYear</label>
+                        <input
+                            type="text"
+                            id="acadYear"
+                            placeholder="Search AcadYear"
+                            value={searchAcadYear}
+                            onChange={(e) => setSearchAcadYear(e.target.value)}
+                            className="mt-1 mr-2 block w-36 px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        />
+                        <label htmlFor="grade" className='font-medium mr-1'>Grade</label>
+                        <input
+                            type="text"
+                            id="grade"
+                            placeholder="Search Grade"
+                            value={searchGrade}
+                            onChange={(e) => setSearchGrade(e.target.value)}
+                            className="mt-1 mr-2 block w-36 px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        />
+                        <label htmlFor="section" className='font-medium mr-1'>Section</label>
+                        <input
+                            type="text"
+                            id="section"
+                            placeholder="Search Section"
+                            value={searchSection}
+                            onChange={(e) => setSearchSection(e.target.value)}
+                            className="mt-1 mr-12 block w-36 px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        />
                         <select
-                            className="mt-1 block w-40 px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            className="mt-1 mr-3 block w-40 px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                             value={selectedSection}
                             onChange={(e) => handleSectionChange(e.target.value)}
                         >

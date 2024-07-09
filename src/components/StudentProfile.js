@@ -131,7 +131,7 @@ function StudentProfile() {
                     <div className="grid grid-cols-3 gap-4 mb-4 mt-4">
                         <div>
                             <label className="mb-2 font-medium">Date of Birth</label>
-                            <input type="date" name="dob" value={student.dob || ''} onChange={handleInputChange} className="p-2 border border-gray-300 rounded-md w-full" />
+                            <input type="date" name="dateOfBirth" value={student.dateOfBirth || ''} onChange={handleInputChange} className="p-2 border border-gray-300 rounded-md w-full" />
                         </div>
                         <div>
                             <label className="mb-2 font-medium">Gender</label>
