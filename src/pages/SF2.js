@@ -144,7 +144,7 @@ function SchoolFormTwo() {
 
 
     return (
-        <div className="container mx-auto p-4">
+        <div className="ml-80 p-4">
             <h2 className="text-2xl font-semibold mb-4">School Form 2 (SF2) Daily Attendance Report of Learners</h2>
             <button onClick={() => openModal()} className='w-40 h-10 text-center shadow-sm py-2 rounded-md bg-blue-500 font-medium text-2xl text-white hover:bg-blue-700 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-blue-500 sm:text-sm top-4 right-4'>
                 Create SF2

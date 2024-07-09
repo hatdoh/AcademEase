@@ -105,9 +105,9 @@ function Sidebar() {
 
 
   return (
-    <div className='flex'>
+    <div className='fixed top-0 left-0 z-40 h-screen'>
       <div className={`${open ? 'w-80' : 'w-20'} duration-300 h-screen p-5 pt-8 bg-dark-purple relative`}>
-        <img src={require("../res/img/control.png")} className={`absolute cursor-pointer rounded-full -right-3 top-9 w-7 border-2 border-dark-purple ${!open && 'rotate-180'}`} onClick={() => setOpen(!open)} />
+{ /*        <img src={require("../res/img/control.png")} className={`absolute cursor-pointer rounded-full -right-3 top-9 w-7 border-2 border-dark-purple ${!open && 'rotate-180'}`} onClick={() => setOpen(!open)} /> */}
         <Link to={"/"}>
           <div className='flex gap-x-4 items-center'>
             <img src={require("../res/img/logo.png")} className={`cursor-pointer duration-500 ${open && "rotate-[360deg]"}`} alt="Logo" />

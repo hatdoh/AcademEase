@@ -84,7 +84,7 @@ function Section() {
 
     return (
         <>
-            <div className="container mx-auto p-4">
+            <div className="ml-80 p-4">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-4">
                         <h2 className="text-2xl ml-2 font-semibold text-gray-800">Section ({selectedSection})</h2>

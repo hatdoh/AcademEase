@@ -29,7 +29,7 @@ function AttendanceTable() {
     return (
         <>
             {/*<h1 className='w-full text-3xl font-bold'>DASHBOARD</h1>*/}
-            <div className="container mx-auto p-4">
+            <div className="ml-80 p-4">
                 <table className="min-w-full bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden">
                     <thead className="text-xl text-gray-800 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
                         <tr>

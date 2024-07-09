@@ -301,7 +301,7 @@ function NewTest(props) {
   };
 
   return (
-    <div className='ml-3'>
+    <div className='ml-80 p-4'>
       <div className="flex items-center">
       <button className='flex items-center w-40 h-10 mt-5 text-center shadow-sm py-2 rounded-md bg-blue-500 font-medium text-2xl text-white hover:bg-blue-700 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-blue-500 sm:ml-4 sm:text-sm' onClick={openModal}>
         <span className="ml-10">New Quiz</span>
@@ -312,12 +312,12 @@ function NewTest(props) {
           placeholder="Search..."
           value={searchTerm}
           onChange={handleSearch}
-          className="w-80 h-10 pl-3 pr-10 mt-5 ml-80 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-indigo-500 sm:text-sm"
+          className="w-80 h-10 pl-3 pr-10 mt-5 ml-72 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-indigo-500 sm:text-sm"
         />
         <select
           value={selectedTestType}
           onChange={handleTestTypeFilterChange}
-          className="w-48 h-10 pl-3 pr-10 mt-5 ml-8 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-indigo-500 sm:text-sm"
+          className="w-48 h-10 pl-3 pr-10 mt-5 ml-4 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-indigo-500 sm:text-sm"
         >
           <option value="">All Test Types</option>
           {savedTests.map((test, index) => (

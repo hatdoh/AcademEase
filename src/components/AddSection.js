@@ -186,7 +186,7 @@ function AddSection() {
     };
 
     return (
-        <div className="container mx-auto p-4">
+        <div className="ml-80 p-4">
             <h2 className="text-2xl font-semibold mb-4">{editingSectionId ? 'Edit Section' : 'Add Section'}</h2>
             <form className="space-y-4" onSubmit={handleSave}>
                 <div>
