@@ -252,7 +252,7 @@ function NewTest(props) {
     if (file) {
       const fileType = file.name.split('.').pop().toLowerCase();
       let content = '';
-
+  
       if (fileType === 'pdf') {
         content = await readPdfFile(file);
       } else if (fileType === 'docx') {
@@ -260,10 +260,43 @@ function NewTest(props) {
       } else if (fileType === 'xlsx' || fileType === 'xls') {
         content = await readExcelFile(file);
       }
-
-      setFileContent(content);
+  
+      // Split content into questions and answer choices
+      const lines = content.split('\n').filter(line => line.trim() !== '');
+      const items = [];
+      let currentQuestion = null;
+  
+      lines.forEach(line => {
+        if (line.includes('?')) {
+          // New question
+          if (currentQuestion) {
+            items.push(currentQuestion);
+          }
+          currentQuestion = {
+            question: line.trim(),
+            choices: []
+          };
+        } else if (line.match(/^[A-D]\)/)) {
+          // Answer choice
+          if (currentQuestion) {
+            currentQuestion.choices.push({
+              id: currentQuestion.choices.length,
+              text: line.trim()
+            });
+          }
+        }
+      });
+  
+      // Push the last question
+      if (currentQuestion) {
+        items.push(currentQuestion);
+      }
+  
+      // Update state with parsed items
+      setItemsInput(items);
     }
   };
+  
 
   const readPdfFile = async (file) => {
     const arrayBuffer = await file.arrayBuffer();
@@ -371,18 +404,30 @@ function NewTest(props) {
 
       <ModalTestQuestion isOpen={isModalOpen} onClose={closeModal} onSave={handleSave}>
         <div className="flex justify-left items-left">
-          <div className="flex flex-col items-left">
+          <div className="flex flex-col items-left w-full">
             <label className="text-lg font-bold mb-2">Name</label>
             <input
-              className="pl-10 uppercase w-96 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="px-6 uppercase w-full h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               placeholder="Input Here"
               value={testName}
               onChange={handleNameChange}
             />
             <label className="text-lg font-bold mt-4 mb-2">Date</label>
-              <input type="date" value={selectedDate} onChange={handleDateChange} className="uppercase pl-20 ml-2 w-64 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+              <input type="date" value={selectedDate} onChange={handleDateChange} className="px-6 uppercase w-full h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
           </div>
-          <div className="flex flex-col justify-right ml-60 mb-24">
+        </div>
+        <div className="flex flex-col items-left mt-5 ">
+          <label  className="text-lg font-bold mb-2" >Select Number of Items</label>
+          <select value={selectedOption} onChange={handleDropdownChange} className="text-center w-full justify-items-center w-24 h-10 mt-1 block border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            <option value="">Select</option>
+            <option value="10">10 Items</option>
+            <option value="20">20 Items</option>
+            <option value="30">30 Items</option>
+            <option value="40">40 Items</option>
+            <option value="50">50 Items</option>
+          </select>
+        </div>
+        <div className="flex flex-nowrap justify-left mt-4">
             <label htmlFor="file-input" className="cursor-pointer">
             <FaPrint className="h-8 w-10" />
             </label>
@@ -394,19 +439,11 @@ function NewTest(props) {
               className="hidden"
             />
             <span>{selectedFile ? selectedFile.name : 'No file selected'}</span>
+            {/* <div className="mt-4">
+              <label className="text-lg font-bold mb-2">File Content</label>
+              <pre>{fileContent}</pre>
+            </div> */}
           </div>
-        </div>
-        <div className="flex flex-col items-center mt-5 ">
-          <label  className="text-lg font-bold mb-2" >Select Number of Items</label>
-          <select value={selectedOption} onChange={handleDropdownChange} className="text-center w-64 justify-items-center w-24 h-10 mt-1 block border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            <option value="">Select</option>
-            <option value="10">10 Items</option>
-            <option value="20">20 Items</option>
-            <option value="30">30 Items</option>
-            <option value="40">40 Items</option>
-            <option value="50">50 Items</option>
-          </select>
-        </div>
         <div className="gap-4 justify-center mt-4">
         {itemsInput.map((item, index) => (
         <div key={index} className="flex flex-col items-center m-1 mt-5 shadow-blue-500/50 shadow-xl">
@@ -421,8 +458,9 @@ function NewTest(props) {
               setItemsInput(newItemsInput);
             }}
           />
-          <pre>{fileContent}</pre> {/* Display file content here */}
+          {/* Display file content here */}
           {/* Inside the mapping of itemsInput.map((item, index)) */}
+                    {/* Inside the mapping of itemsInput.map((item, index)) */}
           {item.choices.map((choice, choiceIndex) => (
             <div key={choice.id} className="flex items-center px-8 mt-2 w-full">
               <input

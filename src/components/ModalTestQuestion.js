@@ -19,7 +19,7 @@ function ModalTestQuestion({ isOpen, onClose, onSave, children, itemsInput, answ
 
         <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
         
-        <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-5 text-left overflow-hidden shadow-xl transform transition-all sm:my-2 sm:align-middle sm:max-w-3xl sm:w-full sm:p-6">
+        <div className="ml-20 inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-5 text-left overflow-hidden shadow-xl transform transition-all sm:my-2 sm:align-middle sm:max-w-3xl sm:w-full sm:p-6">
           <div className="max-h-96 overflow-y-auto">
             {children}
             {itemsInput && itemsInput.map((item, index) => (
