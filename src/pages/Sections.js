@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MdAdd } from 'react-icons/md';
+import { MdAdd, MdArrowUpward, MdArrowDownward } from 'react-icons/md';
 import { Link } from 'react-router-dom';
 import { collection, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/firebase';
@@ -10,10 +10,14 @@ function Section() {
     const [sectionList, setSectionList] = useState(['All']);
     const [students, setStudents] = useState([]);
     const [user, setUser] = useState(null);
+    const [sectionCounts, setSectionCounts] = useState({});
 
     const [searchAcadYear, setSearchAcadYear] = useState('');
     const [searchGrade, setSearchGrade] = useState('');
     const [searchSection, setSearchSection] = useState('');
+
+    const [sortColumn, setSortColumn] = useState('LName');
+    const [sortDirection, setSortDirection] = useState('asc'); // 'asc' or 'desc'
 
     useEffect(() => {
         const auth = getAuth();
@@ -36,6 +40,18 @@ function Section() {
                     const studentSnapshot = await getDocs(studentsCollection);
                     const studentList = studentSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
                     setStudents(studentList);
+
+                    // Calculate section counts
+                    const counts = studentList.reduce((acc, student) => {
+                        const section = student.section;
+                        if (section in acc) {
+                            acc[section]++;
+                        } else {
+                            acc[section] = 1;
+                        }
+                        return acc;
+                    }, {});
+                    setSectionCounts(counts);
 
                 } catch (error) {
                     console.error('Error fetching students:', error);
@@ -62,6 +78,17 @@ function Section() {
         setSelectedSection(section);
     };
 
+    const handleSort = (columnName) => {
+        if (sortColumn === columnName) {
+            // Toggle sort direction
+            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+        } else {
+            // Sort by the selected column in ascending order by default
+            setSortColumn(columnName);
+            setSortDirection('asc');
+        }
+    };
+
     const filteredStudents = students.filter((student) => {
         const acadYear = student.acadYear ? student.acadYear.toLowerCase() : '';
         const grade = student.grade ? student.grade.toLowerCase() : '';
@@ -75,18 +102,37 @@ function Section() {
         );
     });
 
-    const sectionCounts = sectionList.reduce((counts, section) => {
-        counts[section] = students.filter((student) => student.section === section).length;
-        return counts;
-    }, {});
-
-    const getFullName = (student) => {
-        return `${student.LName}, ${student.FName} ${student.MName}`;
-    };
+    const sortedStudents = [...filteredStudents].sort((a, b) => {
+        if (sortColumn === 'LName') {
+            const fullNameA = `${a.LName}, ${a.FName} ${a.MName}`;
+            const fullNameB = `${b.LName}, ${b.FName} ${b.MName}`;
+            return sortDirection === 'asc' ? fullNameA.localeCompare(fullNameB) : fullNameB.localeCompare(fullNameA);
+        }
+        return 0;
+    });
 
     if (!user) {
         return <div>Please log in to view the student data.</div>;
     }
+
+    const renderSortIcon = (columnName) => {
+        if (sortColumn === columnName) {
+            return (
+                <span className="ml-1">
+                    {sortDirection === 'asc' ? (
+                        <MdArrowUpward className="inline-block w-4 h-4 text-gray-500" />
+                    ) : (
+                        <MdArrowDownward className="inline-block w-4 h-4 text-gray-500" />
+                    )}
+                </span>
+            );
+        }
+        return null;
+    };
+
+    const getFullName = (student) => {
+        return `${student.LName}, ${student.FName} ${student.MName}`;
+    };
 
     return (
         <>
@@ -136,9 +182,9 @@ function Section() {
                         </select>
                         <Link
                             to="/add-section"
-                            className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                            className="flex items-center px-3 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
                         >
-                            Add Section <MdAdd className="w-6 h-6 mr-1 ml-2" />
+                            Add Section <MdAdd className="w-5 h-5 mr-1 ml-2" />
                         </Link>
                     </div>
                 </div>
@@ -148,16 +194,32 @@ function Section() {
                         <table className="min-w-full bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden">
                             <thead className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
                                 <tr>
-                                    <th className="px-6 py-3 text-left uppercase">Name</th>
-                                    <th className="px-6 py-3 text-center uppercase">Grade</th>
-                                    <th className="px-6 py-3 text-center uppercase">Section</th>
+                                    <th className="px-6 py-3 text-center uppercase">No</th>
+                                    <th
+                                        className="px-6 py-3 text-left uppercase cursor-pointer"
+                                        onClick={() => handleSort('LName')}
+                                    >
+                                        Name
+                                        {renderSortIcon('LName')}
+                                    </th>
+                                    <th
+                                        className="px-6 py-3 text-center uppercase"
+                                    >
+                                        Grade
+                                    </th>
+                                    <th
+                                        className="px-6 py-3 text-center uppercase"
+                                    >
+                                        Section
+                                    </th>
                                     <th className="px-6 py-3 text-center uppercase">Gender</th>
                                     <th className="px-6 py-3 text-center uppercase">Contact Number</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200">
-                                {filteredStudents.map((student) => (
+                                {sortedStudents.map((student, index) => (
                                     <tr key={student.id} className="hover:bg-gray-100">
+                                        <td className="px-6 py-4 whitespace-nowrap text-center">{index + 1}</td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center space-x-3">
                                                 {student.image && (
@@ -186,7 +248,7 @@ function Section() {
                             </tbody>
                             <tfoot className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
                                 <tr>
-                                    <td className="px-6 py-3 text-left" colSpan="5">
+                                    <td className="px-6 py-3 text-left" colSpan="6">
                                         {Object.entries(sectionCounts).map(([section, count]) => (
                                             section !== 'All' && (
                                                 <span key={section} className="mr-2">{count} Section {section}</span>
