@@ -1,73 +1,72 @@
 import React, { useState } from 'react';
-import * as pdfjsLib from 'pdfjs-dist';
-import mammoth from 'mammoth';
-import * as XLSX from 'xlsx';
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.js`;
 
 const FileReaderComponent = () => {
-  const [fileContent, setFileContent] = useState('');
+  const [testData, setTestData] = useState({
+    questions: [
+      {
+        question: "",
+        choices: ["", "", "", ""],
+      },
+    ],
+  });
 
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const fileType = file.name.split('.').pop().toLowerCase();
-      let content = '';
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
 
-      if (fileType === 'pdf') {
-        content = await readPdfFile(file);
-      } else if (fileType === 'docx') {
-        content = await readDocxFile(file);
-      } else if (fileType === 'xlsx' || fileType === 'xls') {
-        content = await readExcelFile(file);
-      }
+    const fileText = await file.text();
+    const lines = fileText.split('\n');
 
-      setFileContent(content);
-    }
-  };
-
-  const readPdfFile = async (file) => {
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-    let text = '';
-
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-      const page = await pdf.getPage(pageNum);
-      const textContent = await page.getTextContent();
-      textContent.items.forEach(item => {
-        text += item.str + ' ';
-      });
-    }
-
-    return text;
-  };
-
-  const readDocxFile = async (file) => {
-    const arrayBuffer = await file.arrayBuffer();
-    const { value } = await mammoth.extractRawText({ arrayBuffer });
-    return value;
-  };
-
-  const readExcelFile = async (file) => {
-    const data = await file.arrayBuffer();
-    const workbook = XLSX.read(data, { type: 'array' });
-    let text = '';
-
-    workbook.SheetNames.forEach(sheetName => {
-      const worksheet = workbook.Sheets[sheetName];
-      text += XLSX.utils.sheet_to_csv(worksheet);
+    const newQuestions = lines.map((line) => {
+      const parts = line.split(';');
+      return {
+        question: parts[0],
+        choices: parts.slice(1, 5),
+      };
     });
 
-    return text;
+    setTestData({ questions: newQuestions });
+  };
+
+  const handleQuestionChange = (e, index) => {
+    const newQuestions = [...testData.questions];
+    newQuestions[index].question = e.target.value;
+    setTestData({ questions: newQuestions });
+  };
+
+  const handleChoiceChange = (e, questionIndex, choiceIndex) => {
+    const newQuestions = [...testData.questions];
+    newQuestions[questionIndex].choices[choiceIndex] = e.target.value;
+    setTestData({ questions: newQuestions });
+  };
+
+  const renderQuestions = () => {
+    return testData.questions.map((item, index) => (
+      <div className='ml-80' key={index}>
+        <label>Question {index + 1}:</label>
+        <input
+          type="text"
+          value={item.question}
+          onChange={(e) => handleQuestionChange(e, index)}
+        />
+        {item.choices.map((choice, choiceIndex) => (
+          <div key={choiceIndex}>
+            <label>Choice {choiceIndex + 1}:</label>
+            <input
+              type="text"
+              value={choice}
+              onChange={(e) => handleChoiceChange(e, index, choiceIndex)}
+            />
+          </div>
+        ))}
+      </div>
+    ));
   };
 
   return (
     <div>
-      <input type="file" accept=".pdf,.docx,.xlsx,.xls" onChange={handleFileChange} />
-      <div>
-        <h3>File Content:</h3>
-        <pre>{fileContent}</pre>
-      </div>
+      <input className='ml-80' type="file" onChange={handleFileChange} />
+      {renderQuestions()}
     </div>
   );
 };

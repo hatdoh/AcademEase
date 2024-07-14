@@ -261,41 +261,56 @@ function NewTest(props) {
         content = await readExcelFile(file);
       }
   
-      // Split content into questions and answer choices
+      // Parse the content into questions and answer choices
       const lines = content.split('\n').filter(line => line.trim() !== '');
       const items = [];
       let currentQuestion = null;
+      let choicesCount = 0;
   
       lines.forEach(line => {
         if (line.includes('?')) {
           // New question
           if (currentQuestion) {
+            // Filter out empty choices
+            currentQuestion.choices = currentQuestion.choices.filter(choice => choice.text.trim() !== '');
             items.push(currentQuestion);
           }
           currentQuestion = {
             question: line.trim(),
-            choices: []
+            choices: Array.from({ length: 8 }, (_, index) => ({ id: index, text: '' })) // Prepare for up to 8 choices
           };
-        } else if (line.match(/^[A-D]\)/)) {
+          choicesCount = 0;
+        } else if (line.match(/^[A-H]\)/)) {
           // Answer choice
           if (currentQuestion) {
-            currentQuestion.choices.push({
-              id: currentQuestion.choices.length,
-              text: line.trim()
-            });
+            const choiceIndex = line.charCodeAt(0) - 65; // 'A' -> 0, 'B' -> 1, etc.
+            currentQuestion.choices[choiceIndex] = {
+              id: choiceIndex,
+              text: line.trim().substring(2).trim() // Remove the "A) ", "B) ", etc.
+            };
+            choicesCount = Math.max(choicesCount, choiceIndex + 1);
           }
         }
       });
   
       // Push the last question
       if (currentQuestion) {
+        // Filter out empty choices
+        currentQuestion.choices = currentQuestion.choices.slice(0, choicesCount);
         items.push(currentQuestion);
       }
   
       // Update state with parsed items
       setItemsInput(items);
+  
+      // Update answer sheet based on the number of choices per question
+      setAnswerSheet(items.map(item => ({
+        selected: null,
+        options: item.choices.map(choice => String.fromCharCode(65 + choice.id)) // Generate options A, B, C, etc.
+      })));
     }
   };
+  
   
 
   const readPdfFile = async (file) => {
