@@ -4,15 +4,21 @@ import { FaPrint, FaEdit, FaDownload } from "react-icons/fa";
 import { MdDelete, MdAdd } from "react-icons/md";
 import html2pdf from 'html2pdf.js';
 import app from "../config/firebase";
-import { getDatabase, ref, set, push, remove, onValue } from "firebase/database";
+import { getDatabase, ref, set, push, remove, onValue, get } from "firebase/database";
 
 import * as pdfjsLib from 'pdfjs-dist';
 import mammoth from 'mammoth';
 import * as XLSX from 'xlsx';
 
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import QRCode from 'qrcode';
+
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.js`;
 
 function NewTest(props) {
+  const [selectedTestId, setSelectedTestId] = useState(null);
+  const [isSetModalVisible, setSetModalVisible] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [fileContent, setFileContent] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,6 +31,7 @@ function NewTest(props) {
   const [editIndex, setEditIndex] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTestType, setSelectedTestType] = useState('');
+  
 
   const db = getDatabase(app);
 
@@ -193,54 +200,19 @@ function NewTest(props) {
     setSelectedTestType(e.target.value);
   };
 
-  const handlePrint = (test) => {
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write('<html><head><title>Test Questions and Answer Sheet</title></head><body>');
-
-      // Test Name and Date
-      printWindow.document.write(`<h1>${test.name}</h1>`);
-      printWindow.document.write(`<p>Date: ${test.date}</p>`);
-
-      // Number of Items
-      printWindow.document.write(`<p>Number of Items: ${test.items.length}</p>`);
-
-      // Test Questions and Answer Choices
-      if (Array.isArray(test.items)) {
-        test.items.forEach((item, index) => {
-          printWindow.document.write(`<p><strong>Question ${index + 1}:</strong> ${item.question}</p>`);
-          printWindow.document.write('<ul>');
-          item.choices.forEach((choice, choiceIndex) => {
-            printWindow.document.write(`<li>${String.fromCharCode(65 + choiceIndex)}. ${choice.text}</li>`);
-          });
-          printWindow.document.write('</ul>');
-        });
-      }
-
-      // Answer Sheet
-      printWindow.document.write('<h2>Answer Sheet</h2>');
-      if (Array.isArray(test.answerSheet)) {
-        test.answerSheet.forEach((answer, index) => {
-          printWindow.document.write(`<p><strong>Question ${index + 1}:</strong></p>`);
-          printWindow.document.write('<ul>');
-          answer.options.forEach((option, optionIndex) => {
-            const selected = answer.selected === optionIndex;
-            const bgColor = selected ? 'background-color: #4CAF50; color: white;' : '';
-            printWindow.document.write(`<li style="${bgColor}">${String.fromCharCode(65 + optionIndex)}. ${option.text}</li>`);
-          });
-          printWindow.document.write('</ul>');
-        });
-      }
-
-      printWindow.document.write('</body></html>');
-      printWindow.document.close();
-
-      // Convert HTML to PDF and download
-      html2pdf().from(printWindow.document.body).save('test.pdf');
-    } else {
-      alert('Please allow popups for this site');
+  const handlePrint = async (test) => {
+    if (!test || !test.questions) {
+      console.error('Selected test or questions are undefined');
+      return;
     }
+  
+    const questionsA = generateRandomSequence(test.questions);
+    const questionsB = generateRandomSequence(test.questions);
+  
+    await generatePDFWithQRCode(questionsA, 'A');
+    await generatePDFWithQRCode(questionsB, 'B');
   };
+  
 
   const filteredTests = savedTests.filter((test) =>
     test.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -261,8 +233,11 @@ function NewTest(props) {
         content = await readExcelFile(file);
       }
   
-      // Parse the content into questions and answer choices
-      const lines = content.split('\n').filter(line => line.trim() !== '');
+      // Normalize and parse the content into questions and answer choices
+      const lines = content.split('\n')
+        .map(line => line.trim()) // Trim leading and trailing whitespace
+        .filter(line => line !== ''); // Filter out empty lines
+  
       const items = [];
       let currentQuestion = null;
       let choicesCount = 0;
@@ -275,8 +250,10 @@ function NewTest(props) {
             currentQuestion.choices = currentQuestion.choices.filter(choice => choice.text.trim() !== '');
             items.push(currentQuestion);
           }
+          // Remove leading numbers from the question
+          const questionWithoutNumber = line.replace(/^\d+\./, '').trim();
           currentQuestion = {
-            question: line.trim(),
+            question: questionWithoutNumber,
             choices: Array.from({ length: 8 }, (_, index) => ({ id: index, text: '' })) // Prepare for up to 8 choices
           };
           choicesCount = 0;
@@ -286,7 +263,7 @@ function NewTest(props) {
             const choiceIndex = line.charCodeAt(0) - 65; // 'A' -> 0, 'B' -> 1, etc.
             currentQuestion.choices[choiceIndex] = {
               id: choiceIndex,
-              text: line.trim().substring(2).trim() // Remove the "A) ", "B) ", etc.
+              text: line.substring(2).trim() // Remove the "A) ", "B) ", etc.
             };
             choicesCount = Math.max(choicesCount, choiceIndex + 1);
           }
@@ -310,6 +287,7 @@ function NewTest(props) {
       })));
     }
   };
+  
   
   
 
@@ -346,6 +324,92 @@ function NewTest(props) {
     });
 
     return text;
+  };
+  
+  const generateRandomSequence = (questions) => {
+    const shuffled = [...questions];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+  
+  const generateQRCode = async (data) => {
+    try {
+      const url = await QRCode.toDataURL(data);
+      return url;
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  
+  const generatePDFWithQRCode = async (questions, setId) => {
+    const doc = new jsPDF();
+    const qrCodeDataUrl = await generateQRCode(setId);
+  
+    // Print Name and School ID and QR Code at the beginning of the document
+    doc.text('Name: ____________________', 10, 10);
+    doc.text('School ID: ___________________', 10, 20);
+    doc.addImage(qrCodeDataUrl, 'PNG', 160, 10, 40, 40);
+  
+    // Set initial yOffset for questions
+    let yOffset = 50; // Adjust as needed for spacing
+  
+    questions.forEach((item, index) => {
+      // Add new page if necessary
+      if (yOffset > doc.internal.pageSize.height - 20) {
+        doc.addPage();
+        yOffset = 10; // Reset yOffset for new page
+      }
+  
+      // Set the font size for the question text
+      doc.setFontSize(14);
+  
+      // Print the question text
+      doc.text(`${index + 1}. ${item.question}`, 10, yOffset);
+  
+      // Set the font size for the answer choices
+      doc.setFontSize(12);
+  
+      // Set the starting position for the answer choices
+      let startX = 20;
+      let startY = yOffset + 10;
+      let circleRadius = 3;
+      let spacingX = 60; // Adjust the horizontal spacing between choices as needed
+      let spacingY = 10; // Adjust the vertical spacing between rows as needed
+  
+      item.choices.forEach((choice, choiceIndex) => {
+        // Determine the column and row for the current choice
+        let col = choiceIndex % 3;
+        let row = Math.floor(choiceIndex / 3);
+  
+        // Calculate the position for each choice
+        let currentX = startX + (col * spacingX);
+        let currentY = startY + (row * spacingY);
+  
+        // Draw a circle for the choice letter
+        doc.circle(currentX, currentY - 2, circleRadius);
+  
+        // Print the choice letter inside the circle, centered
+        doc.text(`${String.fromCharCode(65 + choiceIndex)}`, currentX - circleRadius / 2, currentY);
+  
+        // Print the choice text next to the circle
+        doc.text(`${choice.text}`, currentX + circleRadius + 2, currentY);
+      });
+  
+      // Increment yOffset for the next set of questions
+      yOffset += (item.choices.length > 3 ? item.choices.length / 3 : 1) * 30;
+    });
+  
+    doc.save(`Test_${setId}.pdf`);
+  };
+  
+  
+  
+
+  const handleCloseSetModal = () => {
+    setSetModalVisible(false);
   };
 
   return (
@@ -546,7 +610,6 @@ function NewTest(props) {
       </div>
       </div>
       </ModalTestQuestion>
-      
     </div>
   );
 }
