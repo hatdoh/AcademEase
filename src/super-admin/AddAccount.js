@@ -112,7 +112,7 @@ function AddAccount() {
   };
 
   return (
-    <div className='p-5'>
+    <div className='ml-80 p-4'>
       <form className='grid grid-cols-1 md:grid-cols-3 gap-6' onSubmit={handleAddAccount}>
         <h2 className='col-span-3 text-2xl font-bold mb-4'>Add Account</h2>
         {error && <p className='col-span-3 text-red-500 text-center'>{error}</p>}

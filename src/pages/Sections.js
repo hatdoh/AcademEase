@@ -190,7 +190,7 @@ function Section() {
                 </div>
 
                 <div className="overflow-x-auto">
-                    <div className="overflow-y-auto max-h-screen">
+                    <div className="overflow-y-auto">
                         <table className="min-w-full bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden">
                             <thead className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
                                 <tr>

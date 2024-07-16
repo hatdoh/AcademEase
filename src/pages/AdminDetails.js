@@ -234,7 +234,7 @@ function AdminDetails() {
 
         <div className='flex mb-4'>
           <div className='mr-2'>
-            <label className='mb-2 font-medium'>Former Password</label>
+            <label className='mb-2 font-medium'>Old Password</label>
             <input
               type='password'
               name='formerPassword'
@@ -254,7 +254,7 @@ function AdminDetails() {
             />
           </div>
           <div className='ml-2'>
-            <label className='mb-2 font-medium'>Confirm Password</label>
+            <label className='mb-2 font-medium'>Repeat Password</label>
             <input
               type='password'
               name='confirmPassword'

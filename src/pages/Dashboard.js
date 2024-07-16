@@ -58,12 +58,15 @@ function Dashboard() {
     const absentCount = attendanceData.absent.length;
 
     return (
-        <div className='px-10 mr-20 mb-20 mt-10 ml-6'>
-            <div className="flex items-center space-x-4">
+        <div className='px-10 mr-20 mb-20 mt-5 ml-6'>
+            <div className="flex items-center ml-72 space-x-4 mb-6">
+                <h2 className="text-2xl font-bold text-gray-800">DASHBOARD</h2>
+            </div>
+            <div className="flex">
                 <h2 className="text-2xl ml-80 mb-2 font-semibold text-gray-800">
                     Section Sampaguita, Friday, 1:00 PM - 2:00 PM
                 </h2>
-                <div className="ml-2 text-sm text-gray-600">
+                <div className="mt-2 ml-52 text-sm text-right text-gray-600">
                     {formattedDateTime}
                 </div>
             </div>
