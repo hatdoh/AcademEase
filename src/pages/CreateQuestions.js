@@ -107,11 +107,15 @@ function CreateQuestions(props) {
       items: selectedOption,
       questions: itemsInput.map((item, index) => ({
         question: item.question,
-        choices: item.choices,
-        correctAnswer: item.choices.findIndex(choice => choice.checked)
+        choices: item.choices.map(choice => ({
+          id: choice.id,
+          text: choice.text,
+          checked: choice.checked
+        })),
+        correctAnswer: item.correctAnswer
       }))
     };
-
+  
     if (editIndex !== null) {
       // Edit existing test
       const editRef = ref(db, `data/tests/${savedTests[editIndex].id}`);
@@ -132,7 +136,7 @@ function CreateQuestions(props) {
           alert("Error: " + error.message);
         });
     }
-
+  
     closeModal(); // Close modal after saving or editing
   };
 
@@ -201,18 +205,78 @@ function CreateQuestions(props) {
     setSelectedTestType(e.target.value);
   };
 
-  const handlePrint = async (test) => {
-    if (!test || !test.questions) {
-      console.error('Selected test or questions are undefined');
-      return;
+  const generateAnswerSheetPDF = async (numQuestions, numChoices) => {
+    const doc = new jsPDF({ format: 'a4' });
+
+    // Define margins based on A4 size
+    const marginTop = 10; // margin from top
+    const marginBottom = 20; // margin from bottom
+    const marginLeft = 15; // margin from left
+    const marginRight = 15; // margin from right
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+
+    // Print the header text
+    doc.text('Answer Sheets', marginLeft + 75, marginTop);
+    doc.text('Name: ____________________', marginLeft, marginTop + 10);
+    doc.text('Student ID Number: ___________________', marginLeft, marginTop + 20);
+    doc.text('Set: ____', marginLeft, marginTop + 30);
+    // Set initial yOffset for answer choices
+    let yOffset = marginTop + 50; // Adjust as needed for spacing
+
+    // Set the font size for the answer choices
+    doc.setFontSize(11);
+
+    // Define horizontal spacing for choices
+    const choiceSpacing = 10;
+    const choiceCircleRadius = 4;
+    const textSize = 12;
+
+    for (let i = 1; i <= numQuestions; i++) {
+        // Add new page if necessary
+        if (yOffset > pageHeight - marginBottom - 20) {
+            doc.addPage();
+            yOffset = marginTop; // Reset yOffset for new page
+        }
+
+        // Print the question number
+        doc.text(`${i}.`, marginLeft, yOffset);
+
+        // Print the answer choices in circles
+        const choices = ['A', 'B', 'C', 'D'].slice(0, numChoices); // Adjust choices based on number of choices
+        choices.forEach((choice, index) => {
+            const x = marginLeft + 10 + (index * choiceSpacing);
+            const circleX = x + 3; // Adjust for additional space between circle and text
+            doc.circle(circleX, yOffset - 3, choiceCircleRadius); // Draw circle
+
+            // Center the letter inside the circle
+            doc.setFontSize(textSize);
+            const textWidth = doc.getTextWidth(choice);
+            const textX = circleX - (textWidth / 2);
+            const textY = yOffset + -1; // Adjust the vertical position of the text
+            doc.text(choice, textX, textY); // Add choice letter inside circle
+        });
+
+        yOffset += 10; // Adjust the vertical spacing between questions
     }
-  
+
+    // Save the answer sheet PDF
+    doc.save('answer_sheet.pdf');
+};
+
+const handlePrint = async (test) => {
+    if (!test || !test.questions) {
+        console.error('Selected test or questions are undefined');
+        return;
+    }
+
     const questionsA = generateRandomSequence(test.questions);
     const questionsB = generateRandomSequence(test.questions);
-  
+
     await generatePDFWithQRCode(questionsA, 'A');
     await generatePDFWithQRCode(questionsB, 'B');
-  };
+    await generateAnswerSheetPDF(test.questions.length, test.questions[0].choices.length); // Generate answer sheet PDF
+};
   
 
   const filteredTests = savedTests.filter((test) =>
@@ -223,71 +287,70 @@ function CreateQuestions(props) {
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-        const fileType = file.name.split('.').pop().toLowerCase();
-        let content = '';
-
-        if (fileType === 'pdf') {
-            content = await readPdfFile(file);
-        } else if (fileType === 'docx') {
-            content = await readDocxFile(file);
-        } else if (fileType === 'xlsx' || fileType === 'xls') {
-            content = await readExcelFile(file);
-        }
-
-        const lines = content.split('\n')
-            .map(line => line.trim())
-            .filter(line => line !== '');
-
-        const items = [];
-        let currentQuestion = null;
-        let correctAnswer = null;
-
-        lines.forEach(line => {
-            if (line.endsWith('?') || line.endsWith('.')) {
-                if (currentQuestion) {
-                    currentQuestion.choices = currentQuestion.choices.filter(choice => choice.text.trim() !== '');
-                    items.push(currentQuestion);
-                }
-                const questionWithoutNumber = line.replace(/^\d+[\.\s]*/, '').trim();
-                currentQuestion = {
-                    question: questionWithoutNumber,
-                    choices: Array.from({ length: 4 }, (_, index) => ({ id: index, text: '' })),
-                    correctAnswer: null
-                };
-            } else if (line.match(/^[A-D][.)]\s/)) {
-                if (currentQuestion) {
-                    const choiceIndex = line.charCodeAt(0) - 65;
-                    const choiceText = line.replace(/^[A-D][.)]\s*/, '').trim();
-                    currentQuestion.choices[choiceIndex] = {
-                        id: choiceIndex,
-                        text: choiceText
-                    };
-                }
-            } else if (line.startsWith('Answer:')) {
-                if (currentQuestion) {
-                    correctAnswer = line.replace('Answer:', '').trim().replace(/[^A-D]/g, '');
-                    currentQuestion.correctAnswer = correctAnswer;
-                }
-            }
-        });
-
-        if (currentQuestion) {
-            currentQuestion.choices = currentQuestion.choices.slice(0, 4);
+      const fileType = file.name.split('.').pop().toLowerCase();
+      let content = '';
+  
+      if (fileType === 'pdf') {
+        content = await readPdfFile(file);
+      } else if (fileType === 'docx') {
+        content = await readDocxFile(file);
+      } else if (fileType === 'xlsx' || fileType === 'xls') {
+        content = await readExcelFile(file);
+      }
+  
+      const lines = content.split('\n')
+        .map(line => line.trim())
+        .filter(line => line !== '');
+  
+      const items = [];
+      let currentQuestion = null;
+  
+      lines.forEach(line => {
+        if (line.endsWith('?') || line.endsWith('.')) {
+          if (currentQuestion) {
+            currentQuestion.choices = currentQuestion.choices.filter(choice => choice.text.trim() !== '');
             items.push(currentQuestion);
+          }
+          const questionWithoutNumber = line.replace(/^\d+[\.\s]*/, '').trim();
+          currentQuestion = {
+            question: questionWithoutNumber,
+            choices: Array.from({ length: 4 }, (_, index) => ({ id: index, text: '', checked: false })),
+            correctAnswer: null
+          };
+        } else if (line.match(/^[A-D][.)]\s/)) {
+          if (currentQuestion) {
+            const choiceIndex = line.charCodeAt(0) - 65;
+            const choiceText = line.replace(/^[A-D][.)]\s*/, '').trim();
+            currentQuestion.choices[choiceIndex] = {
+              id: choiceIndex,
+              text: choiceText,
+              checked: false
+            };
+          }
+        } else if (line.startsWith('Answer:') || line.startsWith('answer:')) {
+          if (currentQuestion) {
+            const correctAnswer = line.replace(/Answer:|answer:/, '').trim().replace(/[^A-D]/g, '');
+            currentQuestion.correctAnswer = correctAnswer;
+            const correctIndex = correctAnswer.charCodeAt(0) - 65;
+            currentQuestion.choices[correctIndex].checked = true;
+          }
         }
-
-        setItemsInput(items);
-
-        // Update answer sheet based on the correct answer
-        setAnswerSheet(items.map(item => ({
-            selected: item.correctAnswer ? item.correctAnswer.charCodeAt(0) - 65 : null,
-            options: item.choices.map(choice => String.fromCharCode(65 + choice.id))
-        })));
+      });
+  
+      if (currentQuestion) {
+        currentQuestion.choices = currentQuestion.choices.slice(0, 4);
+        items.push(currentQuestion);
+      }
+  
+      setItemsInput(items);
+  
+      // Update answer sheet based on the correct answer
+      setAnswerSheet(items.map(item => ({
+        selected: item.correctAnswer ? item.correctAnswer.charCodeAt(0) - 65 : null,
+        options: item.choices.map(choice => String.fromCharCode(65 + choice.id))
+      })));
     }
-};
-
-  
-  
+  };
   
   const readPdfFile = async (file) => {
     const arrayBuffer = await file.arrayBuffer();
