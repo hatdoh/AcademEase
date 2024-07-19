@@ -286,7 +286,7 @@ function AttendanceSummary() {
                         to="/school-form"
                         className="flex items-center px-3 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
                         >
-                        Add Section <MdAdd className="w-5 h-5 mr-1 ml-2" />
+                        Creat SF2 <MdAdd className="w-5 h-5 mr-1 ml-2" />
                     </Link>
                 </div>
             </div>

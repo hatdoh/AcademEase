@@ -38,7 +38,7 @@ function Sidebar() {
     { title: "Dashboard", icon: <MdDashboard size={24} />, link: "/" },
     { title: "Sections", icon: <SiGoogleclassroom size={24} />, link: "/sections" },
     { title: "Attendance Summary", icon: <BsPersonSquare size={24} />, link: "/attendance-summary" },
-    { title: "SF2", icon: <FaRegCalendarMinus size={24} />, link: "/sf2" },
+ //   { title: "SF2", icon: <FaRegCalendarMinus size={24} />, link: "/sf2" },
     { title: "Item Analysis", icon: <PiExam size={24} />, link: "/item-analysis" },
     { title: "Create Test Questions", icon: <FaClipboardQuestion size={24} />, link: "/create-questions" },
   ];
