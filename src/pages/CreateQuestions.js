@@ -98,6 +98,7 @@ function CreateQuestions(props) {
       }))
     );
   };
+  
 
   const handleSave = () => {
     const newTest = {
@@ -222,71 +223,72 @@ function CreateQuestions(props) {
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const fileType = file.name.split('.').pop().toLowerCase();
-      let content = '';
-  
-      if (fileType === 'pdf') {
-        content = await readPdfFile(file);
-      } else if (fileType === 'docx') {
-        content = await readDocxFile(file);
-      } else if (fileType === 'xlsx' || fileType === 'xls') {
-        content = await readExcelFile(file);
-      }
-  
-      // Normalize and parse the content into questions and answer choices
-      const lines = content.split('\n')
-        .map(line => line.trim()) // Trim leading and trailing whitespace
-        .filter(line => line !== ''); // Filter out empty lines
-  
-      const items = [];
-      let currentQuestion = null;
-      let choicesCount = 0;
-  
-      lines.forEach(line => {
-        if (line.includes('?')) {
-          // New question
-          if (currentQuestion) {
-            // Filter out empty choices
-            currentQuestion.choices = currentQuestion.choices.filter(choice => choice.text.trim() !== '');
-            items.push(currentQuestion);
-          }
-          // Remove leading numbers from the question
-          const questionWithoutNumber = line.replace(/^\d+\./, '').trim();
-          currentQuestion = {
-            question: questionWithoutNumber,
-            choices: Array.from({ length: 8 }, (_, index) => ({ id: index, text: '' })) // Prepare for up to 8 choices
-          };
-          choicesCount = 0;
-        } else if (line.match(/^[A-H]\)/)) {
-          // Answer choice
-          if (currentQuestion) {
-            const choiceIndex = line.charCodeAt(0) - 65; // 'A' -> 0, 'B' -> 1, etc.
-            currentQuestion.choices[choiceIndex] = {
-              id: choiceIndex,
-              text: line.substring(2).trim() // Remove the "A) ", "B) ", etc.
-            };
-            choicesCount = Math.max(choicesCount, choiceIndex + 1);
-          }
+        const fileType = file.name.split('.').pop().toLowerCase();
+        let content = '';
+
+        if (fileType === 'pdf') {
+            content = await readPdfFile(file);
+        } else if (fileType === 'docx') {
+            content = await readDocxFile(file);
+        } else if (fileType === 'xlsx' || fileType === 'xls') {
+            content = await readExcelFile(file);
         }
-      });
-  
-      // Push the last question
-      if (currentQuestion) {
-        // Filter out empty choices
-        currentQuestion.choices = currentQuestion.choices.slice(0, choicesCount);
-        items.push(currentQuestion);
-      }
-  
-      // Update state with parsed items
-      setItemsInput(items);
-  
-      // Update answer sheet based on the number of choices per question
-      setAnswerSheet(items.map(item => ({
-        selected: null,
-        options: item.choices.map(choice => String.fromCharCode(65 + choice.id)) // Generate options A, B, C, etc.
-      })));
+
+        const lines = content.split('\n')
+            .map(line => line.trim())
+            .filter(line => line !== '');
+
+        const items = [];
+        let currentQuestion = null;
+        let correctAnswer = null;
+
+        lines.forEach(line => {
+            if (line.endsWith('?') || line.endsWith('.')) {
+                if (currentQuestion) {
+                    currentQuestion.choices = currentQuestion.choices.filter(choice => choice.text.trim() !== '');
+                    items.push(currentQuestion);
+                }
+                const questionWithoutNumber = line.replace(/^\d+[\.\s]*/, '').trim();
+                currentQuestion = {
+                    question: questionWithoutNumber,
+                    choices: Array.from({ length: 4 }, (_, index) => ({ id: index, text: '' })),
+                    correctAnswer: null
+                };
+            } else if (line.match(/^[A-D][.)]\s/)) {
+                if (currentQuestion) {
+                    const choiceIndex = line.charCodeAt(0) - 65;
+                    const choiceText = line.replace(/^[A-D][.)]\s*/, '').trim();
+                    currentQuestion.choices[choiceIndex] = {
+                        id: choiceIndex,
+                        text: choiceText
+                    };
+                }
+            } else if (line.startsWith('Answer:')) {
+                if (currentQuestion) {
+                    correctAnswer = line.replace('Answer:', '').trim().replace(/[^A-D]/g, '');
+                    currentQuestion.correctAnswer = correctAnswer;
+                }
+            }
+        });
+
+        if (currentQuestion) {
+            currentQuestion.choices = currentQuestion.choices.slice(0, 4);
+            items.push(currentQuestion);
+        }
+
+        setItemsInput(items);
+
+        // Update answer sheet based on the correct answer
+        setAnswerSheet(items.map(item => ({
+            selected: item.correctAnswer ? item.correctAnswer.charCodeAt(0) - 65 : null,
+            options: item.choices.map(choice => String.fromCharCode(65 + choice.id))
+        })));
     }
-  };
+};
+
+  
+  
+  
   const readPdfFile = async (file) => {
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
@@ -339,68 +341,115 @@ function CreateQuestions(props) {
       console.error(err);
     }
   };
-  
+
   const generatePDFWithQRCode = async (questions, setId) => {
-    const doc = new jsPDF();
+    const doc = new jsPDF({ format: 'a4' });
+
     const qrCodeDataUrl = await generateQRCode(setId);
-  
+
+    // Define margins based on A4 size
+    const marginTop = 10; // margin from top
+    const marginBottom = 20; // margin from bottom
+    const marginLeft = 15; // margin from left
+    const marginRight = 15; // margin from right
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+
     // Print Name and School ID and QR Code at the beginning of the document
-    doc.text('Name: ____________________', 10, 10);
-    doc.text('School ID: ___________________', 10, 20);
-    doc.addImage(qrCodeDataUrl, 'PNG', 160, 10, 40, 40);
-  
+    doc.text('Name: ____________________', marginLeft, marginTop);
+    doc.text('Student ID: ___________________', marginLeft, marginTop + 10);
+    doc.addImage(qrCodeDataUrl, 'PNG', pageWidth - marginRight - 40, marginTop, 40, 40);
+
     // Set initial yOffset for questions
-    let yOffset = 50; // Adjust as needed for spacing
-  
+    let yOffset = marginTop + 50; // Adjust as needed for spacing
+    const columnWidth = (pageWidth - marginLeft - marginRight) / 2; // Width for two columns
+    const textMaxWidth = columnWidth - 20; // Width for text including padding
+    const textMaxWidthSingleColumn = pageWidth - marginLeft - marginRight; // Width for single column
+
     questions.forEach((item, index) => {
-      // Add new page if necessary
-      if (yOffset > doc.internal.pageSize.height - 20) {
-        doc.addPage();
-        yOffset = 10; // Reset yOffset for new page
-      }
-  
-      // Set the font size for the question text
-      doc.setFontSize(14);
-  
-      // Print the question text
-      doc.text(`${index + 1}. ${item.question}`, 10, yOffset);
-  
-      // Set the font size for the answer choices
-      doc.setFontSize(12);
-  
-      // Set the starting position for the answer choices
-      let startX = 20;
-      let startY = yOffset + 10;
-      let circleRadius = 3;
-      let spacingX = 60; // Adjust the horizontal spacing between choices as needed
-      let spacingY = 10; // Adjust the vertical spacing between rows as needed
-  
-      item.choices.forEach((choice, choiceIndex) => {
-        // Determine the column and row for the current choice
-        let col = choiceIndex % 3;
-        let row = Math.floor(choiceIndex / 3);
-  
-        // Calculate the position for each choice
-        let currentX = startX + (col * spacingX);
-        let currentY = startY + (row * spacingY);
-  
-        // Draw a circle for the choice letter
-        doc.circle(currentX, currentY - 2, circleRadius);
-  
-        // Print the choice letter inside the circle, centered
-        doc.text(`${String.fromCharCode(65 + choiceIndex)}`, currentX - circleRadius / 2, currentY);
-  
-        // Print the choice text next to the circle
-        doc.text(`${choice.text}`, currentX + circleRadius + 2, currentY);
-      });
-  
-      // Increment yOffset for the next set of questions
-      yOffset += (item.choices.length > 3 ? item.choices.length / 3 : 1) * 30;
+        // Add new page if necessary
+        if (yOffset > pageHeight - marginBottom - 20) {
+            doc.addPage();
+            yOffset = marginTop; // Reset yOffset for new page
+        }
+
+        // Set the font size for the question text
+        doc.setFontSize(11);
+
+        // Print the question text
+        doc.text(`${index + 1}. ${item.question}`, marginLeft, yOffset);
+
+        // Set the font size for the answer choices
+        doc.setFontSize(11);
+
+        // Determine layout based on text length
+        let useSingleColumn = item.choices.some(choice => {
+            const choiceText = choice.text;
+            const textWidth = doc.getTextWidth(choiceText);
+            return textWidth > textMaxWidth;
+        });
+
+        // Set the starting positions for the answer choices
+        let startX1 = marginLeft; // Start of first column
+        let startX2 = marginLeft + columnWidth; // Start of second column
+        let startX = startX1; // Default to first column
+        let startY = yOffset + 5; // Start position for choices
+        let spacingY = 4; // Adjust the vertical spacing between rows as needed
+
+        item.choices.forEach((choice, choiceIndex) => {
+            // Use single column layout if text is too long
+            if (useSingleColumn) {
+                startX = marginLeft;
+                const choiceText = choice.text;
+                const textLines = doc.splitTextToSize(choiceText, textMaxWidthSingleColumn);
+
+                if (startY + (textLines.length * 5) > pageHeight - marginBottom) {
+                    doc.addPage();
+                    startY = marginTop;
+                }
+
+                // Print the choice letter and text in a single column
+                doc.text(`${String.fromCharCode(65 + choiceIndex)}. ${textLines[0]}`, startX, startY);
+                textLines.slice(1).forEach((line, lineIndex) => {
+                    doc.text(line, startX, startY + ((lineIndex + 1) * 5));
+                });
+
+                startY += Math.max(2, textLines.length * 5);
+            } else {
+                const column = choiceIndex % 2;
+                const row = Math.floor(choiceIndex / 2);
+
+                startX = column === 0 ? startX1 : startX2;
+                let yPosition = startY + row * spacingY;
+
+                // Wrap text if it exceeds column width
+                const choiceText = choice.text;
+                const textLines = doc.splitTextToSize(choiceText, textMaxWidth);
+
+                // Print the choice letter and text in two columns
+                doc.text(`${String.fromCharCode(65 + choiceIndex)}. ${textLines[0]}`, startX, yPosition);
+                textLines.slice(1).forEach((line, lineIndex) => {
+                    doc.text(line, startX, yPosition + ((lineIndex + 1) * 2));
+                });
+
+                // Add a new page if needed and adjust yOffset
+                if (yPosition + (textLines.length * 2) > pageHeight - marginBottom) {
+                    doc.addPage();
+                    startY = marginTop;
+                    startX1 = marginLeft; // Reset to start of first column
+                    startX2 = marginLeft + columnWidth; // Reset to start of second column
+                }
+            }
+        });
+
+        // Update yOffset for the next set of questions
+        yOffset = startY + Math.max(item.choices.length * spacingY, -3); // Adjust spacing as needed
     });
-  
+
     doc.save(`Test_${setId}.pdf`);
-  };
-  
+};
+
+
   const handleCloseSetModal = () => {
     setSetModalVisible(false);
   };
