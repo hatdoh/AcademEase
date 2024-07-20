@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
 import { db, storage } from '../config/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -8,6 +8,7 @@ import { MdEdit } from 'react-icons/md';
 
 function StudentProfile() {
     const { id } = useParams();
+    const navigate = useNavigate();  // Add useNavigate hook
     const [student, setStudent] = useState({});
     const [imageFile, setImageFile] = useState(null);
     const [isEditingImage, setIsEditingImage] = useState(false);
@@ -76,44 +77,58 @@ function StudentProfile() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        try {
-            // Validation for Contact Number
-            if (!/^09\d{9}$/.test(student.contactNumber)) {
-                throw new Error('Invalid contact number format. It should start with "09".');
+        
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: "Do you really want to save the changes?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, save it!',
+            cancelButtonText: 'No, cancel!',
+        });
+
+        if (result.isConfirmed) {
+            try {
+                // Validation for Contact Number
+                if (!/^09\d{9}$/.test(student.contactNumber)) {
+                    throw new Error('Invalid contact number format. It should start with "09".');
+                }
+
+                // Validation for Age
+                if (isNaN(student.age) || student.age <= 0) {
+                    throw new Error('Age should be a valid number.');
+                }
+
+                // Upload image to Firebase Storage if there's a new file selected
+                let imageUrl = student.image;
+                if (imageFile) {
+                    const storageRef = ref(storage, `students/${id}/${imageFile.name}`);
+                    await uploadBytes(storageRef, imageFile);
+                    imageUrl = await getDownloadURL(storageRef);
+                }
+
+                const updatedStudent = {
+                    ...student,
+                    image: imageUrl,
+                };
+
+                const docRef = doc(db, 'students', id);
+                await updateDoc(docRef, updatedStudent);
+                Swal.fire('Success', 'Student details updated successfully', 'success');
+
+                setIsEditingImage(false); // Close editing mode after successful update
+                navigate('/sections'); // Navigate to /sections after successful update
+            } catch (error) {
+                console.error('Error updating student:', error.message);
+                Swal.fire('Error', error.message, 'error');
             }
-
-            // Validation for Age
-            if (isNaN(student.age) || student.age <= 0) {
-                throw new Error('Age should be a valid number.');
-            }
-
-            // Upload image to Firebase Storage if there's a new file selected
-            let imageUrl = student.image;
-            if (imageFile) {
-                const storageRef = ref(storage, `students/${id}/${imageFile.name}`);
-                await uploadBytes(storageRef, imageFile);
-                imageUrl = await getDownloadURL(storageRef);
-            }
-
-            const updatedStudent = {
-                ...student,
-                image: imageUrl,
-            };
-
-            const docRef = doc(db, 'students', id);
-            await updateDoc(docRef, updatedStudent);
-            Swal.fire('Success', 'Student details updated successfully', 'success');
-            setIsEditingImage(false); // Close editing mode after successful update
-        } catch (error) {
-            console.error('Error updating student:', error.message);
-            Swal.fire('Error', error.message, 'error');
         }
     };
 
     return (
         <div className="ml-80 p-4">
             <div className="">
-                <h2 className="text-2xl font-bold mb-2"> Student Profile</h2>
+                <h2 className="text-2xl font-bold mb-2">Student Profile</h2>
                 <div className="mb-4 flex items-center">
                     {student.image && !isEditingImage ? (
                         <>
@@ -258,9 +273,9 @@ function StudentProfile() {
                                 onChange={handleInputChange}
                                 className="p-2 border border-gray-300 rounded-md w-full"
                             >
-                                <option value="">Select Section</option>
-                                {sections.map((section) => (
-                                    <option key={section} value={section}>
+                                <option value="" disabled>Select Section</option>
+                                {sections.map((section, index) => (
+                                    <option key={index} value={section}>
                                         {section}
                                     </option>
                                 ))}
@@ -268,9 +283,14 @@ function StudentProfile() {
                         </div>
                     </div>
 
-                    <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md">
-                        Save
-                    </button>
+                    <div>
+                        <button
+                            type="submit"
+                            className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-md"
+                        >
+                            Save
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
