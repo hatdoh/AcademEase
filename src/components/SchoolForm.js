@@ -9,6 +9,8 @@ import "react-datepicker/dist/react-datepicker.css";
 
 function SchoolForm() {
     const [modalIsOpen, setModalIsOpen] = useState(false);
+
+    
     const [formData, setFormData] = useState({
         schoolID: '',
         schoolYear: '',
@@ -86,54 +88,71 @@ function SchoolForm() {
         element.click();
     };
 
-    const renderDaysOfWeek = () => {
-        const daysOfWeek = ['M', 'T', 'W', 'TH', 'F'];
-        const firstDayOfMonth = new Date(formData.month.getFullYear(), formData.month.getMonth(), 1);
-        const lastDayOfMonth = new Date(formData.month.getFullYear(), formData.month.getMonth() + 1, 0);
-        const days = [];
-
-        for (let day = firstDayOfMonth.getDate(); day <= lastDayOfMonth.getDate(); day++) {
-            const currentDate = new Date(formData.month.getFullYear(), formData.month.getMonth(), day);
-            const dayOfWeek = currentDate.getDay();
-
-            if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-                days.push(<td key={day} className='p-2 text-center'>{daysOfWeek[dayOfWeek - 1]}</td>);
-            } else {
-                days.push(<td key={day} className='p-2 text-center'></td>);
+        // cons to get holidays for any given year
+        const holidays = {
+            1: [1], // January
+            2: [25], // February
+            4: [9, 17, 18], // April
+            5: [1], // May
+            8: [21, 26], // August
+            12: [8, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31] // December
+        };
+        
+    
+        const renderDaysOfWeek = () => {
+            const daysOfWeek = ['M', 'T', 'W', 'TH', 'F'];
+            const firstDayOfMonth = new Date(formData.month.getFullYear(), formData.month.getMonth(), 1);
+            const lastDayOfMonth = new Date(formData.month.getFullYear(), formData.month.getMonth() + 1, 0);
+            const days = [];
+        
+            for (let day = firstDayOfMonth.getDate(); day <= lastDayOfMonth.getDate(); day++) {
+                const currentDate = new Date(formData.month.getFullYear(), formData.month.getMonth(), day);
+                const dayOfWeek = currentDate.getDay();
+        
+                // Check if the current date is a holiday
+                if (!holidays[formData.month.getMonth() + 1]?.includes(day)) {
+                    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                        days.push(<td key={day} className='p-2 text-center'>{daysOfWeek[dayOfWeek - 1]}</td>);
+                    } else {
+                        days.push(<td key={day} className='p-2 text-center'></td>);
+                    }
+                }
             }
-        }
-
-        return days;
-    };
-
-
-    const renderNoDaysOfWeek = () => {
-        const daysOfWeek = ['M', 'T', 'W', 'TH', 'F'];
-        const firstDayOfMonth = new Date(formData.month.getFullYear(), formData.month.getMonth(), 1);
-        const lastDayOfMonth = new Date(formData.month.getFullYear(), formData.month.getMonth() + 1, 0);
-        const days = [];
-
-        for (let day = firstDayOfMonth.getDate(); day <= lastDayOfMonth.getDate(); day++) {
-            const currentDate = new Date(formData.month.getFullYear(), formData.month.getMonth(), day);
-            const dayOfWeek = currentDate.getDay();
-
-            if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-                days.push(
-                    <th key={day} className='p-2 text-center'>
-                        {day}
-                    </th>
-                );
-            } else {
-                days.push(
-                    <th key={day} className='p-2 text-center'>
-                        {daysOfWeek[dayOfWeek - 1]}
-                    </th>
-                );
+        
+            return days;
+        };
+        
+        const renderNoDaysOfWeek = () => {
+            const daysOfWeek = ['M', 'T', 'W', 'TH', 'F'];
+            const firstDayOfMonth = new Date(formData.month.getFullYear(), formData.month.getMonth(), 1);
+            const lastDayOfMonth = new Date(formData.month.getFullYear(), formData.month.getMonth() + 1, 0);
+            const days = [];
+        
+            for (let day = firstDayOfMonth.getDate(); day <= lastDayOfMonth.getDate(); day++) {
+                const currentDate = new Date(formData.month.getFullYear(), formData.month.getMonth(), day);
+                const dayOfWeek = currentDate.getDay();
+        
+                // Check if the current date is a holiday
+                if (!holidays[formData.month.getMonth() + 1]?.includes(day)) {
+                    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                        days.push(
+                            <th key={day} className='p-2 text-center'>
+                                {day}
+                            </th>
+                        );
+                    } else {
+                        days.push(
+                            <th key={day} className='p-2 text-center'>
+                                {daysOfWeek[dayOfWeek - 1]}
+                            </th>
+                        );
+                    }
+                }
             }
-        }
-
-        return days;
-    };
+        
+            return days;
+        };
+        
 
     const handleSchoolYearChange = (e) => {
         const value = e.target.value;
@@ -175,8 +194,8 @@ function SchoolForm() {
                                 onChange={(e) => handleInputChange('gradeLevel', e.target.value)}
                                 className="rounded-lg border px-2 py-1 pl-6 w-20 mb-4"
                             >
-                                {[...Array(12)].map((_, index) => (
-                                    <option key={index + 1} value={index + 1}>{index + 1}</option>
+                                {[...Array(4)].map((_, index) => (
+                                    <option key={index + 7} value={index + 7}>{index + 7}</option>
                                 ))}
                             </select>
                         </div>
@@ -186,29 +205,35 @@ function SchoolForm() {
                         </div>
                     </form>
                     <div className='overflow-x-auto'>
-                        <div className="bg-white overflow-y-auto max-h-96 w-full">
-                            <table className="min-w-full w-full bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden">
-                                <thead className='text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400'>
-                                    <tr>
-                                        <th className="w-24 px-20"></th>
-                                        {renderNoDaysOfWeek()}
-                                        <th className='p-2'></th>
-                                        <th className='p-2'></th>
-                                        <th className='p-2'></th>
-                                    </tr>
-                                    <tr>
-                                        <th className="w-24 text-center uppercase">LEARNER'S NAME <br />(Last Name, First Name, Middle Name)</th>
-                                        {renderDaysOfWeek()}
-                                        <th className='p-2'>ABSENT</th>
-                                        <th className='p-2'>TARDY</th>
-                                        <th className='p-2'>REMARKS</th>
-                                    </tr>
-                                </thead>
-                                <tbody className='bg-white h-80'>
+                        <div className="bg-white overflow-y-auto max-h-full h-96 w-full">
+                            <table className="min-w-full w-full h-lvh bg-white divide-x border border-gray-200 shadow-lg rounded-lg overflow-hidden">
+                            <thead className='text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400'>
+                                <tr className='bg-white ml-full'>
+                                    <label className='flex flex-nowrap flex-row-reverse items-center font-bold text-sm ml-96 bg-white text-center w-5/6'>
+                                        (1st row for date)
+                                    </label>
+                                </tr>
+                                <tr className='border-y-2 border-black'>
+                                    <th className="w-20 text-sm border-x-2 border-black" rowSpan="2">LEARNER'S NAME <br />(Last Name, First Name, Middle Name)</th>
+                                    {renderNoDaysOfWeek()}
+                                    <th className='p-2 text-sm border-x-2 border-black' colSpan="2">Total for the month</th>
+                                    <th className='px-7 w-full text-center text-sm border-x-2 border-black' rowSpan="2">REMARKS</th>
+                                </tr>
+                                <tr className='border-y-2 border-black'>
+                                    {renderDaysOfWeek()}
+                                    <th className='px-7 text-sm border-x-2 border-black'>ABSENT</th>
+                                    <th className='px-7 text-sm border-x-2 border-black'>TARDY</th>
+                                </tr>
+                            </thead>
+                                <tbody className='bg-white h-lvh'>
                                     <td></td>
                                 </tbody>
                             </table>
-                            <table className='min-w-full w-full bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden'>
+                        </div>
+                    </div>
+                    <div className='overflow-x-auto mt-10'>
+                        <div className="bg-white overflow-y-auto max-h-96 w-80"></div>
+                        <table className='min-w-full w-80 max-h-full bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden'>
                                 <thead className='text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400'>   
                                     <tr>
                                         <th className='py-3 pr-10 text-center'>Month: <br></br> No of Days of Classes:</th>
@@ -251,7 +276,6 @@ function SchoolForm() {
                                 </thead>
                             </table>
                         </div>
-                    </div>
                     <div className="flex justify-end space-x-4 mt-4">
                         <button onClick={saveData} className='w-24 h-10 text-center shadow-sm py-2 rounded-md bg-blue-500 font-medium text-2xl text-white hover:bg-blue-700 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-blue-500 sm:ml-4 sm:text-sm'>
                             Save
