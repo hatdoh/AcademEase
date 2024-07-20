@@ -211,41 +211,53 @@ function CreateQuestions(props) {
     // Define margins based on A4 size
     const marginTop = 10; // margin from top
     const marginBottom = 20; // margin from bottom
-    const marginLeft = 15; // margin from left
+    const marginLeft = 30; // margin from left
     const marginRight = 15; // margin from right
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
 
     // Print the header text
-    doc.text('Answer Sheets', marginLeft + 75, marginTop);
+    doc.text('Answer Sheets', marginLeft + 53, marginTop);
     doc.text('Name: ____________________', marginLeft, marginTop + 10);
     doc.text('Student ID Number: ___________________', marginLeft, marginTop + 20);
     doc.text('Set: ____', marginLeft, marginTop + 30);
+
     // Set initial yOffset for answer choices
     let yOffset = marginTop + 50; // Adjust as needed for spacing
+    let xOffset = marginLeft; // Initial xOffset for answer choices
 
     // Set the font size for the answer choices
     doc.setFontSize(11);
 
-    // Define horizontal spacing for choices
+    // Define horizontal and vertical spacing for choices
     const choiceSpacing = 10;
     const choiceCircleRadius = 4;
     const textSize = 12;
+    const rowSpacing = 10; // Vertical spacing between rows
+    const colSpacing = 50; // Horizontal spacing between columns
 
     for (let i = 1; i <= numQuestions; i++) {
+        // Calculate column and row index
+        const colIndex = Math.floor((i - 1) / 10);
+        const rowIndex = Math.floor((colIndex) / 3);
+
+        // Reset xOffset and yOffset for each new set of columns
+        xOffset = marginLeft + (colIndex % 3) * colSpacing;
+        yOffset = marginTop + 50 + (i - 1) % 10 * rowSpacing + (rowIndex * 100); // Adjust yOffset for rows
+
         // Add new page if necessary
         if (yOffset > pageHeight - marginBottom - 20) {
             doc.addPage();
-            yOffset = marginTop; // Reset yOffset for new page
+            yOffset = marginTop + 50; // Reset yOffset for new page
         }
 
         // Print the question number
-        doc.text(`${i}.`, marginLeft, yOffset);
+        doc.text(`${i}.`, xOffset, yOffset);
 
         // Print the answer choices in circles
         const choices = ['A', 'B', 'C', 'D'].slice(0, numChoices); // Adjust choices based on number of choices
         choices.forEach((choice, index) => {
-            const x = marginLeft + 10 + (index * choiceSpacing);
+            const x = xOffset + 7 + (index * choiceSpacing);
             const circleX = x + 3; // Adjust for additional space between circle and text
             doc.circle(circleX, yOffset - 3, choiceCircleRadius); // Draw circle
 
@@ -256,13 +268,12 @@ function CreateQuestions(props) {
             const textY = yOffset + -1; // Adjust the vertical position of the text
             doc.text(choice, textX, textY); // Add choice letter inside circle
         });
-
-        yOffset += 10; // Adjust the vertical spacing between questions
     }
 
     // Save the answer sheet PDF
     doc.save('answer_sheet.pdf');
 };
+
 
 const handlePrint = async (test) => {
     if (!test || !test.questions) {
@@ -344,6 +355,9 @@ const handlePrint = async (test) => {
   
       setItemsInput(items);
   
+      // Update the state of the number of selected items based on the items or questions parsed
+      setSelectedOption(items.length);
+  
       // Update answer sheet based on the correct answer
       setAnswerSheet(items.map(item => ({
         selected: item.correctAnswer ? item.correctAnswer.charCodeAt(0) - 65 : null,
@@ -351,6 +365,7 @@ const handlePrint = async (test) => {
       })));
     }
   };
+  
   
   const readPdfFile = async (file) => {
     const arrayBuffer = await file.arrayBuffer();
@@ -521,7 +536,7 @@ const handlePrint = async (test) => {
     <div className='ml-80 p-4'>
       <div className="flex items-center">
       <button className='flex items-center w-40 h-10 mt-5 text-center shadow-sm py-2 rounded-md bg-blue-500 font-medium text-2xl text-white hover:bg-blue-700 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-blue-500 sm:ml-4 sm:text-sm' onClick={openModal}>
-        <span className="ml-10">New Quiz</span>
+        <span className="ml-7">Test Question</span>
         <MdAdd className='h-6 w-6' />
       </button>
         <input
@@ -557,10 +572,10 @@ const handlePrint = async (test) => {
             <tbody className="divide-y divide-gray-200">
             {filteredTests.map((test, index) => (
                 <tr key={index} className="h-10">
-                <td className="py-3 px-6 h-10 text-left">{test.name}</td>
-                <td className="py-3 px-6 h-10 text-center">{test.date}</td>
-                <td className="py-3 px-6 h-10 text-center">{test.items}</td>
-                <td className="py-3 px-6 h-10 text-center">
+                <td className="py-3 px-6 h-10 text-left uppercase">{test.name}</td>
+                <td className="py-3 px-6 h-10 text-center uppercase">{test.date}</td>
+                <td className="py-3 px-6 h-10 text-center uppercase">{test.items}</td>
+                <td className="py-3 px-6 h-10 text-center uppercase">
                     <button
                     onClick={() => handlePrint(test)}
                     className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full mr-2"
