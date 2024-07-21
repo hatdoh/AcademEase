@@ -166,42 +166,62 @@ function SchoolForm() {
         <div className="ml-80 p-4">
             <h2 className="text-2xl font-semibold mb-4">School Form 2 (SF2) Daily Attendance Report of Learners</h2>
                 <div className="rounded-lg w-full border-gray-700 max-w-5xl">
-                    <form className='flex justify-center mb-4'>
-                        <div className="flex flex-col">
-                            <label className="block mb-2">School Year</label>
+                    <form className='flex justify-left'>
+                        <div className="flex flex-nowrap">
+                            <label className="block mb-2 mt-3 mr-5">School ID</label>
                             <input
                                 type="text"
-                                className="rounded-lg border px-2 py-1 w-40 mb-4"
+                                className="rounded-lg border h-12 px-5 w-40 mb-4"
+                                value={"301906"}
+                                
+                            />
+                        </div>
+                        <div className="flex flex-nowrap ml-10">
+                            <label className="block mb-2 mt-3 mr-5">School Year</label>
+                            <input
+                                type="text"
+                                className="rounded-lg border px-2 h-12 w-40 mb-4"
                                 placeholder="YYYY-YYYY"
                                 value={formData.schoolYear}
                                 onChange={handleSchoolYearChange}
                             />
                         </div>
-                        <div className="flex flex-col ml-10">
-                            <label className="block mb-2">Report for the Month of</label>
+                        <div className="flex flex-nowrap ml-10">
+                            <label className="block mb-2 mt-3 mr-5">Report for the Month of</label>
                             <DatePicker
                                 selected={formData.month}
                                 onChange={date => handleDateChange(date)}
                                 dateFormat="MMMM yyyy"
                                 showMonthYearPicker
-                                className="rounded-lg border px-2 py-1 w-40 mb-4"
+                                className="rounded-lg border px-2 h-12 w-40 mb-4"
                             />
                         </div>
-                        <div className="flex flex-col ml-10">
-                            <label className="block mb-2">Grade Level</label>
+
+                    </form>
+                    <form className='flex justify-left'>
+                        <div className="flex flex-nowrap">
+                            <label className="block mb-2 mt-3 mr-5">Name of School</label>
+                            <input
+                                type="text"
+                                className="rounded-lg border px-2 h-12 w-60 mb-4"
+                                value={"Moreno Integrated School"}       
+                            />
+                        </div>
+                        <div className="flex flex-nowrap ml-10">
+                            <label className="block mb-2 mt-3 mr-5">Grade Level</label>
                             <select
-                                value={formData.gradeLevel}
+                                value={formData.gradeLevel || 9}
                                 onChange={(e) => handleInputChange('gradeLevel', e.target.value)}
-                                className="rounded-lg border px-2 py-1 pl-6 w-20 mb-4"
+                                className="rounded-lg border px-2 h-12 pl-6 w-20 mb-4"
                             >
                                 {[...Array(4)].map((_, index) => (
-                                    <option key={index + 7} value={index + 7}>{index + 7}</option>
+                                        <option key={index + 7} value={index + 7}>{index + 7}</option>
                                 ))}
                             </select>
                         </div>
-                        <div className="flex flex-col ml-10">
-                            <label className="block mb-2">Section</label>
-                            <input type="text" placeholder='Section' value={formData.section} onChange={(e) => handleInputChange('section', e.target.value)} className="rounded-lg border px-2 py-1 w-60 mb-4" />
+                        <div className="flex flex-nowrap ml-10">
+                            <label className="block mb-2 mt-3 mr-5">Section</label>
+                            <input type="text" placeholder='Section' value={formData.section} onChange={(e) => handleInputChange('section', e.target.value)} className="rounded-lg border px-2 h-12 w-60 mb-4" />
                         </div>
                     </form>
                     <div className='overflow-x-auto'>

@@ -14,6 +14,8 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import QRCode from 'qrcode';
 
+import Swal from 'sweetalert2';
+
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.js`;
 
 function CreateQuestions(props) {
@@ -101,73 +103,174 @@ function CreateQuestions(props) {
   
 
   const handleSave = () => {
-    const newTest = {
-      name: testName,
-      date: selectedDate,
-      items: selectedOption,
-      questions: itemsInput.map((item, index) => ({
-        question: item.question,
-        choices: item.choices.map(choice => ({
-          id: choice.id,
-          text: choice.text,
-          checked: choice.checked
-        })),
-        correctAnswer: item.correctAnswer
-      }))
-    };
-  
-    if (editIndex !== null) {
-      // Edit existing test
-      const editRef = ref(db, `data/tests/${savedTests[editIndex].id}`);
-      set(editRef, newTest)
-        .then(() => {
-          alert("Test updated successfully");
-        })
-        .catch((error) => {
-          alert("Error: " + error.message);
+    if (!testName || testName.trim() === '') {
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Please enter the test name!',
         });
-    } else {
-      // Save new test
-      push(ref(db, 'data/tests'), newTest)
-        .then(() => {
-          alert("Test saved successfully");
-        })
-        .catch((error) => {
-          alert("Error: " + error.message);
-        });
+        return;
     }
-  
+
+    if (!selectedDate) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Please select a date!',
+        });
+        return;
+    }
+
+    if (!selectedOption) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Please select the number of items!',
+        });
+        return;
+    }
+
+    if (itemsInput.some(item => !item.question || item.question.trim() === '')) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Please enter all questions!',
+        });
+        return;
+    }
+
+    if (itemsInput.some(item => item.choices.some(choice => !choice.text || choice.text.trim() === ''))) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Please fill out all choices!',
+        });
+        return;
+    }
+
+    if (itemsInput.some(item => !item.correctAnswer || item.correctAnswer.trim() === '')) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Please select the correct answer for all questions!',
+        });
+        return;
+    }
+
+    const newTest = {
+        name: testName,
+        date: selectedDate,
+        items: selectedOption,
+        questions: itemsInput.map((item, index) => ({
+            question: item.question,
+            choices: item.choices.map(choice => ({
+                id: choice.id,
+                text: choice.text,
+                checked: choice.checked
+            })),
+            correctAnswer: item.correctAnswer
+        }))
+    };
+
+    const successMessage = () => {
+        Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: 'Test updated successfully!',
+        });
+    };
+
+    if (editIndex !== null) {
+        // Edit existing test
+        const editRef = ref(db, `data/tests/${savedTests[editIndex].id}`);
+        set(editRef, newTest)
+            .then(() => {
+                successMessage();
+            })
+            .catch((error) => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: `Error: ${error.message}`,
+                });
+            });
+    } else {
+        // Save new test
+        push(ref(db, 'data/tests'), newTest)
+            .then(() => {
+                successMessage();
+            })
+            .catch((error) => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: `Error: ${error.message}`,
+                });
+            });
+    }
+
     closeModal(); // Close modal after saving or editing
-  };
+};
 
-  const handleDelete = (index, testId) => {
-    const testRef = ref(db, `data/tests/${testId}`);
-  
-    remove(testRef)
-      .then(() => {
-        const updatedTests = savedTests.filter((test, idx) => idx !== index);
-        setSavedTests(updatedTests);
-        alert("Test deleted successfully");
-      })
-      .catch((error) => {
-        alert("Error: " + error.message);
-      });
-  };
+
+
+
+const handleDelete = (index, testId) => {
+  Swal.fire({
+      title: 'Are you sure?',
+      text: 'You won\'t be able to revert this!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!'
+  }).then((result) => {
+      if (result.isConfirmed) {
+          const testRef = ref(db, `data/tests/${testId}`);
+          
+          remove(testRef)
+              .then(() => {
+                  const updatedTests = savedTests.filter((test, idx) => idx !== index);
+                  setSavedTests(updatedTests);
+                  Swal.fire({
+                      icon: 'success',
+                      title: 'Deleted!',
+                      text: 'The test has been deleted successfully.',
+                  });
+              })
+              .catch((error) => {
+                  Swal.fire({
+                      icon: 'error',
+                      title: 'Error!',
+                      text: `Error: ${error.message}`,
+                  });
+              });
+      }
+  });
+};
+
   
 
-  const handleEdit = (index) => {
-    const test = savedTests[index];
-    setTestName(test.name);
-    setSelectedDate(test.date);
-    setSelectedOption(test.items);
-    setItemsInput(test.questions.map(q => ({
-      question: q.question,
-      choices: q.choices
-    })));
-    setAnswerSheet(test.answerSheet);
-    setEditIndex(index);
-    openModal();
-  };
+const handleEdit = (index) => {
+  const test = savedTests[index];
+  
+  setTestName(test.name || '');
+  setSelectedDate(test.date || '');
+  setSelectedOption(test.items || '');
+  setItemsInput(test.questions.map(q => ({
+      question: q.question || '',
+      choices: q.choices.map(choice => ({
+          id: choice.id || '',
+          text: choice.text || '',
+          checked: choice.checked || false
+      })),
+      correctAnswer: q.correctAnswer || ''  // Ensure correctAnswer is set
+  })));
+  setAnswerSheet(test.answerSheet || '');
+  setEditIndex(index);
+  openModal();
+};
+
 
   const handleAddChoice = (questionIndex) => {
     const newItemsInput = [...itemsInput];
@@ -276,18 +379,54 @@ function CreateQuestions(props) {
 
 
 const handlePrint = async (test) => {
-    if (!test || !test.questions) {
-        console.error('Selected test or questions are undefined');
-        return;
-    }
+  if (!test || !test.questions) {
+      console.error('Selected test or questions are undefined');
+      return;
+  }
 
-    const questionsA = generateRandomSequence(test.questions);
-    const questionsB = generateRandomSequence(test.questions);
+  // Show confirmation dialog
+  const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Do you want to generate the PDF files for this test?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, generate!'
+  });
 
-    await generatePDFWithQRCode(questionsA, 'A');
-    await generatePDFWithQRCode(questionsB, 'B');
-    await generateAnswerSheetPDF(test.questions.length, test.questions[0].choices.length); // Generate answer sheet PDF
+  if (result.isConfirmed) {
+      // User confirmed
+      const questionsA = generateRandomSequence(test.questions);
+      const questionsB = generateRandomSequence(test.questions);
+
+      try {
+          await generatePDFWithQRCode(questionsA, 'A');
+          await generatePDFWithQRCode(questionsB, 'B');
+          await generateAnswerSheetPDF(test.questions.length, test.questions[0].choices.length); // Generate answer sheet PDF
+          
+          Swal.fire({
+              icon: 'success',
+              title: 'Success!',
+              text: 'PDFs have been generated successfully!',
+          });
+      } catch (error) {
+          Swal.fire({
+              icon: 'error',
+              title: 'Error!',
+              text: `Failed to generate PDFs: ${error.message}`,
+          });
+      }
+  } else {
+      // User canceled
+      Swal.fire({
+          icon: 'info',
+          title: 'Cancelled',
+          text: 'PDF generation has been cancelled.',
+      });
+  }
 };
+
   
 
   const filteredTests = savedTests.filter((test) =>
@@ -534,28 +673,30 @@ const handlePrint = async (test) => {
 
   return (
     <div className='ml-80 p-4'>
+      <h2 className="text-2xl font-semibold mb-4">Test Questions</h2>
       <div className="flex items-center">
-      <button className='flex items-center w-40 h-10 mt-5 text-center shadow-sm py-2 rounded-md bg-blue-500 font-medium text-2xl text-white hover:bg-blue-700 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-blue-500 sm:ml-4 sm:text-sm' onClick={openModal}>
-        <span className="ml-7">Test Question</span>
-        <MdAdd className='h-6 w-6' />
-      </button>
-        <input
+      <input
           type="text"
           placeholder="Search..."
           value={searchTerm}
           onChange={handleSearch}
-          className="w-80 h-10 pl-3 pr-10 mt-5 ml-72 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-indigo-500 sm:text-sm"
+          className="w-80 h-10 pl-3 pr-10 mt-2 ml-10 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-indigo-500 sm:text-sm"
         />
         <select
           value={selectedTestType}
           onChange={handleTestTypeFilterChange}
-          className="w-48 h-10 pl-3 pr-10 mt-5 ml-4 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-indigo-500 sm:text-sm"
+          className="w-48 h-10 pl-3 pr-10 mt-2 ml-60 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-indigo-500 sm:text-sm"
         >
           <option value="">All Test Types</option>
           {savedTests.map((test, index) => (
             <option key={index} value={test.name}>{test.name}</option>
           ))}
         </select>
+      <button className='flex items-center w-40 h-10 mt-2 text-center shadow-sm py-2 rounded-md bg-blue-500 font-medium text-2xl text-white hover:bg-blue-700 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-blue-500 sm:ml-4 sm:text-sm' onClick={openModal}>
+        <span className="ml-7">Test Question</span>
+        <MdAdd className='h-6 w-6' />
+      </button>
+
       </div>
 
       {/* Display saved tests in a scrollable table */}
