@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, getDocs, query, where, writeBatch } from 'firebase/firestore';
 import { db, storage } from '../config/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import Swal from 'sweetalert2';
@@ -77,7 +77,7 @@ function StudentProfile() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+    
         const result = await Swal.fire({
             title: 'Are you sure?',
             text: "Do you really want to save the changes?",
@@ -86,19 +86,19 @@ function StudentProfile() {
             confirmButtonText: 'Yes, save it!',
             cancelButtonText: 'No, cancel!',
         });
-
+    
         if (result.isConfirmed) {
             try {
                 // Validation for Contact Number
                 if (!/^09\d{9}$/.test(student.contactNumber)) {
                     throw new Error('Invalid contact number format. It should start with "09".');
                 }
-
+    
                 // Validation for Age
                 if (isNaN(student.age) || student.age <= 0) {
                     throw new Error('Age should be a valid number.');
                 }
-
+    
                 // Upload image to Firebase Storage if there's a new file selected
                 let imageUrl = student.image;
                 if (imageFile) {
@@ -106,16 +106,38 @@ function StudentProfile() {
                     await uploadBytes(storageRef, imageFile);
                     imageUrl = await getDownloadURL(storageRef);
                 }
-
+    
                 const updatedStudent = {
                     ...student,
                     image: imageUrl,
                 };
-
-                const docRef = doc(db, 'students', id);
-                await updateDoc(docRef, updatedStudent);
+  
+                // Update student document
+                const studentDocRef = doc(db, 'students', id);
+                await updateDoc(studentDocRef, updatedStudent);
+    
+                // Update related attendance records
+                const attendanceCollection = collection(db, 'attendance');
+                const q = query(attendanceCollection, where('studentId', '==', id));
+                const attendanceSnapshot = await getDocs(q);
+    
+                const batch = writeBatch(db);
+                attendanceSnapshot.forEach(doc => {
+                    const attendanceDocRef = doc.ref;
+                    batch.update(attendanceDocRef, {
+                        FName: updatedStudent.FName,
+                        LName: updatedStudent.LName,
+                        MName: updatedStudent.MName,
+                        grade: updatedStudent.grade,
+                        section: updatedStudent.section,
+                        image: updatedStudent.image,
+                    });
+                });
+    
+                await batch.commit();
+    
                 Swal.fire('Success', 'Student details updated successfully', 'success');
-
+    
                 setIsEditingImage(false); // Close editing mode after successful update
                 navigate('/sections'); // Navigate to /sections after successful update
             } catch (error) {
@@ -123,7 +145,8 @@ function StudentProfile() {
                 Swal.fire('Error', error.message, 'error');
             }
         }
-    };
+    };    
+
 
     return (
         <div className="ml-80 p-4">
