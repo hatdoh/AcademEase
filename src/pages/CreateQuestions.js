@@ -19,6 +19,7 @@ import Swal from 'sweetalert2';
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.js`;
 
 function CreateQuestions(props) {
+  const [id, setId] = useState(null);
   const [directions, setDirections] = useState('');
   const [selectedTestId, setSelectedTestId] = useState(null);
   const [isSetModalVisible, setSetModalVisible] = useState(false);
@@ -72,6 +73,7 @@ function CreateQuestions(props) {
   const handleDropdownChange = (e) => {
     const count = parseInt(e.target.value);
     setSelectedOption(count);
+    // Ensure items input and answer sheet are updated to match the new dropdown value
     setItemsInput(Array.from({ length: count }, (_, index) => ({
       question: `Question ${index + 1}`,
       choices: [
@@ -79,8 +81,10 @@ function CreateQuestions(props) {
         { id: 1, text: '' },
         { id: 2, text: '' },
         { id: 3, text: '' }
-      ]
+      ],
+      correctAnswer: null
     })));
+  
     const answerSet = Array.from({ length: count }, () => ['A', 'B', 'C', 'D']);
     setAnswerSheet(answerSet.map(answer => ({ selected: null, options: answer })));
   };
@@ -101,118 +105,119 @@ function CreateQuestions(props) {
       }))
     );
   };
-  
 
   const handleSave = () => {
     if (!testName || testName.trim() === '') {
-      Swal.fire({
-        icon: 'error',
-        title: 'Oops...',
-        text: 'Please enter the test name!',
-      });
-      return;
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Please enter the test name!',
+        });
+        return;
     }
-  
+
     if (!selectedDate) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Oops...',
-        text: 'Please select a date!',
-      });
-      return;
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Please select a date!',
+        });
+        return;
     }
-  
+
     if (!selectedOption) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Oops...',
-        text: 'Please select the number of items!',
-      });
-      return;
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Please select the number of items!',
+        });
+        return;
     }
-  
+
     if (itemsInput.some(item => !item.question || item.question.trim() === '')) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Oops...',
-        text: 'Please enter all questions!',
-      });
-      return;
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Please enter all questions!',
+        });
+        return;
     }
-  
+
     if (itemsInput.some(item => item.choices.some(choice => !choice.text || choice.text.trim() === ''))) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Oops...',
-        text: 'Please fill out all choices!',
-      });
-      return;
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Please fill out all choices!',
+        });
+        return;
     }
-  
+
     if (itemsInput.some(item => !item.correctAnswer || item.correctAnswer.trim() === '')) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Oops...',
-        text: 'Please select the correct answer for all questions!',
-      });
-      return;
-    }
-  
-    const newTest = {
-      name: testName,
-      date: selectedDate,
-      items: selectedOption,
-      directions: directions, // Include directions
-      questions: itemsInput.map((item, index) => ({
-        question: item.question,
-        choices: item.choices.map(choice => ({
-          id: choice.id,
-          text: choice.text,
-          checked: choice.checked
-        })),
-        correctAnswer: item.correctAnswer
-      }))
-    };
-  
-    const successMessage = () => {
-      Swal.fire({
-        icon: 'success',
-        title: 'Success!',
-        text: 'Test updated successfully!',
-      });
-    };
-  
-    if (editIndex !== null) {
-      // Edit existing test
-      const editRef = ref(db, `data/tests/${savedTests[editIndex].id}`);
-      set(editRef, newTest)
-        .then(() => {
-          successMessage();
-        })
-        .catch((error) => {
-          Swal.fire({
+        Swal.fire({
             icon: 'error',
-            title: 'Error!',
-            text: `Error: ${error.message}`,
-          });
+            title: 'Oops...',
+            text: 'Please select the correct answer for all questions!',
         });
-    } else {
-      // Save new test
-      push(ref(db, 'data/tests'), newTest)
-        .then(() => {
-          successMessage();
-        })
-        .catch((error) => {
-          Swal.fire({
-            icon: 'error',
-            title: 'Error!',
-            text: `Error: ${error.message}`,
-          });
-        });
+        return;
     }
-  
-    closeModal(); // Close modal after saving or editing
+
+      const newTest = {
+    name: testName,
+    date: selectedDate,
+    items: selectedOption,
+    directions: directions, // Include directions
+    questions: itemsInput.map((item, index) => ({
+      question: item.question,
+      choices: item.choices.map(choice => ({
+        id: choice.id,
+        text: choice.text,
+        checked: choice.checked
+      })),
+      correctAnswer: item.correctAnswer
+    }))
   };
+
+  const successMessage = () => {
+    Swal.fire({
+      icon: 'success',
+      title: 'Success!',
+      text: 'Test updated successfully!',
+    });
+  };
+
+  if (editIndex !== null) {
+    // Edit existing test
+    const editRef = ref(db, `data/tests/${savedTests[editIndex].id}`);
+    set(editRef, newTest)
+      .then(() => {
+        successMessage();
+        generatePDF(newTest.questions, newTest.name, newTest.directions); // Call generatePDF here
+      })
+      .catch((error) => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: `Error: ${error.message}`,
+        });
+      });
+  } else {
+    // Save new test
+    push(ref(db, 'data/tests'), newTest)
+      .then(() => {
+        successMessage();
+        generatePDF(newTest.questions, newTest.name, newTest.directions); // Call generatePDF here
+      })
+      .catch((error) => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: `Error: ${error.message}`,
+        });
+      });
+  }
+
+  closeModal(); // Close modal after saving or editing
+};
 
 const handleDelete = (index, testId) => {
   Swal.fire({
@@ -377,52 +382,50 @@ const handleEdit = (index) => {
 
 const handlePrint = async (test) => {
   if (!test || !test.questions) {
-      console.error('Selected test or questions are undefined');
-      return;
+    console.error('Selected test or questions are undefined');
+    return;
   }
 
-  // Show confirmation dialog
   const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: 'Do you want to generate the PDF files for this test?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, generate!'
+    title: 'Are you sure?',
+    text: 'Do you want to generate the PDF files for this test?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, generate!'
   });
 
   if (result.isConfirmed) {
-      // User confirmed
-      const questionsA = generateRandomSequence(test.questions);
-      const questionsB = generateRandomSequence(test.questions);
+    const questionsA = generateRandomSequence(test.questions);
+    const questionsB = generateRandomSequence(test.questions);
 
-      try {
-          await generatePDFWithQRCode(questionsA, 'A');
-          await generatePDFWithQRCode(questionsB, 'B');
-          await generateAnswerSheetPDF(test.questions.length, test.questions[0].choices.length); // Generate answer sheet PDF
-          
-          Swal.fire({
-              icon: 'success',
-              title: 'Success!',
-              text: 'PDFs have been generated successfully!',
-          });
-      } catch (error) {
-          Swal.fire({
-              icon: 'error',
-              title: 'Error!',
-              text: `Failed to generate PDFs: ${error.message}`,
-          });
-      }
-  } else {
-      // User canceled
+    try {
+      await generatePDF(questionsA, 'A', test.directions); // Pass directions
+      await generatePDF(questionsB, 'B', test.directions); // Pass directions
+      await generateAnswerSheetPDF(test.questions.length, test.questions[0].choices.length);
+
       Swal.fire({
-          icon: 'info',
-          title: 'Cancelled',
-          text: 'PDF generation has been cancelled.',
+        icon: 'success',
+        title: 'Success!',
+        text: 'PDFs have been generated successfully!',
       });
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: `Failed to generate PDFs: ${error.message}`,
+      });
+    }
+  } else {
+    Swal.fire({
+      icon: 'info',
+      title: 'Cancelled',
+      text: 'PDF generation has been cancelled.',
+    });
   }
 };
+
 
   const filteredTests = savedTests.filter((test) =>
     test.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -435,12 +438,19 @@ const handlePrint = async (test) => {
       const fileType = file.name.split('.').pop().toLowerCase();
       let content = '';
   
-      if (fileType === 'pdf') {
-        content = await readPdfFile(file);
-      } else if (fileType === 'docx') {
-        content = await readDocxFile(file);
-      } else if (fileType === 'xlsx' || fileType === 'xls') {
-        content = await readExcelFile(file);
+      try {
+        if (fileType === 'pdf') {
+          content = await readPdfFile(file);
+        } else if (fileType === 'docx') {
+          content = await readDocxFile(file);
+        } else if (fileType === 'xlsx' || fileType === 'xls') {
+          content = await readExcelFile(file);
+        } else {
+          throw new Error('Unsupported file type');
+        }
+      } catch (error) {
+        console.error('Error reading file:', error);
+        return;
       }
   
       const lines = content.split('\n')
@@ -454,18 +464,18 @@ const handlePrint = async (test) => {
       lines.forEach(line => {
         if (/^directions:/i.test(line)) {
           directionsText = line.replace(/^directions:/i, '').trim();
-        } else if (line.endsWith('?') || line.endsWith('.')) {
+        } else if (/^\d+\.\s/.test(line) || /^\d+\s/.test(line)) {
           if (currentQuestion) {
             currentQuestion.choices = currentQuestion.choices.filter(choice => choice.text.trim() !== '');
             items.push(currentQuestion);
           }
-          const questionWithoutNumber = line.replace(/^\d+[\.\s]*/, '').trim();
+          const questionWithoutNumber = line.replace(/^\d+\.\s*/, '').replace(/^\d+\s*/, '').trim();
           currentQuestion = {
             question: questionWithoutNumber,
             choices: Array.from({ length: 4 }, (_, index) => ({ id: index, text: '', checked: false })),
             correctAnswer: null
           };
-        } else if (line.match(/^[A-D][.)]\s/)) {
+        } else if (/^[A-D][.)]\s/.test(line)) {
           if (currentQuestion) {
             const choiceIndex = line.charCodeAt(0) - 65;
             const choiceText = line.replace(/^[A-D][.)]\s*/, '').trim();
@@ -475,9 +485,9 @@ const handlePrint = async (test) => {
               checked: false
             };
           }
-        } else if (line.startsWith('Answer:') || line.startsWith('answer:')) {
+        } else if (/^(Answer:|answer:|Correct Answer:|correct answer:|Right Answer:|right answer:)\s*/i.test(line)) {
           if (currentQuestion) {
-            const correctAnswer = line.replace(/Answer:|answer:/, '').trim().replace(/[^A-D]/g, '');
+            const correctAnswer = line.replace(/^(Answer:|answer:|Correct Answer:|correct answer:|Right Answer:|right answer:)\s*/i, '').trim().replace(/[^A-D]/g, '');
             currentQuestion.correctAnswer = correctAnswer;
             const correctIndex = correctAnswer.charCodeAt(0) - 65;
             currentQuestion.choices[correctIndex].checked = true;
@@ -490,15 +500,19 @@ const handlePrint = async (test) => {
         items.push(currentQuestion);
       }
   
+      const itemCount = items.length;
       setItemsInput(items);
       setDirections(directionsText); // Set the directions state
-      setSelectedOption(items.length);
+  
+      // Update the dropdown value and answer sheet
+      setSelectedOption(itemCount);
       setAnswerSheet(items.map(item => ({
         selected: item.correctAnswer ? item.correctAnswer.charCodeAt(0) - 65 : null,
         options: item.choices.map(choice => String.fromCharCode(65 + choice.id))
       })));
     }
-  };      
+  };
+    
   
   const readPdfFile = async (file) => {
     const arrayBuffer = await file.arrayBuffer();
@@ -553,7 +567,7 @@ const handlePrint = async (test) => {
     }
   };
 
-  const generatePDFWithQRCode = async (questions, setId) => {
+  const generatePDF = async (questions, testName, directions) => {
     const doc = new jsPDF({ format: 'a4' });
 
     // Define margins based on A4 size
@@ -579,31 +593,46 @@ const handlePrint = async (test) => {
     centerText('REGION V - BICOL', marginTop + 10);
     centerText('SCHOOLS DIVISION OF CAMARINES NORTE', marginTop + 15);
     centerText('MORENO INTEGRATED SCHOOL', marginTop + 20);
-    doc.text('_________________________________________________________________________', marginLeft, marginTop + 25);
+
+    const lineY = marginTop + 25;
+    const lineText = '_________________________________________________________________________';
+    const lineTextWidth = doc.getTextWidth(lineText);
+    const adjustedLineMarginLeft = marginLeft; // Adjust the margin left as needed
+
+    doc.text(lineText, adjustedLineMarginLeft, lineY);
+
     centerText('PRE-FINAL EXAMINATION', marginTop + 30);
     centerText('Technology and Livelihood Education Cookery', marginTop + 35);
 
-    // Remove directions section
-    // doc.text("Directions:", marginLeft, marginTop + 45);
+    // Add Directions section
+    const directionsY = marginTop + 45;
+    const directionsLabel = "Directions:";
+    doc.text(directionsLabel, marginLeft, directionsY);
 
-    // const directionsY = marginTop + 50;
-    // const directionsTextLines = doc.splitTextToSize(directions || '', pageWidth - marginLeft - marginRight);
-    // directionsTextLines.forEach((line, index) => {
-    //     doc.text(line, marginLeft, directionsY + (index * 10)); // Adjust spacing between lines as needed
-    // });
+    // Calculate the width of the "Directions:" label
+    const directionsLabelWidth = doc.getTextWidth(directionsLabel);
+    const directionsTextX = marginLeft + directionsLabelWidth + 2; // Add some padding
+
+    // Get the lines of directions text
+    const directionsTextLines = doc.splitTextToSize(directions || '', pageWidth - directionsTextX - marginRight);
+
+    // Print the directions text next to the "Directions:" label
+    directionsTextLines.forEach((line, index) => {
+        doc.text(line, directionsTextX, directionsY + (index * 10)); // Adjust spacing between lines as needed
+    });
 
     // Add SCORE box
     const boxSize = 20;
-    const boxX = pageWidth - marginRight - boxSize;
-    const boxY = marginTop + 25 + 5; // Adjust position based on removed directions
+    const boxX = adjustedLineMarginLeft + lineTextWidth + 5; // Adjust position to the right of the line
+    const boxY = lineY - 10; // Adjust to align with the line
     doc.rect(boxX, boxY, boxSize, boxSize); // Draw a rectangle for the box
     doc.text('SCORE', boxX + boxSize / 2 - doc.getTextWidth('SCORE') / 2, boxY + boxSize / 2 + 8); // Add SCORE text
 
     // Set initial yOffset for questions
-    let yOffset = boxY + boxSize + 10; // Adjust as needed for spacing
-    const columnWidth = (pageWidth - marginLeft - marginRight) / 2; // Width for two columns
-    const textMaxWidth = columnWidth - 20; // Width for text including padding
-    const textMaxWidthSingleColumn = pageWidth - marginLeft - marginRight; // Width for single column
+    let yOffset = directionsY + directionsTextLines.length * 10; // Adjust as needed for spacing
+
+    // Width for questions should match directions text width
+    const questionTextMaxWidth = pageWidth - directionsTextX - marginRight; // Same width as directions text
 
     questions.forEach((item, index) => {
         // Add new page if necessary
@@ -611,83 +640,45 @@ const handlePrint = async (test) => {
             doc.addPage();
             yOffset = marginTop; // Reset yOffset for new page
         }
+
         // Set the font size for the question text
         doc.setFontSize(11);
 
         // Print the question text
-        doc.text(`${index + 1}. ${item.question}`, marginLeft, yOffset);
-
-        // Set the font size for the answer choices
-        doc.setFontSize(11);
-
-        // Determine layout based on text length
-        let useSingleColumn = item.choices.some(choice => {
-            const choiceText = choice.text;
-            const textWidth = doc.getTextWidth(choiceText);
-            return textWidth > textMaxWidth;
+        const questionLines = doc.splitTextToSize(`${index + 1}. ${item.question}`, questionTextMaxWidth);
+        questionLines.forEach((line, lineIndex) => {
+            doc.text(line, marginLeft, yOffset + (lineIndex * 5));
         });
+
+        yOffset += questionLines.length * 5; // Update yOffset after printing question
 
         // Set the starting positions for the answer choices
-        let startX1 = marginLeft; // Start of first column
-        let startX2 = marginLeft + columnWidth; // Start of second column
-        let startX = startX1; // Default to first column
-        let startY = yOffset + 5; // Start position for choices
-        let spacingY = 4; // Adjust the vertical spacing between rows as needed
+        const choiceStartX = marginLeft; // Start position for choices
+        let choiceStartY = yOffset; // Start position for choices
 
         item.choices.forEach((choice, choiceIndex) => {
-            // Use single column layout if text is too long
-            if (useSingleColumn) {
-                startX = marginLeft;
-                const choiceText = choice.text;
-                const textLines = doc.splitTextToSize(choiceText, textMaxWidthSingleColumn);
+            const choiceText = choice.text;
+            const choiceLines = doc.splitTextToSize(`${String.fromCharCode(65 + choiceIndex)}. ${choiceText}`, questionTextMaxWidth);
 
-                if (startY + (textLines.length * 5) > pageHeight - marginBottom) {
-                    doc.addPage();
-                    startY = marginTop;
-                }
+            // Print the choice text
+            choiceLines.forEach((line, lineIndex) => {
+                doc.text(line, choiceStartX, choiceStartY + (lineIndex * 5));
+            });
 
-                // Print the choice letter and text in a single column
-                doc.text(`${String.fromCharCode(65 + choiceIndex)}. ${textLines[0]}`, startX, startY);
-                textLines.slice(1).forEach((line, lineIndex) => {
-                    doc.text(line, startX, startY + ((lineIndex + 1) * 5));
-                });
-
-                startY += Math.max(2, textLines.length * 5);
-            } else {
-                const column = choiceIndex % 2;
-                const row = Math.floor(choiceIndex / 2);
-
-                startX = column === 0 ? startX1 : startX2;
-                let yPosition = startY + row * spacingY;
-
-                // Wrap text if it exceeds column width
-                const choiceText = choice.text;
-                const textLines = doc.splitTextToSize(choiceText, textMaxWidth);
-
-                // Print the choice letter and text in two columns
-                doc.text(`${String.fromCharCode(65 + choiceIndex)}. ${textLines[0]}`, startX, yPosition);
-                textLines.slice(1).forEach((line, lineIndex) => {
-                    doc.text(line, startX, yPosition + ((lineIndex + 1) * 2));
-                });
-
-                // Add a new page if needed and adjust yOffset
-                if (yPosition + (textLines.length * 2) > pageHeight - marginBottom) {
-                    doc.addPage();
-                    startY = marginTop;
-                    startX1 = marginLeft; // Reset to start of first column
-                    startX2 = marginLeft + columnWidth; // Reset to start of second column
-                }
-            }
+            choiceStartY += choiceLines.length * 5; // Update position for next choice
         });
 
-        // Update yOffset for the next set of questions
-        yOffset = startY + Math.max(item.choices.length * spacingY, -3); // Adjust spacing as needed
+        // Update yOffset for the next question
+        yOffset = choiceStartY + 1; // Ensure enough space for the next question
     });
 
     // Save the PDF
-    doc.save(`Test_${setId}.pdf`);
+    doc.save('Test.pdf');
 };
 
+const handleDirectionsChange = (e) => {
+  setDirections(e.target.value);
+};
 
   const handleCloseSetModal = () => {
     setSetModalVisible(false);
@@ -768,7 +759,7 @@ const handlePrint = async (test) => {
       <ModalTestQuestion isOpen={isModalOpen} onClose={closeModal} onSave={handleSave}>
         <div className="flex justify-left items-left">
           <div className="flex flex-col items-left w-full">
-            <label className="text-lg font-bold mb-2">Name</label>
+            <label className="text-lg font-bold mb-2">Exam Name</label>
             <input
               className="px-6 uppercase w-full h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               placeholder="Input Here"
@@ -810,12 +801,12 @@ const handlePrint = async (test) => {
         <div className="gap-4 justify-center mt-4">
         {/* Display Directions */}
         <div className="flex flex-col items-center mt-4">
-          <label className="uppercase text-lg font-bold mt-5 mb-2">Directions</label>
+          <label className="uppercase text-lg font-bold mt-5 mb-2">Exam Directions</label>
           <textarea
             className="text-left px-4 py-2 w-5/6 h-24 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             placeholder="Enter directions here"
             value={directions}
-            onChange={(e) => setDirections(e.target.value)}
+            onChange={handleDirectionsChange}
           />
         </div>
 
