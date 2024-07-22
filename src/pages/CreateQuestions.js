@@ -19,6 +19,7 @@ import Swal from 'sweetalert2';
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.js`;
 
 function CreateQuestions(props) {
+  const [directions, setDirections] = useState('');
   const [selectedTestId, setSelectedTestId] = useState(null);
   const [isSetModalVisible, setSetModalVisible] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -104,116 +105,114 @@ function CreateQuestions(props) {
 
   const handleSave = () => {
     if (!testName || testName.trim() === '') {
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: 'Please enter the test name!',
-        });
-        return;
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please enter the test name!',
+      });
+      return;
     }
-
+  
     if (!selectedDate) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: 'Please select a date!',
-        });
-        return;
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please select a date!',
+      });
+      return;
     }
-
+  
     if (!selectedOption) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: 'Please select the number of items!',
-        });
-        return;
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please select the number of items!',
+      });
+      return;
     }
-
+  
     if (itemsInput.some(item => !item.question || item.question.trim() === '')) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: 'Please enter all questions!',
-        });
-        return;
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please enter all questions!',
+      });
+      return;
     }
-
+  
     if (itemsInput.some(item => item.choices.some(choice => !choice.text || choice.text.trim() === ''))) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: 'Please fill out all choices!',
-        });
-        return;
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please fill out all choices!',
+      });
+      return;
     }
-
+  
     if (itemsInput.some(item => !item.correctAnswer || item.correctAnswer.trim() === '')) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: 'Please select the correct answer for all questions!',
-        });
-        return;
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please select the correct answer for all questions!',
+      });
+      return;
     }
-
+  
     const newTest = {
-        name: testName,
-        date: selectedDate,
-        items: selectedOption,
-        questions: itemsInput.map((item, index) => ({
-            question: item.question,
-            choices: item.choices.map(choice => ({
-                id: choice.id,
-                text: choice.text,
-                checked: choice.checked
-            })),
-            correctAnswer: item.correctAnswer
-        }))
+      name: testName,
+      date: selectedDate,
+      items: selectedOption,
+      directions: directions, // Include directions
+      questions: itemsInput.map((item, index) => ({
+        question: item.question,
+        choices: item.choices.map(choice => ({
+          id: choice.id,
+          text: choice.text,
+          checked: choice.checked
+        })),
+        correctAnswer: item.correctAnswer
+      }))
     };
-
+  
     const successMessage = () => {
-        Swal.fire({
-            icon: 'success',
-            title: 'Success!',
-            text: 'Test updated successfully!',
-        });
+      Swal.fire({
+        icon: 'success',
+        title: 'Success!',
+        text: 'Test updated successfully!',
+      });
     };
-
+  
     if (editIndex !== null) {
-        // Edit existing test
-        const editRef = ref(db, `data/tests/${savedTests[editIndex].id}`);
-        set(editRef, newTest)
-            .then(() => {
-                successMessage();
-            })
-            .catch((error) => {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error!',
-                    text: `Error: ${error.message}`,
-                });
-            });
+      // Edit existing test
+      const editRef = ref(db, `data/tests/${savedTests[editIndex].id}`);
+      set(editRef, newTest)
+        .then(() => {
+          successMessage();
+        })
+        .catch((error) => {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: `Error: ${error.message}`,
+          });
+        });
     } else {
-        // Save new test
-        push(ref(db, 'data/tests'), newTest)
-            .then(() => {
-                successMessage();
-            })
-            .catch((error) => {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error!',
-                    text: `Error: ${error.message}`,
-                });
-            });
+      // Save new test
+      push(ref(db, 'data/tests'), newTest)
+        .then(() => {
+          successMessage();
+        })
+        .catch((error) => {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: `Error: ${error.message}`,
+          });
+        });
     }
-
+  
     closeModal(); // Close modal after saving or editing
-};
-
-
-
+  };
 
 const handleDelete = (index, testId) => {
   Swal.fire({
@@ -248,8 +247,6 @@ const handleDelete = (index, testId) => {
       }
   });
 };
-
-  
 
 const handleEdit = (index) => {
   const test = savedTests[index];
@@ -427,8 +424,6 @@ const handlePrint = async (test) => {
   }
 };
 
-  
-
   const filteredTests = savedTests.filter((test) =>
     test.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
     (selectedTestType === '' || test.name === selectedTestType)
@@ -454,9 +449,12 @@ const handlePrint = async (test) => {
   
       const items = [];
       let currentQuestion = null;
+      let directionsText = '';
   
       lines.forEach(line => {
-        if (line.endsWith('?') || line.endsWith('.')) {
+        if (/^directions:/i.test(line)) {
+          directionsText = line.replace(/^directions:/i, '').trim();
+        } else if (line.endsWith('?') || line.endsWith('.')) {
           if (currentQuestion) {
             currentQuestion.choices = currentQuestion.choices.filter(choice => choice.text.trim() !== '');
             items.push(currentQuestion);
@@ -493,18 +491,14 @@ const handlePrint = async (test) => {
       }
   
       setItemsInput(items);
-  
-      // Update the state of the number of selected items based on the items or questions parsed
+      setDirections(directionsText); // Set the directions state
       setSelectedOption(items.length);
-  
-      // Update answer sheet based on the correct answer
       setAnswerSheet(items.map(item => ({
         selected: item.correctAnswer ? item.correctAnswer.charCodeAt(0) - 65 : null,
         options: item.choices.map(choice => String.fromCharCode(65 + choice.id))
       })));
     }
-  };
-  
+  };      
   
   const readPdfFile = async (file) => {
     const arrayBuffer = await file.arrayBuffer();
@@ -562,8 +556,6 @@ const handlePrint = async (test) => {
   const generatePDFWithQRCode = async (questions, setId) => {
     const doc = new jsPDF({ format: 'a4' });
 
-    const qrCodeDataUrl = await generateQRCode(setId);
-
     // Define margins based on A4 size
     const marginTop = 10; // margin from top
     const marginBottom = 20; // margin from bottom
@@ -572,13 +564,43 @@ const handlePrint = async (test) => {
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
 
-    // Print Name and School ID and QR Code at the beginning of the document
-    doc.text('Name: ____________________', marginLeft, marginTop);
-    doc.text('Student ID: ___________________', marginLeft, marginTop + 10);
-    doc.addImage(qrCodeDataUrl, 'PNG', pageWidth - marginRight - 40, marginTop, 40, 40);
+    doc.setFontSize(11);
+
+    // Centered text helper function
+    const centerText = (text, y) => {
+        const textWidth = doc.getTextWidth(text);
+        const x = (pageWidth - textWidth) / 2;
+        doc.text(text, x, y);
+    };
+
+    // Print Name and School ID and SCORE box at the beginning of the document
+    centerText('Republic of the Philippines', marginTop);
+    centerText('Department of Education', marginTop + 5);
+    centerText('REGION V - BICOL', marginTop + 10);
+    centerText('SCHOOLS DIVISION OF CAMARINES NORTE', marginTop + 15);
+    centerText('MORENO INTEGRATED SCHOOL', marginTop + 20);
+    doc.text('_________________________________________________________________________', marginLeft, marginTop + 25);
+    centerText('PRE-FINAL EXAMINATION', marginTop + 30);
+    centerText('Technology and Livelihood Education Cookery', marginTop + 35);
+
+    // Remove directions section
+    // doc.text("Directions:", marginLeft, marginTop + 45);
+
+    // const directionsY = marginTop + 50;
+    // const directionsTextLines = doc.splitTextToSize(directions || '', pageWidth - marginLeft - marginRight);
+    // directionsTextLines.forEach((line, index) => {
+    //     doc.text(line, marginLeft, directionsY + (index * 10)); // Adjust spacing between lines as needed
+    // });
+
+    // Add SCORE box
+    const boxSize = 20;
+    const boxX = pageWidth - marginRight - boxSize;
+    const boxY = marginTop + 25 + 5; // Adjust position based on removed directions
+    doc.rect(boxX, boxY, boxSize, boxSize); // Draw a rectangle for the box
+    doc.text('SCORE', boxX + boxSize / 2 - doc.getTextWidth('SCORE') / 2, boxY + boxSize / 2 + 8); // Add SCORE text
 
     // Set initial yOffset for questions
-    let yOffset = marginTop + 50; // Adjust as needed for spacing
+    let yOffset = boxY + boxSize + 10; // Adjust as needed for spacing
     const columnWidth = (pageWidth - marginLeft - marginRight) / 2; // Width for two columns
     const textMaxWidth = columnWidth - 20; // Width for text including padding
     const textMaxWidthSingleColumn = pageWidth - marginLeft - marginRight; // Width for single column
@@ -589,7 +611,6 @@ const handlePrint = async (test) => {
             doc.addPage();
             yOffset = marginTop; // Reset yOffset for new page
         }
-
         // Set the font size for the question text
         doc.setFontSize(11);
 
@@ -663,6 +684,7 @@ const handlePrint = async (test) => {
         yOffset = startY + Math.max(item.choices.length * spacingY, -3); // Adjust spacing as needed
     });
 
+    // Save the PDF
     doc.save(`Test_${setId}.pdf`);
 };
 
@@ -784,76 +806,78 @@ const handlePrint = async (test) => {
               <label className="text-lg font-bold mb-2">File Content</label>
               <pre>{fileContent}</pre>
             </div> */}
-          </div>
-        <div className="gap-4 justify-center mt-4">
-        {itemsInput.map((item, index) => (
-        <div key={index} className="flex flex-col items-center m-1 mt-5 shadow-blue-500/50 shadow-xl">
-          <label className="uppercase text-lg font-bold mt-5 mb-2">Question {index + 1}</label>
-          <input
-            className="uppercase text-left px-8 w-5/6 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            placeholder={`Input Here ${index + 1}`}
-            value={item.question}
-            onChange={(e) => {
-              const newItemsInput = [...itemsInput];
-              newItemsInput[index].question = e.target.value;
-              setItemsInput(newItemsInput);
-            }}
-          />
-          {/* Display file content here */}
-          {/* Inside the mapping of itemsInput.map((item, index)) */}
-                    {/* Inside the mapping of itemsInput.map((item, index)) */}
-          {item.choices.map((choice, choiceIndex) => (
-            <div key={choice.id} className="flex items-center px-8 mt-2 w-full">
-              <input
-                type="checkbox"
-                checked={choice.checked || false}
-                onChange={(e) => {
-                  const newItemsInput = [...itemsInput];
-                  // Uncheck all other choices in the same question
-                  newItemsInput[index].choices.forEach((ch, idx) => {
-                    if (choiceIndex !== idx) ch.checked = false;
-                  });
-                  // Toggle current choice
-                  newItemsInput[index].choices[choiceIndex].checked = e.target.checked;
-                  setItemsInput(newItemsInput);
-                }}
-              />
-              <input
-                className="uppercase text-left ml-4 px-10 w-11/12 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder={`Answer ${String.fromCharCode(65 + choiceIndex)}`}
-                value={choice.text}
-                onChange={(e) => {
-                  const newItemsInput = [...itemsInput];
-                  newItemsInput[index].choices[choiceIndex].text = e.target.value;
-                  setItemsInput(newItemsInput);
-                }}
-              />
-            </div>
-          ))}
-
-          <div className="flex mt-2">
-            <button
-              onClick={() => {
-                handleAddChoice(index);
-              }}
-              className="flex items-center mb-10 mr-2 shadow-xl text-blue-500 font-bold py-2 px-4 rounded"
-            >
-              <span>New Answer</span><MdAdd className='h-6 w-6' />
-            </button>
-            {item.choices.length > 1 && (
-              <button
-                onClick={() => {
-                  handleRemoveChoice(index);
-                }}
-                className="flex items-center mb-10 shadow-xl text-red-700 font-bold py-2 px-4 rounded"
-              >
-                <span>Remove</span> <MdDelete className='h-6 w-6'/>
-              </button>
-            )}
-          </div>
         </div>
-      ))}
+        <div className="gap-4 justify-center mt-4">
+        {/* Display Directions */}
+        <div className="flex flex-col items-center mt-4">
+          <label className="uppercase text-lg font-bold mt-5 mb-2">Directions</label>
+          <textarea
+            className="text-left px-4 py-2 w-5/6 h-24 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            placeholder="Enter directions here"
+            value={directions}
+            onChange={(e) => setDirections(e.target.value)}
+          />
+        </div>
 
+        {/* Display Questions */}
+        {itemsInput.map((item, index) => (
+          <div key={index} className="flex flex-col items-center m-1 mt-5 shadow-blue-500/50 shadow-xl">
+            <label className="uppercase text-lg font-bold mt-5 mb-2">Question {index + 1}</label>
+            <input
+              className="uppercase text-left px-8 w-5/6 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              placeholder={`Input Here ${index + 1}`}
+              value={item.question}
+              onChange={(e) => {
+                const newItemsInput = [...itemsInput];
+                newItemsInput[index].question = e.target.value;
+                setItemsInput(newItemsInput);
+              }}
+            />
+            {item.choices.map((choice, choiceIndex) => (
+              <div key={choice.id} className="flex items-center px-8 mt-2 w-full">
+                <input
+                  type="checkbox"
+                  checked={choice.checked || false}
+                  onChange={(e) => {
+                    const newItemsInput = [...itemsInput];
+                    newItemsInput[index].choices.forEach((ch, idx) => {
+                      if (choiceIndex !== idx) ch.checked = false;
+                    });
+                    newItemsInput[index].choices[choiceIndex].checked = e.target.checked;
+                    setItemsInput(newItemsInput);
+                  }}
+                />
+                <input
+                  className="uppercase text-left ml-4 px-10 w-11/12 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  placeholder={`Answer ${String.fromCharCode(65 + choiceIndex)}`}
+                  value={choice.text}
+                  onChange={(e) => {
+                    const newItemsInput = [...itemsInput];
+                    newItemsInput[index].choices[choiceIndex].text = e.target.value;
+                    setItemsInput(newItemsInput);
+                  }}
+                />
+              </div>
+            ))}
+
+            <div className="flex mt-2">
+              <button
+                onClick={() => handleAddChoice(index)}
+                className="flex items-center mb-10 mr-2 shadow-xl text-blue-500 font-bold py-2 px-4 rounded"
+              >
+                <span>New Answer</span><MdAdd className='h-6 w-6' />
+              </button>
+              {item.choices.length > 1 && (
+                <button
+                  onClick={() => handleRemoveChoice(index)}
+                  className="flex items-center mb-10 shadow-xl text-red-700 font-bold py-2 px-4 rounded"
+                >
+                  <span>Remove</span> <MdDelete className='h-6 w-6'/>
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
       <div className="mb-5 mt-5 sm:mt-6 sm:flex sm:flex-row-reverse">
             <button
               type="button"
