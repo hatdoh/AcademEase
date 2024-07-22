@@ -618,7 +618,7 @@ const handlePrint = async (test) => {
 
     // Print the directions text next to the "Directions:" label
     directionsTextLines.forEach((line, index) => {
-        doc.text(line, directionsTextX, directionsY + (index * 10)); // Adjust spacing between lines as needed
+        doc.text(line, directionsTextX, directionsY + (index * 5)); // Adjust spacing between lines as needed
     });
 
     // Add SCORE box
@@ -629,7 +629,7 @@ const handlePrint = async (test) => {
     doc.text('SCORE', boxX + boxSize / 2 - doc.getTextWidth('SCORE') / 2, boxY + boxSize / 2 + 8); // Add SCORE text
 
     // Set initial yOffset for questions
-    let yOffset = directionsY + directionsTextLines.length * 10; // Adjust as needed for spacing
+    let yOffset = directionsY + directionsTextLines.length * 5; // Adjust as needed for spacing
 
     // Width for questions should match directions text width
     const questionTextMaxWidth = pageWidth - directionsTextX - marginRight; // Same width as directions text
