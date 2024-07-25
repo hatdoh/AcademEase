@@ -16,6 +16,9 @@ import QRCode from 'qrcode';
 
 import Swal from 'sweetalert2';
 
+import morenoLogo from '../res/img/moreno-logo.jpg'
+import DepedLogo from '../res/img/deped-logo.jpg'
+
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.js`;
 
 function CreateQuestions(props) {
@@ -108,116 +111,126 @@ function CreateQuestions(props) {
 
   const handleSave = () => {
     if (!testName || testName.trim() === '') {
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: 'Please enter the test name!',
-        });
-        return;
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please enter the test name!',
+      });
+      return;
     }
-
+  
     if (!selectedDate) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: 'Please select a date!',
-        });
-        return;
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please select a date!',
+      });
+      return;
     }
-
+  
     if (!selectedOption) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: 'Please select the number of items!',
-        });
-        return;
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please select the number of items!',
+      });
+      return;
     }
-
+  
+    if (!directions || directions.trim() === '') {
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please enter the exam directions!',
+      });
+      return;
+    }
+  
     if (itemsInput.some(item => !item.question || item.question.trim() === '')) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: 'Please enter all questions!',
-        });
-        return;
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please enter all questions!',
+      });
+      return;
     }
-
+  
     if (itemsInput.some(item => item.choices.some(choice => !choice.text || choice.text.trim() === ''))) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: 'Please fill out all choices!',
-        });
-        return;
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please fill out all choices!',
+      });
+      return;
     }
-
+  
     if (itemsInput.some(item => !item.correctAnswer || item.correctAnswer.trim() === '')) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: 'Please select the correct answer for all questions!',
-        });
-        return;
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please select the correct answer for all questions!',
+      });
+      return;
     }
-
-      const newTest = {
-    name: testName,
-    date: selectedDate,
-    items: selectedOption,
-    directions: directions, // Include directions
-    questions: itemsInput.map((item, index) => ({
-      question: item.question,
-      choices: item.choices.map(choice => ({
-        id: choice.id,
-        text: choice.text,
-        checked: choice.checked
-      })),
-      correctAnswer: item.correctAnswer
-    }))
-  };
-
-  const successMessage = () => {
-    Swal.fire({
-      icon: 'success',
-      title: 'Success!',
-      text: 'Test updated successfully!',
-    });
-  };
-
-  if (editIndex !== null) {
-    // Edit existing test
-    const editRef = ref(db, `data/tests/${savedTests[editIndex].id}`);
-    set(editRef, newTest)
-      .then(() => {
-        successMessage();
-        generatePDF(newTest.questions, newTest.name, newTest.directions); // Call generatePDF here
-      })
-      .catch((error) => {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error!',
-          text: `Error: ${error.message}`,
-        });
+  
+    const newTest = {
+      name: testName,
+      date: selectedDate,
+      items: selectedOption,
+      directions: directions, // Include directions
+      questions: itemsInput.map((item, index) => ({
+        question: item.question,
+        choices: item.choices.map(choice => ({
+          id: choice.id,
+          text: choice.text,
+          checked: choice.checked
+        })),
+        correctAnswer: item.correctAnswer
+      }))
+    };
+  
+    const successMessage = () => {
+      Swal.fire({
+        icon: 'success',
+        title: 'Success!',
+        text: 'Test updated successfully!',
       });
-  } else {
-    // Save new test
-    push(ref(db, 'data/tests'), newTest)
-      .then(() => {
-        successMessage();
-        generatePDF(newTest.questions, newTest.name, newTest.directions); // Call generatePDF here
-      })
-      .catch((error) => {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error!',
-          text: `Error: ${error.message}`,
+      closeModal(); // Close modal after successful save
+    };
+  
+    if (editIndex !== null) {
+      // Edit existing test
+      const editRef = ref(db, `data/tests/${savedTests[editIndex].id}`);
+      set(editRef, newTest)
+        .then(() => {
+          successMessage();
+          generatePDF(newTest.questions, newTest.name, newTest.directions); // Call generatePDF here
+        })
+        .catch((error) => {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: `Error: ${error.message}`,
+          });
         });
-      });
-  }
-
-  closeModal(); // Close modal after saving or editing
-};
+    } else {
+      // Save new test
+      push(ref(db, 'data/tests'), newTest)
+        .then(() => {
+          successMessage();
+          generatePDF(newTest.questions, newTest.name, newTest.directions); // Call generatePDF here
+        })
+        .catch((error) => {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: `Error: ${error.message}`,
+          });
+        });
+    }
+  };
+  
+  
 
 const handleDelete = (index, testId) => {
   Swal.fire({
@@ -587,7 +600,18 @@ const handlePrint = async (test) => {
         doc.text(text, x, y);
     };
 
+    // Load logos
+    const morenoLogoWidth = (pageWidth / 5) / 2;
+    const morenoLogoHeight = 15;
+    const depedLogoWidth = (pageWidth / 4) / 2;
+    const depedLogoHeight = 15;
+
+    // Add logos
+    doc.addImage(morenoLogo, 'JPEG', marginLeft + 25, marginTop, morenoLogoWidth, morenoLogoHeight);
+    doc.addImage(DepedLogo, 'JPEG', pageWidth - depedLogoWidth - marginRight -18, marginTop, depedLogoWidth, depedLogoHeight);
+
     // Print Name and School ID and SCORE box at the beginning of the document
+    const textStartY = marginTop + morenoLogoHeight + 5;
     centerText('Republic of the Philippines', marginTop);
     centerText('Department of Education', marginTop + 5);
     centerText('REGION V - BICOL', marginTop + 10);
@@ -754,139 +778,119 @@ const handleDirectionsChange = (e) => {
             </tbody>
         </table>
         </div>
-
-
-      <ModalTestQuestion isOpen={isModalOpen} onClose={closeModal} onSave={handleSave}>
-        <div className="flex justify-left items-left">
-          <div className="flex flex-col items-left w-full">
-            <label className="text-lg font-bold mb-2">Exam Name</label>
-            <input
-              className="px-6 uppercase w-full h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="Input Here"
-              value={testName}
-              onChange={handleNameChange}
-            />
-            <label className="text-lg font-bold mt-4 mb-2">Date</label>
-              <input type="date" value={selectedDate} onChange={handleDateChange} className="px-6 uppercase w-full h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-          </div>
-        </div>
-        <div className="flex flex-col items-left mt-5 ">
-          <label  className="text-lg font-bold mb-2" >Select Number of Items</label>
-          <select value={selectedOption} onChange={handleDropdownChange} className="text-center w-full justify-items-center w-24 h-10 mt-1 block border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            <option value="">Select</option>
-            <option value="10">10 Items</option>
-            <option value="20">20 Items</option>
-            <option value="30">30 Items</option>
-            <option value="40">40 Items</option>
-            <option value="50">50 Items</option>
-          </select>
-        </div>
-        <div className="flex flex-nowrap justify-left mt-4">
-            <label htmlFor="file-input" className="cursor-pointer">
-            <FaPrint className="h-8 w-10" />
-            </label>
-            <input
-              id="file-input"
-              type="file"
-              accept=".pdf,.docx,.xlsx,.xls"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-            <span>{selectedFile ? selectedFile.name : 'No file selected'}</span>
-            {/* <div className="mt-4">
-              <label className="text-lg font-bold mb-2">File Content</label>
-              <pre>{fileContent}</pre>
-            </div> */}
-        </div>
-        <div className="gap-4 justify-center mt-4">
-        {/* Display Directions */}
-        <div className="flex flex-col items-center mt-4">
-          <label className="uppercase text-lg font-bold mt-5 mb-2">Exam Directions</label>
-          <textarea
-            className="text-left px-4 py-2 w-5/6 h-24 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            placeholder="Enter directions here"
-            value={directions}
-            onChange={handleDirectionsChange}
-          />
-        </div>
-
-        {/* Display Questions */}
-        {itemsInput.map((item, index) => (
-          <div key={index} className="flex flex-col items-center m-1 mt-5 shadow-blue-500/50 shadow-xl">
-            <label className="uppercase text-lg font-bold mt-5 mb-2">Question {index + 1}</label>
-            <input
-              className="uppercase text-left px-8 w-5/6 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder={`Input Here ${index + 1}`}
-              value={item.question}
-              onChange={(e) => {
-                const newItemsInput = [...itemsInput];
-                newItemsInput[index].question = e.target.value;
-                setItemsInput(newItemsInput);
-              }}
-            />
-            {item.choices.map((choice, choiceIndex) => (
-              <div key={choice.id} className="flex items-center px-8 mt-2 w-full">
+        <ModalTestQuestion isOpen={isModalOpen} onClose={closeModal} onSave={handleSave}>
+        <div className="flex flex-col h-full">
+          {/* Scrollable content */}
+          <div className="flex-1 overflow-auto p-4">
+            <div className="flex justify-left items-left">
+              <div className="flex flex-col items-left w-full">
+                <label className="text-lg font-bold mb-2">Exam Name</label>
                 <input
-                  type="checkbox"
-                  checked={choice.checked || false}
-                  onChange={(e) => {
-                    const newItemsInput = [...itemsInput];
-                    newItemsInput[index].choices.forEach((ch, idx) => {
-                      if (choiceIndex !== idx) ch.checked = false;
-                    });
-                    newItemsInput[index].choices[choiceIndex].checked = e.target.checked;
-                    setItemsInput(newItemsInput);
-                  }}
+                  className="px-6 uppercase w-full h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  placeholder="Input Here"
+                  value={testName}
+                  onChange={handleNameChange}
                 />
-                <input
-                  className="uppercase text-left ml-4 px-10 w-11/12 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  placeholder={`Answer ${String.fromCharCode(65 + choiceIndex)}`}
-                  value={choice.text}
-                  onChange={(e) => {
-                    const newItemsInput = [...itemsInput];
-                    newItemsInput[index].choices[choiceIndex].text = e.target.value;
-                    setItemsInput(newItemsInput);
-                  }}
+                <label className="text-lg font-bold mt-4 mb-2">Date</label>
+                <input type="date" value={selectedDate} onChange={handleDateChange} className="px-6 uppercase w-full h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+              </div>
+            </div>
+            <div className="flex flex-col items-left mt-5">
+              <label className="text-lg font-bold mb-2">Select Number of Items</label>
+              <select value={selectedOption} onChange={handleDropdownChange} className="text-center w-full justify-items-center w-24 h-10 mt-1 block border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                <option value="">Select</option>
+                <option value="10">10 Items</option>
+                <option value="20">20 Items</option>
+                <option value="30">30 Items</option>
+                <option value="40">40 Items</option>
+                <option value="50">50 Items</option>
+              </select>
+            </div>
+            <div className="flex flex-nowrap justify-left mt-4">
+              <label htmlFor="file-input" className="cursor-pointer">
+                <FaPrint className="h-8 w-10" />
+              </label>
+              <input
+                id="file-input"
+                type="file"
+                accept=".pdf,.docx,.xlsx,.xls"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+              <span>{selectedFile ? selectedFile.name : 'No file selected'}</span>
+            </div>
+            <div className="gap-4 justify-center mt-4">
+              <div className="flex flex-col items-center mt-4">
+                <label className="uppercase text-lg font-bold mt-5 mb-2">Exam Directions</label>
+                <textarea
+                  className="text-left px-4 py-2 w-5/6 h-24 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  placeholder="Enter directions here"
+                  value={directions}
+                  onChange={handleDirectionsChange}
                 />
               </div>
-            ))}
-
-            <div className="flex mt-2">
-              <button
-                onClick={() => handleAddChoice(index)}
-                className="flex items-center mb-10 mr-2 shadow-xl text-blue-500 font-bold py-2 px-4 rounded"
-              >
-                <span>New Answer</span><MdAdd className='h-6 w-6' />
-              </button>
-              {item.choices.length > 1 && (
-                <button
-                  onClick={() => handleRemoveChoice(index)}
-                  className="flex items-center mb-10 shadow-xl text-red-700 font-bold py-2 px-4 rounded"
-                >
-                  <span>Remove</span> <MdDelete className='h-6 w-6'/>
-                </button>
-              )}
+              {itemsInput.map((item, index) => (
+                <div key={index} className="flex flex-col items-center m-1 mt-5 shadow-blue-500/50 shadow-xl">
+                  <label className="uppercase text-lg font-bold mt-5 mb-2">Question {index + 1}</label>
+                  <input
+                    className="uppercase text-left px-8 w-5/6 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    placeholder={`Input Here ${index + 1}`}
+                    value={item.question}
+                    onChange={(e) => {
+                      const newItemsInput = [...itemsInput];
+                      newItemsInput[index].question = e.target.value;
+                      setItemsInput(newItemsInput);
+                    }}
+                  />
+                  {item.choices.map((choice, choiceIndex) => (
+                    <div key={choice.id} className="flex items-center px-8 mt-2 w-full">
+                      <input
+                        type="checkbox"
+                        checked={choice.checked || false}
+                        onChange={(e) => {
+                          const newItemsInput = [...itemsInput];
+                          newItemsInput[index].choices.forEach((ch, idx) => {
+                            if (choiceIndex !== idx) ch.checked = false;
+                          });
+                          newItemsInput[index].choices[choiceIndex].checked = e.target.checked;
+                          setItemsInput(newItemsInput);
+                        }}
+                      />
+                      <input
+                        className="uppercase text-left ml-4 px-10 w-11/12 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        placeholder={`Answer ${String.fromCharCode(65 + choiceIndex)}`}
+                        value={choice.text}
+                        onChange={(e) => {
+                          const newItemsInput = [...itemsInput];
+                          newItemsInput[index].choices[choiceIndex].text = e.target.value;
+                          setItemsInput(newItemsInput);
+                        }}
+                      />
+                    </div>
+                  ))}
+                  <div className="flex mt-2">
+                    <button
+                      onClick={() => handleAddChoice(index)}
+                      className="flex items-center mb-10 mr-2 shadow-xl text-blue-500 font-bold py-2 px-4 rounded"
+                    >
+                      <span>New Answer</span><MdAdd className='h-6 w-6' />
+                    </button>
+                    {item.choices.length > 1 && (
+                      <button
+                        onClick={() => handleRemoveChoice(index)}
+                        className="flex items-center mb-10 shadow-xl text-red-700 font-bold py-2 px-4 rounded"
+                      >
+                        <span>Remove</span> <MdDelete className='h-6 w-6'/>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        ))}
-      <div className="mb-5 mt-5 sm:mt-6 sm:flex sm:flex-row-reverse">
-            <button
-              type="button"
-              className="mt-3 mb-5 mr-24 px-20 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm"
-              onClick={closeModal}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="mr-8 mb-5 ml-4 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
-              onClick={handleSave}
-            >
-              Save
-            </button>
-      </div>
-      </div>
+        </div>
       </ModalTestQuestion>
+
     </div>
   );
 }

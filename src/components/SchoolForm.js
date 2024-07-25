@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from 'react-modal';
 import { Link } from 'react-router-dom';
 import { FaPrint } from "react-icons/fa";
@@ -7,7 +7,20 @@ import { FaEdit } from "react-icons/fa";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../config/firebase';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { MdArrowUpward, MdArrowDownward } from 'react-icons/md';
+
 function SchoolForm() {
+    const [selectedSection, setSelectedSection] = useState('All');
+    const [sectionList, setSectionList] = useState(['All']);
+    const [students, setStudents] = useState([]);
+    const [user, setUser] = useState(null);
+    const [sortColumn, setSortColumn] = useState('LName');
+    const [sortDirection, setSortDirection] = useState('asc'); // 'asc' or 'desc'
+
+
     const [modalIsOpen, setModalIsOpen] = useState(false);
 
     
@@ -26,6 +39,96 @@ function SchoolForm() {
     const [savedForms, setSavedForms] = useState([]);
     const [isEditing, setIsEditing] = useState(false);
     const [currentFormIndex, setCurrentFormIndex] = useState(null);
+
+    useEffect(() => {
+        const auth = getAuth();
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                setUser(user);
+            } else {
+                setUser(null);
+            }
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    useEffect(() => {
+        if (user) {
+            const fetchStudentsAndSections = async () => {
+                try {
+                    const studentsCollection = collection(db, 'students');
+                    const studentSnapshot = await getDocs(studentsCollection);
+                    const studentList = studentSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+                    setStudents(studentList);
+
+                    const sectionsCollection = collection(db, 'sections');
+                    const sectionSnapshot = await getDocs(sectionsCollection);
+                    const sections = ['All', ...new Set(sectionSnapshot.docs.map((doc) => doc.data().section))];
+                    setSectionList(sections);
+                } catch (error) {
+                    console.error('Error fetching data:', error);
+                }
+            };
+
+            fetchStudentsAndSections();
+        }
+    }, [user]);
+
+    const handleSectionChange = (section) => {
+        setSelectedSection(section);
+    };
+
+    const handleSort = (columnName) => {
+        if (sortColumn === columnName) {
+            // Toggle sort direction
+            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+        } else {
+            // Sort by the selected column in ascending order by default
+            setSortColumn(columnName);
+            setSortDirection('asc');
+        }
+    };
+
+    const filteredStudents = students.filter((student) => {
+        return selectedSection === 'All' || student.section === selectedSection;
+    });
+
+    const sortedStudents = [...filteredStudents].sort((a, b) => {
+        if (sortColumn === 'LName') {
+            const fullNameA = `${a.LName}, ${a.FName} ${a.MName}`;
+            const fullNameB = `${b.LName}, ${b.FName} ${b.MName}`;
+            return sortDirection === 'asc' ? fullNameA.localeCompare(fullNameB) : fullNameB.localeCompare(fullNameA);
+        }
+        return 0;
+    });
+
+    const maleStudents = sortedStudents.filter(student => student.gender === 'M' || student.gender === 'Male');
+    const femaleStudents = sortedStudents.filter(student => student.gender === 'F' || student.gender === 'Female');
+    const sortedAndFilteredStudents = [...maleStudents, ...femaleStudents];
+
+    if (!user) {
+        return <div>Please log in to view the student data.</div>;
+    }
+
+    const renderSortIcon = (columnName) => {
+        if (sortColumn === columnName) {
+            return (
+                <span className="ml-1">
+                    {sortDirection === 'asc' ? (
+                        <MdArrowUpward className="inline-block w-4 h-4 text-gray-500" />
+                    ) : (
+                        <MdArrowDownward className="inline-block w-4 h-4 text-gray-500" />
+                    )}
+                </span>
+            );
+        }
+        return null;
+    };
+
+    const getFullName = (student) => {
+        return `${student.LName}, ${student.FName} ${student.MName}`;
+    };
 
     const handleInputChange = (field, value) => {
         setFormData({ ...formData, [field]: value });
@@ -220,8 +323,17 @@ function SchoolForm() {
                             </select>
                         </div>
                         <div className="flex flex-nowrap ml-10">
-                            <label className="block mb-2 mt-3 mr-5">Section</label>
-                            <input type="text" placeholder='Section' value={formData.section} onChange={(e) => handleInputChange('section', e.target.value)} className="rounded-lg border px-2 h-12 w-60 mb-4" />
+                        <select
+                            className="mt-1 mr-3 h-12 block w-40 px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            value={selectedSection}
+                            onChange={(e) => handleSectionChange(e.target.value)}
+                        >
+                            {sectionList.map((section) => (
+                                <option key={section} value={section}>
+                                    {section === 'All' ? 'All Sections' : `Section ${section}`}
+                                </option>
+                            ))}
+                        </select>
                         </div>
                     </form>
                     <div className='overflow-x-auto'>
@@ -245,9 +357,15 @@ function SchoolForm() {
                                     <th className='px-7 text-sm border-x-2 border-black'>TARDY</th>
                                 </tr>
                             </thead>
-                                <tbody className='bg-white h-lvh'>
-                                    <td></td>
-                                </tbody>
+                            <tbody className='bg-white h-lvh'>
+                            {sortedAndFilteredStudents.map((student) => (
+                                <tr key={student.id}>
+                                    <td className="h-6 px-10 border-x-2 border-black border-y-2 border-black text-sm">
+                                        {getFullName(student)}
+                                    </td>
+                                </tr>
+                            ))}
+                            </tbody>
                             </table>
                         </div>
                     </div>
