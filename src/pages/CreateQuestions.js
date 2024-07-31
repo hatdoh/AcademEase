@@ -198,13 +198,21 @@ function CreateQuestions(props) {
       closeModal(); // Close modal after successful save
     };
   
+    const resetForm = () => {
+      setTestName('');
+      setSelectedDate(null);
+      setSelectedOption(null);
+      setDirections(''); // Clear directions field
+      setItemsInput([]);
+    };
+  
     if (editIndex !== null) {
       // Edit existing test
       const editRef = ref(db, `data/tests/${savedTests[editIndex].id}`);
       set(editRef, newTest)
         .then(() => {
           successMessage();
-          generatePDF(newTest.questions, newTest.name, newTest.directions); // Call generatePDF here
+          resetForm(); // Reset the form after save
         })
         .catch((error) => {
           Swal.fire({
@@ -218,7 +226,7 @@ function CreateQuestions(props) {
       push(ref(db, 'data/tests'), newTest)
         .then(() => {
           successMessage();
-          generatePDF(newTest.questions, newTest.name, newTest.directions); // Call generatePDF here
+          resetForm(); // Reset the form after save
         })
         .catch((error) => {
           Swal.fire({
@@ -230,8 +238,6 @@ function CreateQuestions(props) {
     }
   };
   
-  
-
 const handleDelete = (index, testId) => {
   Swal.fire({
       title: 'Are you sure?',
@@ -439,7 +445,6 @@ const handlePrint = async (test) => {
   }
 };
 
-
   const filteredTests = savedTests.filter((test) =>
     test.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
     (selectedTestType === '' || test.name === selectedTestType)
@@ -569,15 +574,6 @@ const handlePrint = async (test) => {
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     return shuffled;
-  };
-  
-  const generateQRCode = async (data) => {
-    try {
-      const url = await QRCode.toDataURL(data);
-      return url;
-    } catch (err) {
-      console.error(err);
-    }
   };
 
   const generatePDF = async (questions, testName, directions) => {
@@ -833,7 +829,7 @@ const handleDirectionsChange = (e) => {
                 <div key={index} className="flex flex-col items-center m-1 mt-5 shadow-blue-500/50 shadow-xl">
                   <label className="uppercase text-lg font-bold mt-5 mb-2">Question {index + 1}</label>
                   <input
-                    className="uppercase text-left px-8 w-5/6 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    className="uppercase text-left px-8 w-5/6 h-10 mb-5 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     placeholder={`Input Here ${index + 1}`}
                     value={item.question}
                     onChange={(e) => {
@@ -843,7 +839,7 @@ const handleDirectionsChange = (e) => {
                     }}
                   />
                   {item.choices.map((choice, choiceIndex) => (
-                    <div key={choice.id} className="flex items-center px-8 mt-2 w-full">
+                    <div key={choice.id} className="flex items-center px-8 mb-2 mt-2 w-full">
                       <input
                         type="checkbox"
                         checked={choice.checked || false}
@@ -868,22 +864,6 @@ const handleDirectionsChange = (e) => {
                       />
                     </div>
                   ))}
-                  <div className="flex mt-2">
-                    <button
-                      onClick={() => handleAddChoice(index)}
-                      className="flex items-center mb-10 mr-2 shadow-xl text-blue-500 font-bold py-2 px-4 rounded"
-                    >
-                      <span>New Answer</span><MdAdd className='h-6 w-6' />
-                    </button>
-                    {item.choices.length > 1 && (
-                      <button
-                        onClick={() => handleRemoveChoice(index)}
-                        className="flex items-center mb-10 shadow-xl text-red-700 font-bold py-2 px-4 rounded"
-                      >
-                        <span>Remove</span> <MdDelete className='h-6 w-6'/>
-                      </button>
-                    )}
-                  </div>
                 </div>
               ))}
             </div>
