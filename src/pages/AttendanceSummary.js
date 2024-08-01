@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaSort } from 'react-icons/fa';
 import { MdAdd } from "react-icons/md";
+import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
 function AttendanceSummary() {
@@ -15,11 +16,23 @@ function AttendanceSummary() {
     const [lateSortOrder, setLateSortOrder] = useState(null);
     const [absentSortOrder, setAbsentSortOrder] = useState(null);
     const [presentSortOrder, setPresentSortOrder] = useState(null); // New state for present sort order
+    const [startDate, setStartDate] = useState(null); // State for start date
+    const [endDate, setEndDate] = useState(null); // State for end date
 
     useEffect(() => {
         // Fetch attendance data from Firestore
         const fetchAttendanceData = async () => {
-            const querySnapshot = await getDocs(collection(db, 'attendance'));
+            const attendanceCollection = collection(db, 'attendance');
+            let attendanceQuery = attendanceCollection;
+
+            if (startDate && endDate) {
+                attendanceQuery = query(attendanceCollection,
+                    where('date', '>=', startDate),
+                    where('date', '<=', endDate)
+                );
+            }
+
+            const querySnapshot = await getDocs(attendanceQuery);
             const attendanceData = querySnapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data(),
@@ -61,7 +74,7 @@ function AttendanceSummary() {
 
         fetchAttendanceData();
         fetchSectionData();
-    }, []);
+    }, [startDate, endDate]);
 
     const handleSectionChange = (section) => {
         setSelectedSection(section);
@@ -137,6 +150,25 @@ function AttendanceSummary() {
                     <h2 className="text-2xl ml-2 font-semibold text-gray-800">Section ({selectedSection})</h2>
                 </div>
                 <div className="flex items-center space-x-4">
+                    <DatePicker
+                        selected={startDate}
+                        onChange={(date) => setStartDate(date)}
+                        selectsStart
+                        startDate={startDate}
+                        endDate={endDate}
+                        placeholderText="From"
+                        className="mt-1 block w-40 px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                    <DatePicker
+                        selected={endDate}
+                        onChange={(date) => setEndDate(date)}
+                        selectsEnd
+                        startDate={startDate}
+                        endDate={endDate}
+                        minDate={startDate}
+                        placeholderText="To"
+                        className="mt-1 block w-40 px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
                     <select
                         className="mt-1 block w-40 px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                         value={selectedSection}
@@ -201,16 +233,16 @@ function AttendanceSummary() {
                             ))}
                         </tbody>
                         <tfoot className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
-                                <tr>
-                                    <td className="px-6 py-3 text-left" colSpan="6">
-                                        {Object.entries(sectionCounts).map(([section, count]) => (
-                                            section !== 'All' && (
-                                                <span key={section} className="mr-2">{count} Section {section}</span>
-                                            )
-                                        ))}
-                                    </td>
-                                </tr>
-                            </tfoot>
+                            <tr>
+                                <td className="px-6 py-3 text-left" colSpan="6">
+                                    {Object.entries(sectionCounts).map(([section, count]) => (
+                                        section !== 'All' && (
+                                            <span key={section} className="mr-2">{count} Section {section}</span>
+                                        )
+                                    ))}
+                                </td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             </div>
