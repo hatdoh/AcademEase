@@ -418,48 +418,48 @@ function SchoolForm() {
                         </div>
                     </div>
                     <div className='overflow-x-auto mt-10'>
-                        <div className="bg-white overflow-y-auto max-h-96 w-80"></div>
-                        <table className='min-w-full w-80 max-h-full bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden'>
-                                <thead className='text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400'>   
+                        <div className="bg-white overflow-y-auto max-h-96 w-60"></div>
+                        <table className='min-w-full w-60 max-h-full bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden'>
+                                <thead className='text-xs text-left text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400'>   
                                     <tr>
-                                        <th className='py-3 pr-10 text-center'>Month: <br></br> No of Days of Classes:</th>
-                                        <th className='py-3 px-4'>M</th>
-                                        <th className='py-3 px-4'>F</th>
-                                        <th className='py-3 px-8'>Total</th>
+                                        <th className='py-3 text-black pl-5 border border-black text-left'>Month:</th>
+                                        <th className='py-3 text-black border border-black text-center' >No of Days of Classes:</th>
+                                        <th className='py-3 text-black px-10 border border-black text-center'>M</th>
+                                        <th className='py-3 text-black px-10 border border-black text-center'>F</th>
+                                        <th className='py-3 text-black px-10 border border-black text-center'>Total</th>
                                     </tr>
                                     <tr>
-                                        <th className='bg-white py-2 px-10'>* Enrolment as of (1st Friday of June)</th>
-                                        
+                                        <th className='bg-white text-black py-2 border border-black text-center' colSpan={2}>* Enrolment as of (10th Friday of June)</th>
                                     </tr>
                                     <tr>
-                                        <th className='bg-white py-2 px-10'>Late Enrollment during the month (beyond cut-off)</th>
+                                        <th className='bg-white text-black py-2 border border-black text-center' colSpan={2}>Late Enrollment during the month (beyond cut-off)</th>
                                     </tr>
                                     <tr>
-                                        <th className='bg-white py-2 px-10'>Registered Learners as of end of the month</th>
+                                        <th className='bg-white text-black py-2 border border-black text-center' colSpan={2}>Registered Learners as of end of the month</th>
                                     </tr>
                                     <tr>
-                                        <th className='bg-white py-2 px-10'>Percentage of Enrolment as of end of the month</th>
+                                        <th className='bg-white text-black py-2 border border-black text-center' colSpan={2}>Percentage of Enrolment as of end of the month</th>
                                     </tr>
                                     <tr>
-                                        <th className='bg-white py-2 px-10'>Average Daily Attendance</th>
+                                        <th className='bg-white text-black py-2 border border-black text-center' colSpan={2}>Average Daily Attendance</th>
                                     </tr>
                                     <tr>
-                                        <th className='bg-white py-2 px-10'>Percentage of Attendance for the month</th>
+                                        <th className='bg-white text-black py-2 border border-black text-center' colSpan={2}>Percentage of Attendance for the month</th>
                                     </tr>
                                     <tr>
-                                        <th className='bg-white py-2 px-10'>Number of students absent for 5 consecutive days:</th>
+                                        <th className='bg-white text-black py-2 border border-black text-center' colSpan={2}>Number of students absent for 5 consecutive days:</th>
                                     </tr>
                                     <tr>
-                                        <th className='bg-white py-2 px-10'>Drop out</th>
+                                        <th className='bg-white text-black py-2 border border-black text-center' colSpan={2}>Drop out</th>
                                     </tr>
                                     <tr>
-                                        <th className='bg-white py-2 px-10'>Transferred out</th>
+                                        <th className='bg-white text-black py-2 border border-black text-center' colSpan={2}>Transferred out</th>
                                     </tr>
                                     <tr>
-                                        <th className='bg-white py-2 px-10'>Transferred in</th>
+                                        <th className='bg-white text-black py-2 border border-black text-center' colSpan={2}>Transferred in</th>
                                     </tr>
-
                                 </thead>
+
                             </table>
                         </div>
                     <div className="flex justify-end space-x-4 mt-4">
