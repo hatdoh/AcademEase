@@ -18,6 +18,7 @@ import AddAccount from './super-admin/AddAccount';
 import StudentProfile from './components/StudentProfile';
 import AddSection from './components/AddSection';
 import SchoolForm from './components/SchoolForm';
+import ViewAttendanceSummary from './components/ViewAttendanceSummary';
 import './index.css'; 
 
 function App() {
@@ -56,6 +57,7 @@ function App() {
           <Route path="/add-section" element={<PrivateRoute authenticated={authenticated} element={<AddSection />} />} />
           <Route path="/school-form" element={<PrivateRoute authenticated={authenticated} element={<SchoolForm />} />} />
           <Route path="/profile/:id" element={<StudentProfile />} />
+          <Route path="/view-attendance-summary/:id" element={<ViewAttendanceSummary />} />
           <Route path="/attendance-summary" element={<PrivateRoute authenticated={authenticated} element={<AttendanceSummary />} />} />
           <Route path="/create-questions" element={<PrivateRoute authenticated={authenticated} element={<CreateQuestions />} />} />
           <Route path="/item-analysis" element={<PrivateRoute authenticated={authenticated} element={<ItemAnalysis />} />} />

@@ -77,7 +77,7 @@ function StudentProfile() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-    
+
         const result = await Swal.fire({
             title: 'Are you sure?',
             text: "Do you really want to save the changes?",
@@ -86,19 +86,19 @@ function StudentProfile() {
             confirmButtonText: 'Yes, save it!',
             cancelButtonText: 'No, cancel!',
         });
-    
+
         if (result.isConfirmed) {
             try {
                 // Validation for Contact Number
                 if (!/^09\d{9}$/.test(student.contactNumber)) {
                     throw new Error('Invalid contact number format. It should start with "09".');
                 }
-    
+
                 // Validation for Age
                 if (isNaN(student.age) || student.age <= 0) {
                     throw new Error('Age should be a valid number.');
                 }
-    
+
                 // Upload image to Firebase Storage if there's a new file selected
                 let imageUrl = student.image;
                 if (imageFile) {
@@ -106,21 +106,21 @@ function StudentProfile() {
                     await uploadBytes(storageRef, imageFile);
                     imageUrl = await getDownloadURL(storageRef);
                 }
-    
+
                 const updatedStudent = {
                     ...student,
                     image: imageUrl,
                 };
-  
+
                 // Update student document
                 const studentDocRef = doc(db, 'students', id);
                 await updateDoc(studentDocRef, updatedStudent);
-    
+
                 // Update related attendance records
                 const attendanceCollection = collection(db, 'attendance');
                 const q = query(attendanceCollection, where('studentId', '==', id));
                 const attendanceSnapshot = await getDocs(q);
-    
+
                 const batch = writeBatch(db);
                 attendanceSnapshot.forEach(doc => {
                     const attendanceDocRef = doc.ref;
@@ -133,11 +133,11 @@ function StudentProfile() {
                         image: updatedStudent.image,
                     });
                 });
-    
+
                 await batch.commit();
-    
+
                 Swal.fire('Success', 'Student details updated successfully', 'success');
-    
+
                 setIsEditingImage(false); // Close editing mode after successful update
                 navigate('/sections'); // Navigate to /sections after successful update
             } catch (error) {
@@ -145,7 +145,7 @@ function StudentProfile() {
                 Swal.fire('Error', error.message, 'error');
             }
         }
-    };    
+    };
 
 
     return (
@@ -160,15 +160,25 @@ function StudentProfile() {
                                 alt={student.FName}
                                 className="mt-2 h-[110px] w-[110px] object-cover rounded-full"
                             />
-                            <div className="ml-2">
-                                <p className="font-bold text-lg">{`${student.FName} ${student.MName} ${student.LName}`}</p>
-                                <button
-                                    onClick={handleImageEditToggle}
-                                    className="flex items-center border-2 border-gray-600 bg-neutral-100 text-black px-2 py-1 rounded-md mt-1"
-                                >
-                                    <MdEdit className="mr-1" />
-                                    Edit
-                                </button>
+                            <div className="ml-2 flex items-center">
+                                <div>
+                                    <p className="font-bold text-lg">{`${student.FName} ${student.MName} ${student.LName}`}</p>
+                                    <div className='flex items-center'>
+                                        <button
+                                            onClick={handleImageEditToggle}
+                                            className="flex items-center mr-3 border-2 border-gray-500 bg-neutral-100 text-black px-2 rounded-md mt-5"
+                                        >
+                                            <MdEdit className="mr-1 text-sm" />
+                                            Edit
+                                        </button>
+                                        <button
+                                            onClick={() => navigate(`/view-attendance-summary/${id}`)}
+                                            className="text-blue-800 underline mt-5"
+                                        >
+                                            View Attendance Summary
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </>
                     ) : (
