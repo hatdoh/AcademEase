@@ -40,6 +40,13 @@ function SchoolForm() {
     const [isEditing, setIsEditing] = useState(false);
     const [currentFormIndex, setCurrentFormIndex] = useState(null);
 
+    const sectionToGradeLevelMap = {
+        'Section A': 7,
+        'Section B': 8,
+        'Section C': 9,
+        // Add more mappings as necessary
+    };    
+
     useEffect(() => {
         const auth = getAuth();
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -77,7 +84,9 @@ function SchoolForm() {
 
     const handleSectionChange = (section) => {
         setSelectedSection(section);
-    };
+        const gradeLevel = sectionToGradeLevelMap[section] || ''; // Default to '' if no mapping found
+        setFormData({ ...formData, section, gradeLevel });
+    };    
 
     const handleSort = (columnName) => {
         if (sortColumn === columnName) {
@@ -192,7 +201,7 @@ function SchoolForm() {
     };
 
         // cons to get holidays for any given year
-        const holidays = {
+    const holidays = {
             1: [1], // January
             2: [25], // February
             4: [9, 17, 18], // April
@@ -202,7 +211,7 @@ function SchoolForm() {
         };
         
     
-        const renderDaysOfWeek = () => {
+    const renderDaysOfWeek = () => {
             const daysOfWeek = ['M', 'T', 'W', 'TH', 'F'];
             const firstDayOfMonth = new Date(formData.month.getFullYear(), formData.month.getMonth(), 1);
             const lastDayOfMonth = new Date(formData.month.getFullYear(), formData.month.getMonth() + 1, 0);
@@ -225,7 +234,7 @@ function SchoolForm() {
             return days;
         };
         
-        const renderNoDaysOfWeek = () => {
+    const renderNoDaysOfWeek = () => {
             const daysOfWeek = ['M', 'T', 'W', 'TH', 'F'];
             const firstDayOfMonth = new Date(formData.month.getFullYear(), formData.month.getMonth(), 1);
             const lastDayOfMonth = new Date(formData.month.getFullYear(), formData.month.getMonth() + 1, 0);
@@ -338,34 +347,73 @@ function SchoolForm() {
                     </form>
                     <div className='overflow-x-auto'>
                         <div className="bg-white overflow-y-auto max-h-full h-96 w-full">
-                            <table className="min-w-full w-full h-lvh bg-white divide-x border border-gray-200 shadow-lg rounded-lg overflow-hidden">
-                            <thead className='text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400'>
-                                <tr className='bg-white ml-full'>
-                                    <label className='flex flex-nowrap flex-row-reverse items-center font-bold text-sm ml-96 bg-white text-center w-5/6'>
-                                        (1st row for date)
-                                    </label>
-                                </tr>
-                                <tr className='border-y-2 border-black'>
-                                    <th className="w-20 text-sm border-x-2 border-black" rowSpan="2">LEARNER'S NAME <br />(Last Name, First Name, Middle Name)</th>
-                                    {renderNoDaysOfWeek()}
-                                    <th className='p-2 text-sm border-x-2 border-black' colSpan="2">Total for the month</th>
-                                    <th className='px-7 w-full text-center text-sm border-x-2 border-black' rowSpan="2">REMARKS</th>
-                                </tr>
-                                <tr className='border-y-2 border-black'>
-                                    {renderDaysOfWeek()}
-                                    <th className='px-7 text-sm border-x-2 border-black'>ABSENT</th>
-                                    <th className='px-7 text-sm border-x-2 border-black'>TARDY</th>
-                                </tr>
-                            </thead>
-                            <tbody className='bg-white h-lvh'>
-                            {sortedAndFilteredStudents.map((student) => (
-                                <tr key={student.id}>
-                                    <td className="h-6 px-10 border-x-2 border-black border-y-2 border-black text-sm">
-                                        {getFullName(student)}
-                                    </td>
-                                </tr>
-                            ))}
-                            </tbody>
+                            <table className="min-w-full w-full bg-white divide-x border border-gray-200 shadow-lg rounded-lg overflow-hidden">
+                                <thead className='text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400'>
+                                    <tr className='bg-white'>
+                                        <th colSpan={5} className='text-left text-base px-4 py-2 text-black font-bold'>
+                                            Number of Students: {sortedAndFilteredStudents.length}
+                                        </th>
+                                    </tr>
+                                    <tr className='bg-white ml-full'>
+                                        <label className='flex flex-nowrap flex-row-reverse items-center text-violet-800 font-bold text-sm ml-96 bg-white text-center w-5/6'>
+                                            (1st row for date)
+                                        </label>
+                                    </tr>
+                                    <tr className='border-t text-black border-black'>
+                                        <th className="w-20 text-sm text-black border border-black" rowSpan="2">
+                                            {`LEARNER'S NAME`} <br />(Last Name, First Name, Middle Name)
+                                        </th>
+                                        {renderNoDaysOfWeek()}
+                                        <th className='p-2 text-sm border text-black border-black' colSpan="2">Total for the month</th>
+                                        <th className='px-7 w-full text-center text-blue-500 text-sm border border-black' rowSpan="2">REMARKS</th>
+                                    </tr>
+                                    <tr className='border-y text-black border-black font-bold'>
+                                        {renderDaysOfWeek()}
+                                        <th className='px-7 text-sm border text-green-500 border-black'>ABSENT</th>
+                                        <th className='px-7 text-sm border text-red-500 border-black'>TARDY</th>
+                                    </tr>
+                                </thead>
+                                <tbody className='bg-white'>
+                                    {/* Male Students */}
+                                    {maleStudents.length > 0 && (
+                                        <>
+                                            {maleStudents.map((student, index) => (
+                                                <tr key={student.id} className="h-5"> {/* Increased height for spacing */}
+                                                    <td className="h-full px-6 border border-black text-sm flex items-center justify-start"> {/* Adjusted padding */}
+                                                        {index + 1}. {getFullName(student)}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            <tr className='bg-white'>
+                                                <td className='text-center text-blue-700 px-4 border border-black text-black font-bold'>
+                                                    MALE | Total Per Day
+                                                </td>
+                                            </tr>
+                                        </>
+                                    )}
+                                    {/* Female Students */}
+                                    {femaleStudents.length > 0 && (
+                                        <>
+                                            {femaleStudents.map((student, index) => (
+                                                <tr key={student.id} className="h-5"> {/* Increased height for spacing */}
+                                                    <td className="h-full px-6 border border-black text-sm flex items-center justify-start"> {/* Adjusted padding */}
+                                                        {index + 1}. {getFullName(student)}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            <tr className='bg-white'>
+                                                <td className='text-center text-pink-500 px-4 border border-black text-black font-bold'>
+                                                    FEMALE | Total Per Day
+                                                </td>
+                                            </tr>
+                                        </>
+                                    )}
+                                    <tr className='bg-white'>
+                                        <td className='text-center px-4 border border-black text-black font-bold'>
+                                            Combined TOTAL PER DAY
+                                        </td>
+                                    </tr>
+                                </tbody>
                             </table>
                         </div>
                     </div>
