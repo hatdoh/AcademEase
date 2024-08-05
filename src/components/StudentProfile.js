@@ -173,7 +173,7 @@ function StudentProfile() {
                                         </button>
                                         <button
                                             onClick={() => navigate(`/view-attendance-summary/${id}`)}
-                                            className="text-blue-800 underline mt-5"
+                                            className="text-blue-700 underline mt-5"
                                         >
                                             View Attendance Summary
                                         </button>
