@@ -2,10 +2,13 @@ import React, { useState, useEffect } from "react";
 import { Link } from 'react-router-dom';
 import { db } from "../config/firebase";
 import { collection, query, onSnapshot } from 'firebase/firestore';
+import { Grid, Typography, Paper, Table, TableHead, TableBody, TableRow, TableCell, Avatar, Box, useTheme, useMediaQuery } from '@mui/material';
 
 function Dashboard() {
     const [dateTime, setDateTime] = useState(new Date());
     const [attendanceData, setAttendanceData] = useState({ present: [], late: [], absent: [] });
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -58,64 +61,88 @@ function Dashboard() {
     const absentCount = attendanceData.absent.length;
 
     return (
-        <div className='px-10 mr-20 mb-20 mt-5 ml-6'>
-            <div className="flex items-center ml-72 space-x-4 mb-6">
-                <h2 className="text-2xl font-bold text-gray-800">DASHBOARD</h2>
-            </div>
-            <div className="flex">
-                <h2 className="text-2xl ml-80 mb-2 font-semibold text-gray-800">
-                    Section Sampaguita, Friday, 1:00 PM - 2:00 PM
-                </h2>
-                <div className="mt-2 ml-52 text-sm text-right text-gray-600">
-                    {formattedDateTime}
-                </div>
-            </div>
-            <div className="ml-80 p-4">
-                <table className="min-w-full bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden">
-                    <thead className="text-xl text-gray-800 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
-                        <tr>
-                            <th className="py-3 px-4 border-b border-gray-200">{`${presentCount} Present`}</th>
-                            <th className="py-3 px-4 border-b border-gray-200">{`${lateCount} Late`}</th>
-                            <th className="py-3 px-4 border-b border-gray-200">{`${absentCount} Absent`}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                            <td className="py-4 px-6 border-b border-gray-200">
-                                {attendanceData.present.map(student => (
-                                    <div key={student.id} className="flex items-center space-x-3 my-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-900 rounded transition duration-300">
-                                        <img src={student.image} alt={student.name} className="w-10 h-10 rounded-full" />
-                                        <Link to={`/profile/${student.id}`} className="text-blue-600 hover:underline">
-                                            <span>{`${student.FName} ${student.MName} ${student.LName}`}</span>
-                                        </Link>
-                                    </div>
-                                ))}
-                            </td>
-                            <td className="py-4 px-6 border-b border-gray-200">
-                                {attendanceData.late.map(student => (
-                                    <div key={student.id} className="flex items-center space-x-3 my-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-900 rounded transition duration-300">
-                                        <img src={student.image} alt={student.name} className="w-10 h-10 rounded-full" />
-                                        <Link to={`/profile/${student.id}`} className="text-blue-600 hover:underline">
-                                            <span>{`${student.FName} ${student.MName} ${student.LName}`}</span>
-                                        </Link>
-                                    </div>
-                                ))}
-                            </td>
-                            <td className="py-4 px-6 border-b border-gray-200">
-                                {attendanceData.absent.map(student => (
-                                    <div key={student.id} className="flex items-center space-x-3 my-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-900 rounded transition duration-300">
-                                        <img src={student.image} alt={student.name} className="w-10 h-10 rounded-full" />
-                                        <Link to={`/profile/${student.id}`} className="text-blue-600 hover:underline">
-                                            <span>{`${student.FName} ${student.MName} ${student.LName}`}</span>
-                                        </Link>
-                                    </div>
-                                ))}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <Box sx={{ flexGrow: 4, mt: 7, ml: { sm: '220px', md: '32px' }, pr: { xs: 2, sm: 3, md: 4 }, pl: { xs: 2, sm: 3, md: 4 }, overflowX: 'hidden' }}>
+            <Grid container spacing={2} alignItems="center">
+                <Grid item xs={12} sm={6} color={'#1f2b36'}>
+                    <Typography variant="h6" sx={{ fontSize: { xs: '1.75rem', sm: '2rem' }, fontWeight: 'bold' }}>
+                        Section Sampaguita, Friday, 1:00 PM - 2:00 PM
+                    </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6} sx={{ textAlign: { sm: 'right' } }}>
+                    <Typography variant="body2" color="textSecondary">
+                        {formattedDateTime}
+                    </Typography>
+                </Grid>
+            </Grid>
+
+            <Paper sx={{ mt: 3, boxShadow: 3, borderRadius: 2, p: 2}}>
+                <Box sx={{ overflowX: 'auto', maxHeight: '60vh' }}>
+                    {isMobile ? (
+                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                            {['present', 'late', 'absent'].map((status) => (
+                                <Box key={status} sx={{ mb: 2 }}>
+                                    <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                                        {`${status.charAt(0).toUpperCase() + status.slice(1)} (${attendanceData[status].length})`}
+                                    </Typography>
+                                    {attendanceData[status].map(student => (
+                                        <Box key={student.id} display="flex" alignItems="center" p={1} sx={{ cursor: 'pointer', '&:hover': { backgroundColor: '#f5f5f5' }, borderRadius: 1 }}>
+                                            <Avatar src={student.image} alt={student.name} sx={{ width: 40, height: 40, mr: 2 }} />
+                                            <Link to={`/profile/${student.id}`} style={{ textDecoration: 'none', color: '#1e88e5' }}>
+                                                {`${student.FName} ${student.MName} ${student.LName}`}
+                                            </Link>
+                                        </Box>
+                                    ))}
+                                </Box>
+                            ))}
+                        </Box>
+                    ) : (
+                        <Table sx={{ minWidth: 650, borderRadius: 2 }}>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell align="center" sx={{ fontWeight: 'bold'}}>{`${presentCount} Present`}</TableCell>
+                                    <TableCell align="center" sx={{ fontWeight: 'bold'}}>{`${lateCount} Late`}</TableCell>
+                                    <TableCell align="center" sx={{ fontWeight: 'bold'}}>{`${absentCount} Absent`}</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                <TableRow>
+                                    <TableCell sx={{overflowY: 'auto', maxHeight: '60vh' }}>
+                                        {attendanceData.present.map(student => (
+                                            <Box key={student.id} display="flex" alignItems="center" p={1} sx={{ cursor: 'pointer', '&:hover': { backgroundColor: '#f5f5f5' }, borderRadius: 1 }}>
+                                                <Avatar src={student.image} alt={student.name} sx={{ width: 40, height: 40, mr: 2 }} />
+                                                <Link to={`/profile/${student.id}`} style={{ textDecoration: 'none', color: '#1e88e5' }}>
+                                                    {`${student.FName} ${student.MName} ${student.LName}`}
+                                                </Link>
+                                            </Box>
+                                        ))}
+                                    </TableCell>
+                                    <TableCell sx={{overflowY: 'auto', maxHeight: '60vh' }}>
+                                        {attendanceData.late.map(student => (
+                                            <Box key={student.id} display="flex" alignItems="center" p={1} sx={{ cursor: 'pointer', '&:hover': { backgroundColor: '#f5f5f5' }, borderRadius: 1 }}>
+                                                <Avatar src={student.image} alt={student.name} sx={{ width: 40, height: 40, mr: 2 }} />
+                                                <Link to={`/profile/${student.id}`} style={{ textDecoration: 'none', color: '#1e88e5' }}>
+                                                    {`${student.FName} ${student.MName} ${student.LName}`}
+                                                </Link>
+                                            </Box>
+                                        ))}
+                                    </TableCell>
+                                    <TableCell sx={{ overflowY: 'auto', maxHeight: '60vh' }}>
+                                        {attendanceData.absent.map(student => (
+                                            <Box key={student.id} display="flex" alignItems="center" p={1} sx={{ cursor: 'pointer', '&:hover': { backgroundColor: '#f5f5f5' }, borderRadius: 1 }}>
+                                                <Avatar src={student.image} alt={student.name} sx={{ width: 40, height: 40, mr: 2 }} />
+                                                <Link to={`/profile/${student.id}`} style={{ textDecoration: 'none', color: '#1e88e5' }}>
+                                                    {`${student.FName} ${student.MName} ${student.LName}`}
+                                                </Link>
+                                            </Box>
+                                        ))}
+                                    </TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                    )}
+                </Box>
+            </Paper>
+        </Box>
     );
 }
 

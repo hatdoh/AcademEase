@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { collection, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { Grid, Typography, TextField, Select, MenuItem, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel, Paper, Box, Avatar, IconButton, useTheme, useMediaQuery } from '@mui/material';
 
 function Section() {
     const [selectedSection, setSelectedSection] = useState('All');
@@ -11,13 +12,14 @@ function Section() {
     const [students, setStudents] = useState([]);
     const [user, setUser] = useState(null);
     const [sectionCounts, setSectionCounts] = useState({});
-
     const [searchAcadYear, setSearchAcadYear] = useState('');
     const [searchGrade, setSearchGrade] = useState('');
     const [searchSection, setSearchSection] = useState('');
-
     const [sortColumn, setSortColumn] = useState('LName');
     const [sortDirection, setSortDirection] = useState('asc'); // 'asc' or 'desc'
+
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     useEffect(() => {
         const auth = getAuth();
@@ -74,16 +76,14 @@ function Section() {
         }
     }, [user]);
 
-    const handleSectionChange = (section) => {
-        setSelectedSection(section);
+    const handleSectionChange = (event) => {
+        setSelectedSection(event.target.value);
     };
 
     const handleSort = (columnName) => {
         if (sortColumn === columnName) {
-            // Toggle sort direction
             setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
         } else {
-            // Sort by the selected column in ascending order by default
             setSortColumn(columnName);
             setSortDirection('asc');
         }
@@ -112,17 +112,17 @@ function Section() {
     });
 
     if (!user) {
-        return <div>Please log in to view the student data.</div>;
+        return <Typography variant="body1">Please log in to view the student data.</Typography>;
     }
 
     const renderSortIcon = (columnName) => {
         if (sortColumn === columnName) {
             return (
-                <span className="ml-1">
+                <span>
                     {sortDirection === 'asc' ? (
-                        <MdArrowUpward className="inline-block w-4 h-4 text-gray-500" />
+                        <MdArrowUpward style={{ verticalAlign: 'middle', fontSize: '1rem' }} />
                     ) : (
-                        <MdArrowDownward className="inline-block w-4 h-4 text-gray-500" />
+                        <MdArrowDownward style={{ verticalAlign: 'middle', fontSize: '1rem' }} />
                     )}
                 </span>
             );
@@ -135,133 +135,156 @@ function Section() {
     };
 
     return (
-        <>
-            <div className="ml-80 p-4">
-                <div className="flex items-center space-x-4 mb-4">
-                    <h2 className="text-2xl ml-2 font-semibold text-gray-800">Section ({selectedSection})</h2>
-                </div>
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center">
-                        <label htmlFor="acadYear" className='font-medium mr-1'>AcadYear</label>
-                        <input
-                            type="text"
-                            id="acadYear"
-                            placeholder="YYYY-YYYY"
-                            value={searchAcadYear}
-                            onChange={(e) => setSearchAcadYear(e.target.value)}
-                            className="mt-1 mr-2 block w-36 px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        />
-                        <label htmlFor="grade" className='font-medium mr-1'>Grade</label>
-                        <input
-                            type="text"
-                            id="grade"
-                            placeholder="Search Grade"
-                            value={searchGrade}
-                            onChange={(e) => setSearchGrade(e.target.value)}
-                            className="mt-1 mr-2 block w-36 px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        />
-                        <label htmlFor="section" className='font-medium mr-1'>Section</label>
-                        <input
-                            type="text"
-                            id="section"
-                            placeholder="Search Section"
-                            value={searchSection}
-                            onChange={(e) => setSearchSection(e.target.value)}
-                            className="mt-1 mr-12 block w-36 px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        />
-                        <select
-                            className="mt-1 mr-3 block w-40 px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                            value={selectedSection}
-                            onChange={(e) => handleSectionChange(e.target.value)}
-                        >
-                            {sectionList.map((section) => (
-                                <option key={section} value={section}>
-                                    {section === 'All' ? 'All Sections' : `Section ${section}`}
-                                </option>
-                            ))}
-                        </select>
-                        <Link
-                            to="/add-section"
-                            className="flex items-center px-3 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                        >
-                            Add Section <MdAdd className="w-5 h-5 mr-1 ml-2" />
-                        </Link>
-                    </div>
-                </div>
+        <Box sx={{ padding: 2 }}>
+            <Grid container spacing={2} mb={2}>
+                <Grid item xs={12}>
+                    <Typography variant="h6" gutterBottom>
+                        Section ({selectedSection})
+                    </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                    <TextField
+                        label="Acad Year"
+                        variant="outlined"
+                        fullWidth
+                        value={searchAcadYear}
+                        onChange={(e) => setSearchAcadYear(e.target.value)}
+                        sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                    />
+                </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                    <TextField
+                        label="Grade"
+                        variant="outlined"
+                        fullWidth
+                        value={searchGrade}
+                        onChange={(e) => setSearchGrade(e.target.value)}
+                        sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                    />
+                </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                    <TextField
+                        label="Section"
+                        variant="outlined"
+                        fullWidth
+                        value={searchSection}
+                        onChange={(e) => setSearchSection(e.target.value)}
+                        sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                    />
+                </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                    <Select
+                        value={selectedSection}
+                        onChange={handleSectionChange}
+                        fullWidth
+                        variant="outlined"
+                        sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                    >
+                        {sectionList.map((section) => (
+                            <MenuItem key={section} value={section}>
+                                {section === 'All' ? 'All Sections' : `Section ${section}`}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                    <Button
+                        component={Link}
+                        to="/add-section"
+                        variant="contained"
+                        color="primary"
+                        startIcon={<MdAdd />}
+                        sx={{ mt: 1 }}
+                    >
+                        Add Section
+                    </Button>
+                </Grid>
+            </Grid>
 
-                <div className="overflow-x-auto">
-                    <div className="overflow-y-auto">
-                        <table className="min-w-full bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden">
-                            <thead className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
-                                <tr>
-                                    <th className="px-6 py-3 text-center uppercase">No</th>
-                                    <th
-                                        className="px-6 py-3 text-left uppercase cursor-pointer"
-                                        onClick={() => handleSort('LName')}
-                                    >
-                                        Name
-                                        {renderSortIcon('LName')}
-                                    </th>
-                                    <th
-                                        className="px-6 py-3 text-center uppercase"
-                                    >
-                                        Grade
-                                    </th>
-                                    <th
-                                        className="px-6 py-3 text-center uppercase"
-                                    >
-                                        Section
-                                    </th>
-                                    <th className="px-6 py-3 text-center uppercase">Gender</th>
-                                    <th className="px-6 py-3 text-center uppercase">Contact Number</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                                {sortedStudents.map((student, index) => (
-                                    <tr key={student.id} className="hover:bg-gray-100">
-                                        <td className="px-6 py-4 whitespace-nowrap text-center">{index + 1}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center space-x-3">
-                                                {student.image && (
-                                                    <img
-                                                        className="h-10 w-10 rounded-full"
-                                                        src={student.image}
-                                                        alt={student.FName}
-                                                    />
-                                                )}
-                                                <Link
-                                                    to={`/profile/${student.id}`}
-                                                    className="text-blue-600 hover:underline"
-                                                >
-                                                    <span>{getFullName(student)}</span>
-                                                </Link>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center">{student.grade}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center">{student.section}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center">{student.gender}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center">
-                                            {student.contactNumber}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                            <tfoot className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
-                                <tr>
-                                    <td className="px-6 py-3 text-left" colSpan="6">
-                                        {Object.entries(sectionCounts).map(([section, count]) => (
-                                            section !== 'All' && (
-                                                <span key={section} className="mr-2">{count} Section {section}</span>
-                                            )
-                                        ))}
-                                    </td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </>
+            {
+        isMobile ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                <Typography variant="h6" gutterBottom>
+                    Section ({selectedSection})
+                </Typography>
+                {sortedStudents.map((student, index) => (
+                    <Box key={student.id} sx={{ border: '1px solid', borderRadius: 1, padding: 2, mb: 2 }}>
+                        {student.image && (
+                            <Avatar src={student.image} alt={student.FName} sx={{ width: 80, height: 80, mt: 2 }} />
+                        )}
+                        <Typography variant="h6" gutterBottom>
+                            {index + 1}. {getFullName(student)}
+                        </Typography>
+                        <Typography variant="body1">Grade: {student.grade}</Typography>
+                        <Typography variant="body1">Section: {student.section}</Typography>
+                        <Typography variant="body1">Gender: {student.gender}</Typography>
+                        <Typography variant="body1">Contact Number: {student.contactNumber}</Typography>
+                        <Link to={`/profile/${student.id}`} style={{ textDecoration: 'none', color: theme.palette.primary.main }}>
+                            View Profile
+                        </Link>
+                    </Box>
+                ))}
+            </Box>
+        ) : (
+            <TableContainer component={Paper} sx={{ display: 'flex', justifyContent: 'center' }}>
+                <Table sx={{ minWidth: 650, width: '100%' }}>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell align="center">No</TableCell>
+                            <TableCell>
+                                <TableSortLabel
+                                    active={sortColumn === 'LName'}
+                                    direction={sortColumn === 'LName' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('LName')}
+                                >
+                                    Name
+                                    {renderSortIcon('LName')}
+                                </TableSortLabel>
+                            </TableCell>
+                            <TableCell align="center">Grade</TableCell>
+                            <TableCell align="center">Section</TableCell>
+                            <TableCell align="center">Gender</TableCell>
+                            <TableCell align="center">Contact Number</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {sortedStudents.map((student, index) => (
+                            <TableRow key={student.id}>
+                                <TableCell align="center">{index + 1}</TableCell>
+                                <TableCell>
+                                    <Box sx={{ display: 'flex', alignItems: 'center'}}>
+                                        {student.image && (
+                                            <Avatar
+                                                src={student.image}
+                                                alt={student.FName}
+                                                sx={{ width: 60, height: 60, mr: 2 }}
+                                            />
+                                        )}
+                                        <Link
+                                            to={`/profile/${student.id}`}
+                                            style={{
+                                                textDecoration: 'none',
+                                                color: theme.palette.primary.main,
+                                                fontWeight: 'bold'
+                                            }}
+                                        >
+                                            {getFullName(student)}
+                                        </Link>
+                                    </Box>
+                                </TableCell>
+                                <TableCell align="center">{student.grade}</TableCell>
+                                <TableCell align="center">{student.section}</TableCell>
+                                <TableCell align="center">{student.gender}</TableCell>
+                                <TableCell align="center">{student.contactNumber}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+        )
+    }
+        </Box >
+
     );
 }
 
