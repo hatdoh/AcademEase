@@ -19,6 +19,7 @@ import StudentProfile from './components/StudentProfile';
 import AddSection from './components/AddSection';
 import SchoolForm from './components/SchoolForm';
 import ViewAttendanceSummary from './components/ViewAttendanceSummary';
+import FaceRecognition from './pages/FaceRecognition';
 import './index.css'; 
 
 function App() {
@@ -65,6 +66,7 @@ function App() {
           <Route path="/account" element={<PrivateRoute authenticated={authenticated} element={<Admin />} />} />
           <Route path="/admin-details" element={<PrivateRoute authenticated={authenticated} element={<AdminDetails />} />} />
           <Route path="/add-account" element={<PrivateRoute authenticated={authenticated} element={<AddAccount />} />} />
+          <Route path="/face-recognition" element={<PrivateRoute authenticated={authenticated} element={<FaceRecognition />} />} />
         </Routes>
       </div>
     </div>
