@@ -5,14 +5,19 @@ import { db, storage } from '../config/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import Swal from 'sweetalert2';
 import { MdEdit } from 'react-icons/md';
+import { Button,  Container, Grid, Typography, TextField, InputLabel, Select, MenuItem, IconButton, FormControl, useMediaQuery, useTheme, Card, CardContent, CardMedia, CardActions, Box } from '@mui/material';
 
 function StudentProfile() {
     const { id } = useParams();
-    const navigate = useNavigate();  // Add useNavigate hook
+    const navigate = useNavigate();
     const [student, setStudent] = useState({});
     const [imageFile, setImageFile] = useState(null);
     const [isEditingImage, setIsEditingImage] = useState(false);
     const [sections, setSections] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // Check if screen is mobile size
 
     useEffect(() => {
         const fetchStudent = async () => {
@@ -24,8 +29,10 @@ function StudentProfile() {
                 } else {
                     console.error('No such document!');
                 }
+                setLoading(false);
             } catch (error) {
                 console.error('Error fetching student:', error);
+                setLoading(false);
             }
         };
 
@@ -72,7 +79,7 @@ function StudentProfile() {
     };
 
     const handleImageEditToggle = () => {
-        setIsEditingImage(true); // Set editing mode to true to show the file input
+        setIsEditingImage(true);
     };
 
     const handleSubmit = async (e) => {
@@ -138,8 +145,8 @@ function StudentProfile() {
 
                 Swal.fire('Success', 'Student details updated successfully', 'success');
 
-                setIsEditingImage(false); // Close editing mode after successful update
-                navigate('/sections'); // Navigate to /sections after successful update
+                setIsEditingImage(false);
+                navigate('/sections');
             } catch (error) {
                 console.error('Error updating student:', error.message);
                 Swal.fire('Error', error.message, 'error');
@@ -147,186 +154,272 @@ function StudentProfile() {
         }
     };
 
+    const handleCancel = () => {
+        navigate('/sections');
+    };
 
     return (
-        <div className="ml-80 p-4">
-            <div className="">
-                <h2 className="text-2xl font-bold mb-2">Student Profile</h2>
-                <div className="mb-4 flex items-center">
-                    {student.image && !isEditingImage ? (
-                        <>
-                            <img
-                                src={student.image}
-                                alt={student.FName}
-                                className="mt-2 h-[110px] w-[110px] object-cover rounded-full"
-                            />
-                            <div className="ml-2 flex items-center">
-                                <div>
-                                    <p className="font-bold text-lg">{`${student.FName} ${student.MName} ${student.LName}`}</p>
-                                    <div className='flex items-center'>
-                                        <button
-                                            onClick={handleImageEditToggle}
-                                            className="flex items-center mr-3 border-2 border-gray-500 bg-neutral-100 text-black px-2 rounded-md mt-5"
-                                        >
-                                            <MdEdit className="mr-1 text-sm" />
-                                            Edit
-                                        </button>
-                                        <button
+        <Container maxWidth="lg">
+            <Typography variant="h4" gutterBottom sx={{ mt: 3 }}>
+                Student Profile
+            </Typography>
+            <Grid container spacing={3}>
+                <Grid item xs={12} sm={4}>
+                    <Card sx={{
+                        maxWidth: 400,
+                        margin: 'auto',
+                        padding: 2,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        boxShadow: 3,
+                        borderRadius: 2,
+                        overflow: 'hidden',
+                    }}>
+                        <CardMedia
+                            component="img"
+                            image={student.image || '/default-image.png'}
+                            alt={student.FName}
+                            sx={{
+                                width: 180,
+                                heigt: 180,
+                                objectFit: 'cover',
+                                borderRadius: '50%',
+                                mb: 2,
+                            }}
+                        />
+                        <CardContent align='center'>
+                            {!isEditingImage ? (
+                                <>
+                                    <Box
+                                        display="flex"
+                                        flexDirection="column"
+                                        alignItems="center"  // Centers items horizontally
+                                        justifyContent="center"  // Centers items vertically (optional)
+                                        sx={{ textAlign: 'center' }}  // Ensures text is centered
+                                    >
+                                        <Typography variant="h6" gutterBottom>
+                                            {`${student.FName} ${student.MName} ${student.LName}`}
+                                        </Typography>
+                                        <Button
+                                            variant="outlined"
+                                            color="primary"
                                             onClick={() => navigate(`/view-attendance-summary/${id}`)}
-                                            className="text-blue-700 underline mt-5"
+                                            sx={{
+                                                mb: 2,
+                                                '&:hover': {
+                                                    bgcolor: 'primary.main',  // Background color on hover
+                                                    color: 'white',            // Text color on hover
+                                                    borderColor: 'primary.main', // Border color on hover
+                                                },
+                                            }}
                                         >
                                             View Attendance Summary
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </>
-                    ) : (
-                        <input type="file" onChange={handleImageChange} className="mt-1 block w-full" />
-                    )}
-                </div>
+                                        </Button>
+                                        <Button
+                                            variant="outlined"
+                                            color="primary"
+                                            onClick={() => navigate(`/view-grades/${id}`)}
+                                            sx={{
+                                                mb: 2,
+                                                '&:hover': {
+                                                    bgcolor: 'primary.main',  // Background color on hover
+                                                    color: 'white',            // Text color on hover
+                                                    borderColor: 'primary.main', // Border color on hover
+                                                },
+                                            }}
+                                        >
+                                            View Grades
+                                        </Button>
 
-                <form onSubmit={handleSubmit}>
-                    <div className="grid grid-cols-3 gap-4">
-                        <div>
-                            <label className="mb-2 font-medium">Last Name</label>
-                            <input
-                                type="text"
-                                name="LName"
-                                value={student.LName || ''}
-                                onChange={handleInputChange}
-                                className="p-2 border border-gray-300 rounded-md w-full"
-                            />
-                        </div>
-                        <div>
-                            <label className="mb-2 font-medium">First Name</label>
-                            <input
-                                type="text"
-                                name="FName"
-                                value={student.FName || ''}
-                                onChange={handleInputChange}
-                                className="p-2 border border-gray-300 rounded-md w-full"
-                            />
-                        </div>
-                        <div>
-                            <label className="mb-2 font-medium">Middle Name</label>
-                            <input
-                                type="text"
-                                name="MName"
-                                value={student.MName || ''}
-                                onChange={handleInputChange}
-                                className="p-2 border border-gray-300 rounded-md w-full"
-                            />
-                        </div>
-                    </div>
+                                        <IconButton onClick={handleImageEditToggle} color="primary">
+                                            <Box display="flex" alignItems="center">
+                                                <Typography variant="body2" sx={{ fontSize: '1rem', mr: 1 }}>
+                                                    Edit Profile
+                                                </Typography>
+                                                <MdEdit fontSize='medium' />
+                                            </Box>
+                                        </IconButton>
+                                    </Box>
+                                </>
 
-                    <div className="grid grid-cols-3 gap-4 mb-4 mt-4">
-                        <div>
-                            <label className="mb-2 font-medium">Date of Birth</label>
-                            <input
-                                type="date"
-                                name="dateOfBirth"
-                                value={student.dateOfBirth || ''}
-                                onChange={handleInputChange}
-                                className="p-2 border border-gray-300 rounded-md w-full"
-                            />
-                        </div>
-                        <div>
-                            <label className="mb-2 font-medium">Gender</label>
-                            <input
-                                type="text"
-                                name="gender"
-                                value={student.gender || ''}
-                                onChange={handleInputChange}
-                                className="p-2 border border-gray-300 rounded-md w-full"
-                            />
-                        </div>
-                        <div>
-                            <label className="mb-2 font-medium">Age</label>
-                            <input
-                                type="text"
-                                name="age"
-                                value={student.age || ''}
-                                onChange={handleInputChange}
-                                className="p-2 border border-gray-300 rounded-md w-full"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4 mb-4 mt-4">
-                        <div>
-                            <label className="mb-2 font-medium">Address</label>
-                            <input
-                                type="text"
-                                name="address"
-                                value={student.address || ''}
-                                onChange={handleInputChange}
-                                className="p-2 border border-gray-300 rounded-md w-full"
-                            />
-                        </div>
-                        <div>
-                            <label className="mb-2 font-medium">Email Address</label>
-                            <input
-                                type="text"
-                                name="emailAddress"
-                                value={student.emailAddress || ''}
-                                onChange={handleInputChange}
-                                className="p-2 border border-gray-300 rounded-md w-full"
-                            />
-                        </div>
-                        <div>
-                            <label className="mb-2 font-medium">Contact Number</label>
-                            <input
-                                type="text"
-                                name="contactNumber"
-                                value={student.contactNumber || ''}
-                                onChange={handleInputChange}
-                                className="p-2 border border-gray-300 rounded-md w-full"
-                                maxLength="11"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 mb-4 mt-4">
-                        <div>
-                            <label className="mb-2 font-medium">Grade</label>
-                            <input
-                                type="text"
-                                name="grade"
-                                value={student.grade || ''}
-                                onChange={handleInputChange}
-                                className="p-2 border border-gray-300 rounded-md w-full"
-                            />
-                        </div>
-                        <div>
-                            <label className="mb-2 font-medium">Section</label>
-                            <select
-                                name="section"
-                                value={student.section || ''}
-                                onChange={handleInputChange}
-                                className="p-2 border border-gray-300 rounded-md w-full"
-                            >
-                                <option value="" disabled>Select Section</option>
-                                {sections.map((section, index) => (
-                                    <option key={index} value={section}>
-                                        {section}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div>
-                        <button
-                            type="submit"
-                            className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-md"
-                        >
-                            Save
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                            ) : (
+                                <input
+                                    type="file"
+                                    onChange={handleImageChange}
+                                    style={{ display: 'block', width: '100%' }}
+                                />
+                            )}
+                        </CardContent>
+                    </Card>
+                </Grid>
+                <Grid item xs={12} sm={8}>
+                    <Typography variant="h6" sx={{mb: 1}}>
+                        Personal Information
+                    </Typography>
+                    <form onSubmit={handleSubmit} sx={{ mt: 5 }}>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    label="Last Name"
+                                    name="LName"
+                                    value={student.LName || ''}
+                                    onChange={handleInputChange}
+                                    fullWidth
+                                    variant="outlined"
+                                    sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    label="First Name"
+                                    name="FName"
+                                    value={student.FName || ''}
+                                    onChange={handleInputChange}
+                                    fullWidth
+                                    variant="outlined"
+                                    sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    label="Middle Name"
+                                    name="MName"
+                                    value={student.MName || ''}
+                                    onChange={handleInputChange}
+                                    fullWidth
+                                    variant="outlined"
+                                    sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    label="Date of Birth"
+                                    type="date"
+                                    name="dateOfBirth"
+                                    value={student.dateOfBirth || ''}
+                                    onChange={handleInputChange}
+                                    fullWidth
+                                    InputLabelProps={{ shrink: true }}
+                                    variant="outlined"
+                                    sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    label="Gender"
+                                    name="gender"
+                                    value={student.gender || ''}
+                                    onChange={handleInputChange}
+                                    fullWidth
+                                    variant="outlined"
+                                    sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    label="Age"
+                                    name="age"
+                                    type="number"
+                                    value={student.age || ''}
+                                    onChange={handleInputChange}
+                                    fullWidth
+                                    variant="outlined"
+                                    sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    label="Address"
+                                    name="address"
+                                    value={student.address || ''}
+                                    onChange={handleInputChange}
+                                    fullWidth
+                                    variant="outlined"
+                                    sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    label="Email"
+                                    name="emailAddress"
+                                    type="email"
+                                    value={student.emailAddress || ''}
+                                    onChange={handleInputChange}
+                                    fullWidth
+                                    variant="outlined"
+                                    sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    label="Contact Number"
+                                    name="contactNumber"
+                                    value={student.contactNumber || ''}
+                                    onChange={handleInputChange}
+                                    fullWidth
+                                    variant="outlined"
+                                    sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    label="Grade"
+                                    name="grade"
+                                    value={student.grade || ''}
+                                    onChange={handleInputChange}
+                                    fullWidth
+                                    variant="outlined"
+                                    sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <FormControl fullWidth variant="outlined">
+                                    <InputLabel>Section</InputLabel>
+                                    <Select
+                                        name="section"
+                                        value={student.section || ''}
+                                        onChange={handleInputChange}
+                                        label="Section"
+                                        sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                    >
+                                        {sections.map((section, index) => (
+                                            <MenuItem key={index} value={section}>
+                                                {section}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Box display="flex" justifyContent="flex-end" gap={2}>
+                                    <Button
+                                        type="submit"
+                                        variant="contained"
+                                        color="primary"
+                                    >
+                                        Save Changes
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outlined"
+                                        sx={{
+                                            color: 'black', backgroundColor: 'white',
+                                            '&:hover': {
+                                                backgroundColor: '#bbbdbf',
+                                            },
+                                        }}
+                                        onClick={handleCancel}
+                                    >
+                                        Back
+                                    </Button>
+                                </Box>
+                            </Grid>
+                        </Grid>
+                    </form>
+                </Grid>
+            </Grid>
+        </Container>
     );
 }
 

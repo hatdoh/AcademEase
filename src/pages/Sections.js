@@ -230,21 +230,21 @@ function Section() {
                 <Table sx={{ minWidth: 650, width: '100%' }}>
                     <TableHead>
                         <TableRow>
-                            <TableCell align="center">No</TableCell>
+                            <TableCell align="center" style={{fontWeight: 'bold'}}>No</TableCell>
                             <TableCell>
                                 <TableSortLabel
                                     active={sortColumn === 'LName'}
                                     direction={sortColumn === 'LName' ? sortDirection : 'asc'}
                                     onClick={() => handleSort('LName')}
+                                    style={{fontWeight: 'bold'}}
                                 >
                                     Name
-                                    {renderSortIcon('LName')}
                                 </TableSortLabel>
                             </TableCell>
-                            <TableCell align="center">Grade</TableCell>
-                            <TableCell align="center">Section</TableCell>
-                            <TableCell align="center">Gender</TableCell>
-                            <TableCell align="center">Contact Number</TableCell>
+                            <TableCell align="center" style={{fontWeight: 'bold'}}>Grade</TableCell>
+                            <TableCell align="center" style={{fontWeight: 'bold'}}>Section</TableCell>
+                            <TableCell align="center" style={{fontWeight: 'bold'}}>Gender</TableCell>
+                            <TableCell align="center" style={{fontWeight: 'bold'}}>Contact Number</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
