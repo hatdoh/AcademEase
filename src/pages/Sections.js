@@ -111,10 +111,6 @@ function Section() {
         return 0;
     });
 
-    if (!user) {
-        return <Typography variant="body1">Please log in to view the student data.</Typography>;
-    }
-
     const renderSortIcon = (columnName) => {
         if (sortColumn === columnName) {
             return (
@@ -210,15 +206,15 @@ function Section() {
                 {sortedStudents.map((student, index) => (
                     <Box key={student.id} sx={{ border: '1px solid', borderRadius: 1, padding: 2, mb: 2 }}>
                         {student.image && (
-                            <Avatar src={student.image} alt={student.FName} sx={{ width: 80, height: 80, mt: 2 }} />
+                            <Avatar src={student.image} alt={student.FName} sx={{ width: 80, height: 80, mt: 1 }} />
                         )}
                         <Typography variant="h6" gutterBottom>
                             {index + 1}. {getFullName(student)}
                         </Typography>
-                        <Typography variant="body1">Grade: {student.grade}</Typography>
-                        <Typography variant="body1">Section: {student.section}</Typography>
-                        <Typography variant="body1">Gender: {student.gender}</Typography>
-                        <Typography variant="body1">Contact Number: {student.contactNumber}</Typography>
+                        <Typography variant="body1"><strong>Grade:</strong> {student.grade}</Typography>
+                        <Typography variant="body1"><strong>Section:</strong> {student.section}</Typography>
+                        <Typography variant="body1"><strong>Gender:</strong> {student.gender}</Typography>
+                        <Typography variant="body1"><strong>Contact Number:</strong> {student.contactNumber}</Typography>
                         <Link to={`/profile/${student.id}`} style={{ textDecoration: 'none', color: theme.palette.primary.main }}>
                             View Profile
                         </Link>

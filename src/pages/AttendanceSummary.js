@@ -1,26 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaSort } from 'react-icons/fa';
-import { MdAdd } from "react-icons/md";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import { MdAdd } from 'react-icons/md';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { Box, Button, MenuItem, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel, Typography, Paper, Grid, useMediaQuery, useTheme, Avatar } from '@mui/material';
 
 function AttendanceSummary() {
     const [students, setStudents] = useState([]);
     const [selectedSection, setSelectedSection] = useState('All');
     const [selectedAttendanceSummary, setSelectedAttendanceSummary] = useState('Daily');
-    const [sectionList, setSectionList] = useState(['All']); // Initial section list
-    const [attendanceSummaryList] = useState(['Daily', 'Weekly', 'Monthly']); // Attendance summary list
+    const [sectionList, setSectionList] = useState(['All']);
+    const [attendanceSummaryList] = useState(['Daily', 'Weekly', 'Monthly']);
     const [lateSortOrder, setLateSortOrder] = useState(null);
     const [absentSortOrder, setAbsentSortOrder] = useState(null);
-    const [presentSortOrder, setPresentSortOrder] = useState(null); // New state for present sort order
-    const [startDate, setStartDate] = useState(null); // State for start date
-    const [endDate, setEndDate] = useState(null); // State for end date
+    const [presentSortOrder, setPresentSortOrder] = useState(null);
+    const [startDate, setStartDate] = useState(null);
+    const [endDate, setEndDate] = useState(null);
+
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     useEffect(() => {
-        // Fetch attendance data from Firestore
         const fetchAttendanceData = async () => {
             const attendanceCollection = collection(db, 'attendance');
             let attendanceQuery = attendanceCollection;
@@ -38,17 +41,17 @@ function AttendanceSummary() {
                 ...doc.data(),
             }));
 
-            // Calculate totalLate, totalAbsent, and totalPresent based on 'remarks'
             const studentData = attendanceData.reduce((acc, record) => {
-                const { id, FName, LName, MName, section, remarks, image } = record;
+                const { id, FName, LName, MName, section, remarks, image, grade } = record;
                 const key = `${LName} ${FName} ${MName}-${section}`;
 
                 if (!acc[key]) {
                     acc[key] = {
                         id,
                         name: `${LName}, ${FName} ${MName}`,
+                        grade,
                         section,
-                        image: image || 'defaultImageURL', // Use actual image URL or a default one
+                        image: image || 'defaultImageURL',
                         totalLate: 0,
                         totalAbsent: 0,
                         totalPresent: 0,
@@ -57,7 +60,7 @@ function AttendanceSummary() {
 
                 if (remarks === 'late') acc[key].totalLate += 1;
                 if (remarks === 'absent') acc[key].totalAbsent += 1;
-                if (remarks === 'present') acc[key].totalPresent += 1; // Increment totalPresent if 'present'
+                if (remarks === 'present') acc[key].totalPresent += 1;
 
                 return acc;
             }, {});
@@ -65,7 +68,6 @@ function AttendanceSummary() {
             setStudents(Object.values(studentData));
         };
 
-        // Fetch section data from Firestore
         const fetchSectionData = async () => {
             const querySnapshot = await getDocs(collection(db, 'sections'));
             const sections = querySnapshot.docs.map(doc => doc.data().section);
@@ -76,12 +78,12 @@ function AttendanceSummary() {
         fetchSectionData();
     }, [startDate, endDate]);
 
-    const handleSectionChange = (section) => {
-        setSelectedSection(section);
+    const handleSectionChange = (event) => {
+        setSelectedSection(event.target.value);
     };
 
-    const handleAttendanceSummaryChange = (summary) => {
-        setSelectedAttendanceSummary(summary);
+    const handleAttendanceSummaryChange = (event) => {
+        setSelectedAttendanceSummary(event.target.value);
     };
 
     const filterByAttendanceSummary = (student, summary) => {
@@ -138,18 +140,28 @@ function AttendanceSummary() {
         filterByAttendanceSummary(student, selectedAttendanceSummary)
     );
 
-    const sectionCounts = sectionList.reduce((counts, section) => {
-        counts[section] = students.filter(student => student.section === section).length;
-        return counts;
-    }, {});
-
     return (
-        <div className="ml-80 p-4">
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-4">
-                    <h2 className="text-2xl ml-2 font-semibold text-gray-800">Section ({selectedSection})</h2>
-                </div>
-                <div className="flex items-center space-x-4">
+        <Box sx={{ padding: 2 }}>
+            <Grid container spacing={2} mb={2}>
+                <Grid item xs={12}>
+                    <Typography variant="h6">Attendance Summary ({selectedSection})</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                    <Select
+                        value={selectedSection}
+                        onChange={handleSectionChange}
+                        fullWidth
+                        variant="outlined"
+                        sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                    >
+                        {sectionList.map((section) => (
+                            <MenuItem key={section} value={section}>
+                                {section === 'All' ? 'All Sections' : `Section ${section}`}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3} sx={{ mt: 2 }}>
                     <DatePicker
                         selected={startDate}
                         onChange={(date) => setStartDate(date)}
@@ -157,8 +169,9 @@ function AttendanceSummary() {
                         startDate={startDate}
                         endDate={endDate}
                         placeholderText="From"
-                        className="mt-1 block w-40 px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     />
+                </Grid>
+                <Grid item xs={12} sm={6} md={3} sx={{ mt: 2 }}>
                     <DatePicker
                         selected={endDate}
                         onChange={(date) => setEndDate(date)}
@@ -167,86 +180,105 @@ function AttendanceSummary() {
                         endDate={endDate}
                         minDate={startDate}
                         placeholderText="To"
-                        className="mt-1 block w-40 px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     />
-                    <select
-                        className="mt-1 block w-40 px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        value={selectedSection}
-                        onChange={(e) => handleSectionChange(e.target.value)}
-                    >
-                        {sectionList.map((section) => (
-                            <option key={section} value={section}>{section === 'All' ? 'All Sections' : `Section ${section}`}</option>
-                        ))}
-                    </select>
-                    {/*<select
-                        className="mt-1 block w-40 px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        value={selectedAttendanceSummary}
-                        onChange={(e) => handleAttendanceSummaryChange(e.target.value)}
-                    >
-                        {attendanceSummaryList.map((summary) => (
-                            <option key={summary} value={summary}>{summary}</option>
-                        ))}
-                    </select>*/}
-                    <Link
-                        to="/school-form"
-                        className="flex items-center px-3 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                    >
-                        Create SF2 <MdAdd className="w-5 h-5 mr-1 ml-2" />
+                </Grid>
+                <Grid item xs={12} sm={6} md={3} sx={{ mt: 1 }}>
+                    <Link to="/school-form" style={{ textDecoration: 'none' }}>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            startIcon={<MdAdd />}
+                            fullWidth={isMobile}
+                        >
+                            Create SF2
+                        </Button>
                     </Link>
-                </div>
-            </div>
+                </Grid>
+            </Grid>
 
-            <div className="overflow-x-auto">
-                <div className="overflow-y-auto">
-                    <table className="min-w-full bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden">
-                        <thead className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
-                            <tr>
-                                <th className="px-6 py-3 text-left uppercase">Name</th>
-                                <th className="px-6 py-3 text-center uppercase">Section</th>
-                                <th className="px-6 py-3 text-center uppercase cursor-pointer" onClick={sortByPresent}>
-                                    Total No. of Present {presentSortOrder === 'asc' ? <FaSort className="inline-block mb-1 ml-1" /> : presentSortOrder === 'desc' ? <FaSort className="inline-block rotate-180 mb-1 ml-1" /> : ''}
-                                </th>
-                                <th className="px-6 py-3 text-center uppercase cursor-pointer" onClick={sortByLate}>
-                                    Total No. of Late {lateSortOrder === 'asc' ? <FaSort className="inline-block mb-1 ml-1" /> : lateSortOrder === 'desc' ? <FaSort className="inline-block rotate-180 mb-1 ml-1" /> : ''}
-                                </th>
-                                <th className="px-6 py-3 text-center uppercase cursor-pointer" onClick={sortByAbsent}>
-                                    Total No. of Absent {absentSortOrder === 'asc' ? <FaSort className="inline-block mb-1 ml-1" /> : absentSortOrder === 'desc' ? <FaSort className="inline-block rotate-180 mb-1 ml-1" /> : ''}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                            {filteredStudents.map((student) => (
-                                <tr key={student.id} className="hover:bg-gray-100">
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center space-x-3">
-                                            <img className="h-10 w-10 rounded-full" src={student.image} alt={student.name} />
-                                            <Link to={`/profile/${student.id}`} className="text-blue-600 hover:underline">
-                                                <span>{student.name}</span>
+            {isMobile ? (
+                <Box sx={{ display: 'flex', flexDirection: 'column', marginTop: 2 }}>
+                    {filteredStudents.map((student, index) => (
+                        <Box key={student.id} sx={{ border: '1px solid', borderRadius: 1, padding: 2, mb: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                {student.image && (
+                                    <Avatar src={student.image} alt={student.name} sx={{ width: 80, height: 80, mt: 1 }} />
+                                )}
+                            </Box>
+                            <Typography variant="h6" sx={{ marginLeft: 1 }}>
+                                {index + 1}. {student.name}
+                            </Typography>
+                            <Typography variant="body1"><strong>Grade:</strong> {student.grade}</Typography>
+                            <Typography variant="body1"><strong>Section:</strong> {student.section}</Typography>
+                            <Typography variant="body1"><strong>Total Present:</strong> {student.totalPresent}</Typography>
+                            <Typography variant="body1"><strong>Total Late:</strong> {student.totalLate}</Typography>
+                            <Typography variant="body1"><strong>Total Absent:</strong> {student.totalAbsent}</Typography>
+                            <Link to={`/profile/${student.id}`} style={{ textDecoration: 'none', color: theme.palette.primary.main }}>
+                                View Profile
+                            </Link>
+                        </Box>
+                    ))}
+                </Box>
+            ) : (
+                <TableContainer component={Paper} sx={{ marginTop: 2 }}>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell style={{fontWeight: 'bold'}}>Name</TableCell>
+                                <TableCell align='center' style={{fontWeight: 'bold'}}>Section</TableCell>
+                                <TableCell align='center' style={{fontWeight: 'bold'}}>
+                                    <TableSortLabel
+                                        active={lateSortOrder !== null}
+                                        direction={lateSortOrder || 'asc'}
+                                        onClick={sortByLate}
+                                    >
+                                        Total Late <FaSort />
+                                    </TableSortLabel>
+                                </TableCell>
+                                <TableCell align='center' style={{fontWeight: 'bold'}}>
+                                    <TableSortLabel
+                                        active={absentSortOrder !== null}
+                                        direction={absentSortOrder || 'asc'}
+                                        onClick={sortByAbsent}
+                                    >
+                                        Total Absent <FaSort />
+                                    </TableSortLabel>
+                                </TableCell>
+                                <TableCell align="center" style={{fontWeight: 'bold'}}>
+                                    <TableSortLabel
+                                        active={presentSortOrder !== null}
+                                        direction={presentSortOrder || 'asc'}
+                                        onClick={sortByPresent}
+                                    >
+                                        Total Present <FaSort />
+                                    </TableSortLabel>
+                                </TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {filteredStudents.map((student, index) => (
+                                <TableRow key={student.id}>
+                                    <TableCell>
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                            {student.image && (
+                                                <Avatar src={student.image} alt={student.name} sx={{ width: 40, height: 40, marginRight: 2 }} />
+                                            )}
+                                            <Link to={`/profile/${student.id}`} style={{ textDecoration: 'none', color: theme.palette.primary.main, fontWeight: 'bold' }}>
+                                                <Typography>{student.name}</Typography>
                                             </Link>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-center text-gray-800">{student.section}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-center text-gray-800">{student.totalPresent}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-center text-gray-800">{student.totalLate}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-center text-gray-800">{student.totalAbsent}</td>
-                                </tr>
+                                        </Box>
+                                    </TableCell>
+                                    <TableCell align='center'>{student.section}</TableCell>
+                                    <TableCell align="center">{student.totalLate}</TableCell>
+                                    <TableCell align="center">{student.totalAbsent}</TableCell>
+                                    <TableCell align="center">{student.totalPresent}</TableCell>
+                                </TableRow>
                             ))}
-                        </tbody>
-                        <tfoot className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
-                            <tr>
-                                <td className="px-6 py-3 text-left" colSpan="6">
-                                    {Object.entries(sectionCounts).map(([section, count]) => (
-                                        section !== 'All' && (
-                                            <span key={section} className="mr-2">{count} Section {section}</span>
-                                        )
-                                    ))}
-                                </td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </div>
-        </div>
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            )}
+        </Box>
     );
 }
 
