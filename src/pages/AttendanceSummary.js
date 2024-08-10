@@ -144,7 +144,7 @@ function AttendanceSummary() {
         <Box sx={{ padding: 2 }}>
             <Grid container spacing={2} mb={2}>
                 <Grid item xs={12}>
-                    <Typography variant="h6">Attendance Summary ({selectedSection})</Typography>
+                    <Typography variant="h4">Attendance Summary ({selectedSection})</Typography>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
                     <Select

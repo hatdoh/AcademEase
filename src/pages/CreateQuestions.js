@@ -5,19 +5,16 @@ import { MdDelete, MdAdd } from "react-icons/md";
 import html2pdf from 'html2pdf.js';
 import app from "../config/firebase";
 import { getDatabase, ref, set, push, remove, onValue, get } from "firebase/database";
-
 import * as pdfjsLib from 'pdfjs-dist';
 import mammoth from 'mammoth';
 import * as XLSX from 'xlsx';
-
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import QRCode from 'qrcode';
-
 import Swal from 'sweetalert2';
-
 import morenoLogo from '../res/img/moreno-logo.jpg'
 import DepedLogo from '../res/img/deped-logo.jpg'
+import { Box, Button, Grid, IconButton, MenuItem, Paper, Select, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography, Checkbox, InputLabel, useTheme, useMediaQuery, Card, CardContent } from '@mui/material';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.js`;
 
@@ -38,7 +35,10 @@ function CreateQuestions(props) {
   const [editIndex, setEditIndex] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTestType, setSelectedTestType] = useState('');
-  
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
 
   const db = getDatabase(app);
 
@@ -58,7 +58,7 @@ function CreateQuestions(props) {
     setIsModalOpen(true);
   };
 
-  
+
   const closeModal = () => {
     setIsModalOpen(false);
     setEditIndex(null); // Reset edit index when modal is closed
@@ -87,7 +87,7 @@ function CreateQuestions(props) {
       ],
       correctAnswer: null
     })));
-  
+
     const answerSet = Array.from({ length: count }, () => ['A', 'B', 'C', 'D']);
     setAnswerSheet(answerSet.map(answer => ({ selected: null, options: answer })));
   };
@@ -118,7 +118,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-  
+
     if (!selectedDate) {
       Swal.fire({
         icon: 'error',
@@ -127,7 +127,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-  
+
     if (!selectedOption) {
       Swal.fire({
         icon: 'error',
@@ -136,7 +136,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-  
+
     if (!directions || directions.trim() === '') {
       Swal.fire({
         icon: 'error',
@@ -145,7 +145,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-  
+
     if (itemsInput.some(item => !item.question || item.question.trim() === '')) {
       Swal.fire({
         icon: 'error',
@@ -154,7 +154,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-  
+
     if (itemsInput.some(item => item.choices.some(choice => !choice.text || choice.text.trim() === ''))) {
       Swal.fire({
         icon: 'error',
@@ -163,7 +163,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-  
+
     if (itemsInput.some(item => !item.correctAnswer || item.correctAnswer.trim() === '')) {
       Swal.fire({
         icon: 'error',
@@ -172,7 +172,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-  
+
     const newTest = {
       name: testName,
       date: selectedDate,
@@ -188,7 +188,7 @@ function CreateQuestions(props) {
         correctAnswer: item.correctAnswer
       }))
     };
-  
+
     const successMessage = () => {
       Swal.fire({
         icon: 'success',
@@ -197,7 +197,7 @@ function CreateQuestions(props) {
       });
       closeModal(); // Close modal after successful save
     };
-  
+
     const resetForm = () => {
       setTestName('');
       setSelectedDate(null);
@@ -205,7 +205,7 @@ function CreateQuestions(props) {
       setDirections(''); // Clear directions field
       setItemsInput([]);
     };
-  
+
     if (editIndex !== null) {
       // Edit existing test
       const editRef = ref(db, `data/tests/${savedTests[editIndex].id}`);
@@ -237,9 +237,9 @@ function CreateQuestions(props) {
         });
     }
   };
-  
-const handleDelete = (index, testId) => {
-  Swal.fire({
+
+  const handleDelete = (index, testId) => {
+    Swal.fire({
       title: 'Are you sure?',
       text: 'You won\'t be able to revert this!',
       icon: 'warning',
@@ -247,50 +247,50 @@ const handleDelete = (index, testId) => {
       confirmButtonColor: '#3085d6',
       cancelButtonColor: '#d33',
       confirmButtonText: 'Yes, delete it!'
-  }).then((result) => {
+    }).then((result) => {
       if (result.isConfirmed) {
-          const testRef = ref(db, `data/tests/${testId}`);
-          
-          remove(testRef)
-              .then(() => {
-                  const updatedTests = savedTests.filter((test, idx) => idx !== index);
-                  setSavedTests(updatedTests);
-                  Swal.fire({
-                      icon: 'success',
-                      title: 'Deleted!',
-                      text: 'The test has been deleted successfully.',
-                  });
-              })
-              .catch((error) => {
-                  Swal.fire({
-                      icon: 'error',
-                      title: 'Error!',
-                      text: `Error: ${error.message}`,
-                  });
-              });
-      }
-  });
-};
+        const testRef = ref(db, `data/tests/${testId}`);
 
-const handleEdit = (index) => {
-  const test = savedTests[index];
-  
-  setTestName(test.name || '');
-  setSelectedDate(test.date || '');
-  setSelectedOption(test.items || '');
-  setItemsInput(test.questions.map(q => ({
+        remove(testRef)
+          .then(() => {
+            const updatedTests = savedTests.filter((test, idx) => idx !== index);
+            setSavedTests(updatedTests);
+            Swal.fire({
+              icon: 'success',
+              title: 'Deleted!',
+              text: 'The test has been deleted successfully.',
+            });
+          })
+          .catch((error) => {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error!',
+              text: `Error: ${error.message}`,
+            });
+          });
+      }
+    });
+  };
+
+  const handleEdit = (index) => {
+    const test = savedTests[index];
+
+    setTestName(test.name || '');
+    setSelectedDate(test.date || '');
+    setSelectedOption(test.items || '');
+    setItemsInput(test.questions.map(q => ({
       question: q.question || '',
       choices: q.choices.map(choice => ({
-          id: choice.id || '',
-          text: choice.text || '',
-          checked: choice.checked || false
+        id: choice.id || '',
+        text: choice.text || '',
+        checked: choice.checked || false
       })),
       correctAnswer: q.correctAnswer || ''  // Ensure correctAnswer is set
-  })));
-  setAnswerSheet(test.answerSheet || '');
-  setEditIndex(index);
-  openModal();
-};
+    })));
+    setAnswerSheet(test.answerSheet || '');
+    setEditIndex(index);
+    openModal();
+  };
 
 
   const handleAddChoice = (questionIndex) => {
@@ -361,89 +361,89 @@ const handleEdit = (index) => {
     const colSpacing = 50; // Horizontal spacing between columns
 
     for (let i = 1; i <= numQuestions; i++) {
-        // Calculate column and row index
-        const colIndex = Math.floor((i - 1) / 10);
-        const rowIndex = Math.floor((colIndex) / 3);
+      // Calculate column and row index
+      const colIndex = Math.floor((i - 1) / 10);
+      const rowIndex = Math.floor((colIndex) / 3);
 
-        // Reset xOffset and yOffset for each new set of columns
-        xOffset = marginLeft + (colIndex % 3) * colSpacing;
-        yOffset = marginTop + 50 + (i - 1) % 10 * rowSpacing + (rowIndex * 100); // Adjust yOffset for rows
+      // Reset xOffset and yOffset for each new set of columns
+      xOffset = marginLeft + (colIndex % 3) * colSpacing;
+      yOffset = marginTop + 50 + (i - 1) % 10 * rowSpacing + (rowIndex * 100); // Adjust yOffset for rows
 
-        // Add new page if necessary
-        if (yOffset > pageHeight - marginBottom - 20) {
-            doc.addPage();
-            yOffset = marginTop + 50; // Reset yOffset for new page
-        }
+      // Add new page if necessary
+      if (yOffset > pageHeight - marginBottom - 20) {
+        doc.addPage();
+        yOffset = marginTop + 50; // Reset yOffset for new page
+      }
 
-        // Print the question number
-        doc.text(`${i}.`, xOffset, yOffset);
+      // Print the question number
+      doc.text(`${i}.`, xOffset, yOffset);
 
-        // Print the answer choices in circles
-        const choices = ['A', 'B', 'C', 'D'].slice(0, numChoices); // Adjust choices based on number of choices
-        choices.forEach((choice, index) => {
-            const x = xOffset + 7 + (index * choiceSpacing);
-            const circleX = x + 3; // Adjust for additional space between circle and text
-            doc.circle(circleX, yOffset - 3, choiceCircleRadius); // Draw circle
+      // Print the answer choices in circles
+      const choices = ['A', 'B', 'C', 'D'].slice(0, numChoices); // Adjust choices based on number of choices
+      choices.forEach((choice, index) => {
+        const x = xOffset + 7 + (index * choiceSpacing);
+        const circleX = x + 3; // Adjust for additional space between circle and text
+        doc.circle(circleX, yOffset - 3, choiceCircleRadius); // Draw circle
 
-            // Center the letter inside the circle
-            doc.setFontSize(textSize);
-            const textWidth = doc.getTextWidth(choice);
-            const textX = circleX - (textWidth / 2);
-            const textY = yOffset + -1; // Adjust the vertical position of the text
-            doc.text(choice, textX, textY); // Add choice letter inside circle
-        });
+        // Center the letter inside the circle
+        doc.setFontSize(textSize);
+        const textWidth = doc.getTextWidth(choice);
+        const textX = circleX - (textWidth / 2);
+        const textY = yOffset + -1; // Adjust the vertical position of the text
+        doc.text(choice, textX, textY); // Add choice letter inside circle
+      });
     }
 
     // Save the answer sheet PDF
     doc.save('answer_sheet.pdf');
-};
+  };
 
 
-const handlePrint = async (test) => {
-  if (!test || !test.questions) {
-    console.error('Selected test or questions are undefined');
-    return;
-  }
+  const handlePrint = async (test) => {
+    if (!test || !test.questions) {
+      console.error('Selected test or questions are undefined');
+      return;
+    }
 
-  const result = await Swal.fire({
-    title: 'Are you sure?',
-    text: 'Do you want to generate the PDF files for this test?',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#3085d6',
-    cancelButtonColor: '#d33',
-    confirmButtonText: 'Yes, generate!'
-  });
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Do you want to generate the PDF files for this test?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, generate!'
+    });
 
-  if (result.isConfirmed) {
-    const questionsA = generateRandomSequence(test.questions);
-    const questionsB = generateRandomSequence(test.questions);
+    if (result.isConfirmed) {
+      const questionsA = generateRandomSequence(test.questions);
+      const questionsB = generateRandomSequence(test.questions);
 
-    try {
-      await generatePDF(questionsA, 'A', test.directions); // Pass directions
-      await generatePDF(questionsB, 'B', test.directions); // Pass directions
-      await generateAnswerSheetPDF(test.questions.length, test.questions[0].choices.length);
+      try {
+        await generatePDF(questionsA, 'A', test.directions); // Pass directions
+        await generatePDF(questionsB, 'B', test.directions); // Pass directions
+        await generateAnswerSheetPDF(test.questions.length, test.questions[0].choices.length);
 
+        Swal.fire({
+          icon: 'success',
+          title: 'Success!',
+          text: 'PDFs have been generated successfully!',
+        });
+      } catch (error) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: `Failed to generate PDFs: ${error.message}`,
+        });
+      }
+    } else {
       Swal.fire({
-        icon: 'success',
-        title: 'Success!',
-        text: 'PDFs have been generated successfully!',
-      });
-    } catch (error) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Error!',
-        text: `Failed to generate PDFs: ${error.message}`,
+        icon: 'info',
+        title: 'Cancelled',
+        text: 'PDF generation has been cancelled.',
       });
     }
-  } else {
-    Swal.fire({
-      icon: 'info',
-      title: 'Cancelled',
-      text: 'PDF generation has been cancelled.',
-    });
-  }
-};
+  };
 
   const filteredTests = savedTests.filter((test) =>
     test.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -455,7 +455,7 @@ const handlePrint = async (test) => {
     if (file) {
       const fileType = file.name.split('.').pop().toLowerCase();
       let content = '';
-  
+
       try {
         if (fileType === 'pdf') {
           content = await readPdfFile(file);
@@ -470,15 +470,15 @@ const handlePrint = async (test) => {
         console.error('Error reading file:', error);
         return;
       }
-  
+
       const lines = content.split('\n')
         .map(line => line.trim())
         .filter(line => line !== '');
-  
+
       const items = [];
       let currentQuestion = null;
       let directionsText = '';
-  
+
       lines.forEach(line => {
         if (/^directions:/i.test(line)) {
           directionsText = line.replace(/^directions:/i, '').trim();
@@ -512,16 +512,16 @@ const handlePrint = async (test) => {
           }
         }
       });
-  
+
       if (currentQuestion) {
         currentQuestion.choices = currentQuestion.choices.slice(0, 4);
         items.push(currentQuestion);
       }
-  
+
       const itemCount = items.length;
       setItemsInput(items);
       setDirections(directionsText); // Set the directions state
-  
+
       // Update the dropdown value and answer sheet
       setSelectedOption(itemCount);
       setAnswerSheet(items.map(item => ({
@@ -530,8 +530,8 @@ const handlePrint = async (test) => {
       })));
     }
   };
-    
-  
+
+
   const readPdfFile = async (file) => {
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
@@ -566,7 +566,7 @@ const handlePrint = async (test) => {
 
     return text;
   };
-  
+
   const generateRandomSequence = (questions) => {
     const shuffled = [...questions];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -591,9 +591,9 @@ const handlePrint = async (test) => {
 
     // Centered text helper function
     const centerText = (text, y) => {
-        const textWidth = doc.getTextWidth(text);
-        const x = (pageWidth - textWidth) / 2;
-        doc.text(text, x, y);
+      const textWidth = doc.getTextWidth(text);
+      const x = (pageWidth - textWidth) / 2;
+      doc.text(text, x, y);
     };
 
     // Load logos
@@ -604,7 +604,7 @@ const handlePrint = async (test) => {
 
     // Add logos
     doc.addImage(morenoLogo, 'JPEG', marginLeft + 25, marginTop, morenoLogoWidth, morenoLogoHeight);
-    doc.addImage(DepedLogo, 'JPEG', pageWidth - depedLogoWidth - marginRight -18, marginTop, depedLogoWidth, depedLogoHeight);
+    doc.addImage(DepedLogo, 'JPEG', pageWidth - depedLogoWidth - marginRight - 18, marginTop, depedLogoWidth, depedLogoHeight);
 
     // Print Name and School ID and SCORE box at the beginning of the document
     const textStartY = marginTop + morenoLogoHeight + 5;
@@ -638,7 +638,7 @@ const handlePrint = async (test) => {
 
     // Print the directions text next to the "Directions:" label
     directionsTextLines.forEach((line, index) => {
-        doc.text(line, directionsTextX, directionsY + (index * 5)); // Adjust spacing between lines as needed
+      doc.text(line, directionsTextX, directionsY + (index * 5)); // Adjust spacing between lines as needed
     });
 
     // Add SCORE box
@@ -655,225 +655,316 @@ const handlePrint = async (test) => {
     const questionTextMaxWidth = pageWidth - directionsTextX - marginRight; // Same width as directions text
 
     questions.forEach((item, index) => {
-        // Add new page if necessary
-        if (yOffset > pageHeight - marginBottom - 20) {
-            doc.addPage();
-            yOffset = marginTop; // Reset yOffset for new page
-        }
+      // Add new page if necessary
+      if (yOffset > pageHeight - marginBottom - 20) {
+        doc.addPage();
+        yOffset = marginTop; // Reset yOffset for new page
+      }
 
-        // Set the font size for the question text
-        doc.setFontSize(11);
+      // Set the font size for the question text
+      doc.setFontSize(11);
 
-        // Print the question text
-        const questionLines = doc.splitTextToSize(`${index + 1}. ${item.question}`, questionTextMaxWidth);
-        questionLines.forEach((line, lineIndex) => {
-            doc.text(line, marginLeft, yOffset + (lineIndex * 5));
+      // Print the question text
+      const questionLines = doc.splitTextToSize(`${index + 1}. ${item.question}`, questionTextMaxWidth);
+      questionLines.forEach((line, lineIndex) => {
+        doc.text(line, marginLeft, yOffset + (lineIndex * 5));
+      });
+
+      yOffset += questionLines.length * 5; // Update yOffset after printing question
+
+      // Set the starting positions for the answer choices
+      const choiceStartX = marginLeft; // Start position for choices
+      let choiceStartY = yOffset; // Start position for choices
+
+      item.choices.forEach((choice, choiceIndex) => {
+        const choiceText = choice.text;
+        const choiceLines = doc.splitTextToSize(`${String.fromCharCode(65 + choiceIndex)}. ${choiceText}`, questionTextMaxWidth);
+
+        // Print the choice text
+        choiceLines.forEach((line, lineIndex) => {
+          doc.text(line, choiceStartX, choiceStartY + (lineIndex * 5));
         });
 
-        yOffset += questionLines.length * 5; // Update yOffset after printing question
+        choiceStartY += choiceLines.length * 5; // Update position for next choice
+      });
 
-        // Set the starting positions for the answer choices
-        const choiceStartX = marginLeft; // Start position for choices
-        let choiceStartY = yOffset; // Start position for choices
-
-        item.choices.forEach((choice, choiceIndex) => {
-            const choiceText = choice.text;
-            const choiceLines = doc.splitTextToSize(`${String.fromCharCode(65 + choiceIndex)}. ${choiceText}`, questionTextMaxWidth);
-
-            // Print the choice text
-            choiceLines.forEach((line, lineIndex) => {
-                doc.text(line, choiceStartX, choiceStartY + (lineIndex * 5));
-            });
-
-            choiceStartY += choiceLines.length * 5; // Update position for next choice
-        });
-
-        // Update yOffset for the next question
-        yOffset = choiceStartY + 1; // Ensure enough space for the next question
+      // Update yOffset for the next question
+      yOffset = choiceStartY + 1; // Ensure enough space for the next question
     });
 
     // Save the PDF
     doc.save('Test.pdf');
-};
+  };
 
-const handleDirectionsChange = (e) => {
-  setDirections(e.target.value);
-};
+  const handleDirectionsChange = (e) => {
+    setDirections(e.target.value);
+  };
 
   const handleCloseSetModal = () => {
     setSetModalVisible(false);
   };
 
   return (
-    <div className='ml-80 p-4'>
-      <h2 className="text-2xl font-semibold mb-4">Test Questions</h2>
-      <div className="flex items-center">
-      <input
-          type="text"
-          placeholder="Search..."
-          value={searchTerm}
-          onChange={handleSearch}
-          className="w-80 h-10 pl-3 pr-10 mt-2 ml-10 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-indigo-500 sm:text-sm"
-        />
-        <select
-          value={selectedTestType}
-          onChange={handleTestTypeFilterChange}
-          className="w-48 h-10 pl-3 pr-10 mt-2 ml-60 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-indigo-500 sm:text-sm"
-        >
-          <option value="">All Test Types</option>
-          {savedTests.map((test, index) => (
-            <option key={index} value={test.name}>{test.name}</option>
-          ))}
-        </select>
-      <button className='flex items-center w-40 h-10 mt-2 text-center shadow-sm py-2 rounded-md bg-blue-500 font-medium text-2xl text-white hover:bg-blue-700 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-blue-500 sm:ml-4 sm:text-sm' onClick={openModal}>
-        <span className="ml-7">Test Question</span>
-        <MdAdd className='h-6 w-6' />
-      </button>
-
-      </div>
-
-      {/* Display saved tests in a scrollable table */}
-      <div className="mt-8 mr-5 bg-white w-12/12 h-96 overflow-x-scroll overflow-y-scroll rounded-lg">
-        <table className="w-full bg-white shadow-md rounded-lg">
-            <thead className="bg-gray-200 text-gray-700 uppercase">
-            <tr>
-                <th className="py-3 px-6 text-left">Test Name</th>
-                <th className="py-3 px-6 text-center">Date</th>
-                <th className="py-3 px-6 text-center">Number of Items</th>
-                <th className="py-3 px-6 text-center">Actions</th>
-            </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-            {filteredTests.map((test, index) => (
-                <tr key={index} className="h-10">
-                <td className="py-3 px-6 h-10 text-left uppercase">{test.name}</td>
-                <td className="py-3 px-6 h-10 text-center uppercase">{test.date}</td>
-                <td className="py-3 px-6 h-10 text-center uppercase">{test.items}</td>
-                <td className="py-3 px-6 h-10 text-center uppercase">
-                    <button
-                    onClick={() => handlePrint(test)}
-                    className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full mr-2"
-                    >
-                    <FaDownload />
-                    </button>
-                    <button
-                    onClick={() => handleEdit(index)}
-                    className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-full mr-2"
-                    >
-                    <FaEdit />
-                    </button>
-                    <button
-                    onClick={() => handleDelete(index, test.id)}
-                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full"
-                    >
-                    <MdDelete />
-                    </button>
-                </td>
-                </tr>
+    <Box sx={{ ml: isMobile ? 0 : 3, p: 2 }}>
+      <Typography variant="h4" sx={{ mt: isMobile ? 6 : 1, mb: 2 }}>Test Questions</Typography>
+      <Grid container spacing={2} alignItems="center">
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            placeholder="Search..."
+            value={searchTerm}
+            onChange={handleSearch}
+            variant="outlined"
+            size="small"
+            sx={{ backgroundColor: 'white', borderRadius: 1 }}
+          />
+        </Grid>
+        <Grid item xs={12} sm={3}>
+          <Select
+            fullWidth
+            value={selectedTestType}
+            onChange={handleTestTypeFilterChange}
+            variant="outlined"
+            size="small"
+            displayEmpty
+            sx={{ backgroundColor: 'white', borderRadius: 1 }}
+          >
+            <MenuItem value="">All Test Types</MenuItem>
+            {savedTests.map((test, index) => (
+              <MenuItem key={index} value={test.name}>{test.name}</MenuItem>
             ))}
-            </tbody>
-        </table>
-        </div>
-        <ModalTestQuestion isOpen={isModalOpen} onClose={closeModal} onSave={handleSave}>
-        <div className="flex flex-col h-full">
-          {/* Scrollable content */}
-          <div className="flex-1 overflow-auto p-4">
-            <div className="flex justify-left items-left">
-              <div className="flex flex-col items-left w-full">
-                <label className="text-lg font-bold mb-2">Exam Name</label>
-                <input
-                  className="px-6 uppercase w-full h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  placeholder="Input Here"
-                  value={testName}
-                  onChange={handleNameChange}
-                />
-                <label className="text-lg font-bold mt-4 mb-2">Date</label>
-                <input type="date" value={selectedDate} onChange={handleDateChange} className="px-6 uppercase w-full h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-              </div>
-            </div>
-            <div className="flex flex-col items-left mt-5">
-              <label className="text-lg font-bold mb-2">Select Number of Items</label>
-              <select value={selectedOption} onChange={handleDropdownChange} className="text-center w-full justify-items-center w-24 h-10 mt-1 block border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                <option value="">Select</option>
-                <option value="10">10 Items</option>
-                <option value="20">20 Items</option>
-                <option value="30">30 Items</option>
-                <option value="40">40 Items</option>
-                <option value="50">50 Items</option>
-              </select>
-            </div>
-            <div className="flex flex-nowrap justify-left mt-4">
-              <label htmlFor="file-input" className="cursor-pointer">
-                <FaPrint className="h-8 w-10" />
-              </label>
+          </Select>
+        </Grid>
+        <Grid item xs={12} sm={3}>
+          <Button
+            fullWidth
+            variant="contained"
+            color="primary"
+            startIcon={<MdAdd />}
+            onClick={openModal}
+          >
+            Test Question
+          </Button>
+        </Grid>
+      </Grid>
+
+      {/* Conditional layout for mobile and desktop */}
+      {isMobile ? (
+        <Box sx={{ mt: 4 }}>
+          {filteredTests.map((test, index) => (
+            <Card key={index} sx={{ mb: 2 }}>
+              <CardContent>
+                <Typography variant="h6">{test.name}</Typography>
+                <Typography>Date: {test.date}</Typography>
+                <Typography>Items: {test.items}</Typography>
+                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                  <IconButton color="primary" onClick={() => handlePrint(test)}>
+                    <FaDownload />
+                  </IconButton>
+                  <IconButton color="secondary" onClick={() => handleEdit(index)}>
+                    <FaEdit />
+                  </IconButton>
+                  <IconButton color="error" onClick={() => handleDelete(index, test.id)}>
+                    <MdDelete />
+                  </IconButton>
+                </Box>
+              </CardContent>
+            </Card>
+          ))}
+        </Box>
+      ) : (
+        <Box sx={{ mt: 4, height: 400, overflow: 'auto', px: 2 }}>
+          <Paper elevation={3} sx={{ borderRadius: 2 }}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell
+                    sx={{
+                      fontWeight: 'bold',
+                      fontSize: '1.1rem',
+                      backgroundColor: '#f5f5f5',
+                      borderBottom: '2px solid #ddd',
+                    }}
+                  >
+                    Test Name
+                  </TableCell>
+                  <TableCell
+                    align="center"
+                    sx={{
+                      fontWeight: 'bold',
+                      fontSize: '1.1rem',
+                      backgroundColor: '#f5f5f5',
+                      borderBottom: '2px solid #ddd',
+                    }}
+                  >
+                    Date
+                  </TableCell>
+                  <TableCell
+                    align="center"
+                    sx={{
+                      fontWeight: 'bold',
+                      fontSize: '1.1rem',
+                      backgroundColor: '#f5f5f5',
+                      borderBottom: '2px solid #ddd',
+                    }}
+                  >
+                    Number of Items
+                  </TableCell>
+                  <TableCell
+                    align="center"
+                    sx={{
+                      fontWeight: 'bold',
+                      fontSize: '1.1rem',
+                      backgroundColor: '#f5f5f5',
+                      borderBottom: '2px solid #ddd',
+                    }}
+                  >
+                    Actions
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredTests.map((test, index) => (
+                  <TableRow
+                    key={index}
+                    sx={{
+                      '&:nth-of-type(odd)': {
+                        backgroundColor: '#f9f9f9',
+                      },
+                      '&:hover': {
+                        backgroundColor: '#f1f1f1',
+                      },
+                    }}
+                  >
+                    <TableCell sx={{ padding: '16px' }}>{test.name}</TableCell>
+                    <TableCell align="center" sx={{ padding: '16px' }}>{test.date}</TableCell>
+                    <TableCell align="center" sx={{ padding: '16px' }}>{test.items}</TableCell>
+                    <TableCell align="center" sx={{ padding: '16px' }}>
+                      <IconButton color="primary" onClick={() => handlePrint(test)} sx={{ mx: 1 }}>
+                        <FaDownload fontSize='medium' />
+                      </IconButton>
+                      <IconButton color="secondary" onClick={() => handleEdit(index)} sx={{ mx: 1 }}>
+                        <FaEdit fontSize='medium' />
+                      </IconButton>
+                      <IconButton color="error" onClick={() => handleDelete(index, test.id)} sx={{ mx: 1 }}>
+                        <MdDelete fontSize='medium' />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Paper>
+        </Box>
+      )}
+
+      {/* Modal for creating or editing test questions */}
+      <ModalTestQuestion isOpen={isModalOpen} onClose={closeModal} onSave={handleSave}>
+        <Box sx={{ p: 2 }}>
+          <Typography variant="h6">Create/Edit Test</Typography>
+          <TextField
+            fullWidth
+            label="Exam Name"
+            value={testName}
+            onChange={handleNameChange}
+            variant="outlined"
+            sx={{ mt: 2 }}
+          />
+          <TextField
+            fullWidth
+            label="Date"
+            type="date"
+            value={selectedDate}
+            onChange={handleDateChange}
+            variant="outlined"
+            sx={{ mt: 2 }}
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+          <InputLabel sx={{ mt: 2 }}>Select Number of Items</InputLabel>
+          <Select
+            fullWidth
+            value={selectedOption}
+            onChange={handleDropdownChange}
+            variant="outlined"
+            sx={{ mt: 1 }}
+          >
+            <MenuItem value="10">10 Items</MenuItem>
+            <MenuItem value="20">20 Items</MenuItem>
+            <MenuItem value="30">30 Items</MenuItem>
+            <MenuItem value="40">40 Items</MenuItem>
+            <MenuItem value="50">50 Items</MenuItem>
+          </Select>
+          <Box sx={{ mt: 2, display: 'flex', alignItems: 'center' }}>
+            <IconButton color="primary" component="label">
+              <FaPrint />
               <input
-                id="file-input"
                 type="file"
                 accept=".pdf,.docx,.xlsx,.xls"
                 onChange={handleFileChange}
-                className="hidden"
+                hidden
               />
-              <span>{selectedFile ? selectedFile.name : 'No file selected'}</span>
-            </div>
-            <div className="gap-4 justify-center mt-4">
-              <div className="flex flex-col items-center mt-4">
-                <label className="uppercase text-lg font-bold mt-5 mb-2">Exam Directions</label>
-                <textarea
-                  className="text-left px-4 py-2 w-5/6 h-24 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  placeholder="Enter directions here"
-                  value={directions}
-                  onChange={handleDirectionsChange}
-                />
-              </div>
-              {itemsInput.map((item, index) => (
-                <div key={index} className="flex flex-col items-center m-1 mt-5 shadow-blue-500/50 shadow-xl">
-                  <label className="uppercase text-lg font-bold mt-5 mb-2">Question {index + 1}</label>
-                  <input
-                    className="uppercase text-left px-8 w-5/6 h-10 mb-5 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    placeholder={`Input Here ${index + 1}`}
-                    value={item.question}
+            </IconButton>
+            <Typography sx={{ ml: 1 }}>{selectedFile ? selectedFile.name : 'No file selected'}</Typography>
+          </Box>
+          <TextField
+            fullWidth
+            label="Exam Directions"
+            multiline
+            rows={4}
+            value={directions}
+            onChange={handleDirectionsChange}
+            variant="outlined"
+            sx={{ mt: 2 }}
+          />
+          {itemsInput.map((item, index) => (
+            <Box key={index} sx={{ mt: 3, p: 2, border: '1px solid #ccc', borderRadius: 2 }}>
+              <Typography variant="h6">Question {index + 1}</Typography>
+              <TextField
+                fullWidth
+                label={`Question ${index + 1}`}
+                value={item.question}
+                onChange={(e) => {
+                  const newItemsInput = [...itemsInput];
+                  newItemsInput[index].question = e.target.value;
+                  setItemsInput(newItemsInput);
+                }}
+                variant="outlined"
+                sx={{ mt: 2 }}
+              />
+              {item.choices.map((choice, choiceIndex) => (
+                <Box key={choiceIndex} sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
+                  <Checkbox
+                    checked={choice.checked || false}
                     onChange={(e) => {
                       const newItemsInput = [...itemsInput];
-                      newItemsInput[index].question = e.target.value;
+                      newItemsInput[index].choices.forEach((ch, idx) => {
+                        if (choiceIndex !== idx) ch.checked = false;
+                      });
+                      newItemsInput[index].choices[choiceIndex].checked = e.target.checked;
                       setItemsInput(newItemsInput);
                     }}
                   />
-                  {item.choices.map((choice, choiceIndex) => (
-                    <div key={choice.id} className="flex items-center px-8 mb-2 mt-2 w-full">
-                      <input
-                        type="checkbox"
-                        checked={choice.checked || false}
-                        onChange={(e) => {
-                          const newItemsInput = [...itemsInput];
-                          newItemsInput[index].choices.forEach((ch, idx) => {
-                            if (choiceIndex !== idx) ch.checked = false;
-                          });
-                          newItemsInput[index].choices[choiceIndex].checked = e.target.checked;
-                          setItemsInput(newItemsInput);
-                        }}
-                      />
-                      <input
-                        className="uppercase text-left ml-4 px-10 w-11/12 h-10 border-2 border-indigo-200 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        placeholder={`Answer ${String.fromCharCode(65 + choiceIndex)}`}
-                        value={choice.text}
-                        onChange={(e) => {
-                          const newItemsInput = [...itemsInput];
-                          newItemsInput[index].choices[choiceIndex].text = e.target.value;
-                          setItemsInput(newItemsInput);
-                        }}
-                      />
-                    </div>
-                  ))}
-                </div>
+                  <TextField
+                    fullWidth
+                    label={`Answer ${String.fromCharCode(65 + choiceIndex)}`}
+                    value={choice.text}
+                    onChange={(e) => {
+                      const newItemsInput = [...itemsInput];
+                      newItemsInput[index].choices[choiceIndex].text = e.target.value;
+                      setItemsInput(newItemsInput);
+                    }}
+                    variant="outlined"
+                  />
+                </Box>
               ))}
-            </div>
-          </div>
-        </div>
+            </Box>
+          ))}
+        </Box>
       </ModalTestQuestion>
-
-    </div>
+    </Box>
   );
 }
 
 export default CreateQuestions;
-

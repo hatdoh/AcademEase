@@ -4,7 +4,7 @@ import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from 'firebase
 import { db } from '../config/firebase';
 import Swal from 'sweetalert2';
 import { FaEdit, FaTrash } from 'react-icons/fa';
-import { Button, TextField, MenuItem, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Typography, Box, Container, Grid, useTheme, useMediaQuery } from '@mui/material';
+import { Button, TextField, MenuItem, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Typography, Box, Container, Grid, useTheme, useMediaQuery, Card, CardContent } from '@mui/material';
 
 function AddSection() {
     const [section, setSection] = useState('');
@@ -188,7 +188,7 @@ function AddSection() {
     return (
         <Container maxWidth="lg">
             <Box sx={{ padding: 2 }}>
-                <Box mt={4} mb={2}>
+                <Box sx={{mt: isMobile ? 6 : 2, mb: 2}}>
                     <Typography variant="h4" component="h2">
                         {editingSectionId ? 'Edit Section' : 'Add Section'}
                     </Typography>
@@ -267,46 +267,62 @@ function AddSection() {
                             {editingSectionId ? 'Update Section' : 'Add Section'}
                         </Button>
                         <Link to="/sections">
-                            <Button variant="outlined"
-                                sx={{
-                                    color: 'black', backgroundColor: 'white',
-                                    '&:hover': {
-                                        backgroundColor: '#bbbdbf',
-                                    },
-                                }}>
-                                Back
-                            </Button>
+                            <Button variant="outlined">Cancel</Button>
                         </Link>
                     </Box>
                 </Box>
 
-                <Box mt={4} sx={{ display: 'flex', justifyContent: 'center' }}>
+                {/* Conditionally render layout based on screen size */}
+                {isMobile ? (
+                    <Box>
+                        {sections.map((section) => (
+                            <Card key={section.id} sx={{ marginBottom: 2 }}>
+                                <CardContent>
+                                    <Typography variant="h6">{section.section}</Typography>
+                                    <Typography variant="body2">
+                                        {convertTo12HourFormat(section.startTime)} - {convertTo12HourFormat(section.endTime)}
+                                    </Typography>
+                                    <Typography variant="body2">{section.day}</Typography>
+                                    <Typography variant="body2">{section.acadYear}</Typography>
+                                    <Box mt={2}>
+                                        <IconButton color="primary" onClick={() => handleEdit(section)}>
+                                            <FaEdit />
+                                        </IconButton>
+                                        <IconButton color="error" onClick={() => handleDelete(section.id)}>
+                                            <FaTrash />
+                                        </IconButton>
+                                    </Box>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </Box>
+                ) : (
                     <TableContainer component={Paper}>
                         <Table>
                             <TableHead>
                                 <TableRow>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Academic Year</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Section Name</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Start Time</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>End Time</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Day</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+                                    <TableCell>Section</TableCell>
+                                    <TableCell>Start Time</TableCell>
+                                    <TableCell>End Time</TableCell>
+                                    <TableCell>Day</TableCell>
+                                    <TableCell>Academic Year</TableCell>
+                                    <TableCell>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {sections.map((section) => (
                                     <TableRow key={section.id}>
-                                        <TableCell>{section.acadYear}</TableCell>
                                         <TableCell>{section.section}</TableCell>
                                         <TableCell>{convertTo12HourFormat(section.startTime)}</TableCell>
                                         <TableCell>{convertTo12HourFormat(section.endTime)}</TableCell>
                                         <TableCell>{section.day}</TableCell>
+                                        <TableCell>{section.acadYear}</TableCell>
                                         <TableCell>
-                                            <IconButton onClick={() => handleEdit(section)} color="primary">
-                                                <FaEdit fontSize='medium' />
+                                            <IconButton color="primary" onClick={() => handleEdit(section)}>
+                                                <FaEdit />
                                             </IconButton>
-                                            <IconButton onClick={() => handleDelete(section.id)} color="error">
-                                                <FaTrash fontSize='medium' />
+                                            <IconButton color="error" onClick={() => handleDelete(section.id)}>
+                                                <FaTrash />
                                             </IconButton>
                                         </TableCell>
                                     </TableRow>
@@ -314,7 +330,7 @@ function AddSection() {
                             </TableBody>
                         </Table>
                     </TableContainer>
-                </Box>
+                )}
             </Box>
         </Container>
     );

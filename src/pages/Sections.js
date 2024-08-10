@@ -133,8 +133,8 @@ function Section() {
     return (
         <Box sx={{ padding: 2 }}>
             <Grid container spacing={2} mb={2}>
-                <Grid item xs={12}>
-                    <Typography variant="h6" gutterBottom>
+                <Grid item xs={12} sx={{mt: isMobile ? 6: 2}}>
+                    <Typography variant="h4" gutterBottom>
                         Section ({selectedSection})
                     </Typography>
                 </Grid>
@@ -200,7 +200,7 @@ function Section() {
             {
         isMobile ? (
             <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="h4" gutterBottom>
                     Section ({selectedSection})
                 </Typography>
                 {sortedStudents.map((student, index) => (
