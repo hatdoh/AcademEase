@@ -346,58 +346,67 @@ function CreateQuestions(props) {
     doc.text('Student ID Number: ___________________', marginLeft, marginTop + 20);
     doc.text('Set: ____', marginLeft, marginTop + 30);
 
-    // Set initial yOffset for answer choices
-    let yOffset = marginTop + 50; // Adjust as needed for spacing
-    let xOffset = marginLeft; // Initial xOffset for answer choices
+    // Print the "Score" label and draw the small box next to it
+    const scoreX = marginLeft;
+    const scoreY = marginTop + 40;
+    doc.text('Score', scoreX, scoreY);
+    const scoreBoxWidth = 40;
+    const scoreBoxHeight = 12;
+    doc.rect(scoreX + 25, scoreY - 5, scoreBoxWidth, scoreBoxHeight); // Draw the small box next to "Score"
+
+    // Draw a large box below the "Score" box
+    const largeBoxWidth = 180; // Width of the large box
+    const largeBoxHeight = 165; // Height of the large box
+    const largeBoxX = (pageWidth - largeBoxWidth) / 2; // Center the large box horizontally
+    const largeBoxY = scoreY + 10; // Position the large box below the "Score" box
+    doc.rect(largeBoxX, largeBoxY, largeBoxWidth, largeBoxHeight); // Draw the large box
+
+    // Define spacing and sizes for the box contents
+    const boxMargin = 1; // Margin around the content inside each box
+    const rowSpacing =-136; // Vertical spacing between rows of boxes
+    const colSpacing =-10; // Horizontal spacing between columns of boxes
+    const boxWidth = (largeBoxWidth - 2 * boxMargin - 2 * colSpacing) / 3; // Width of each box in 3 columns
+    const boxHeight = (largeBoxHeight - 2 * boxMargin - 2 * rowSpacing) / 3; // Height of each box in 2 rows
+    const choiceSpacing = 10; // Horizontal spacing between answer choices
+    const choiceCircleRadius = 4; // Radius of the circles for answer choices
+    const textSize = 12; // Font size for answer choices
+
+    let xOffset, yOffset;
 
     // Set the font size for the answer choices
     doc.setFontSize(11);
 
-    // Define horizontal and vertical spacing for choices
-    const choiceSpacing = 10;
-    const choiceCircleRadius = 4;
-    const textSize = 12;
-    const rowSpacing = 10; // Vertical spacing between rows
-    const colSpacing = 50; // Horizontal spacing between columns
-
+    // Positioning for each question and answer choices
     for (let i = 1; i <= numQuestions; i++) {
-      // Calculate column and row index
-      const colIndex = Math.floor((i - 1) / 10);
-      const rowIndex = Math.floor((colIndex) / 3);
+        // Calculate row and column index
+        const rowIndex = Math.floor((i - 1) / 3);
+        const colIndex = (i - 1) % 3;
 
-      // Reset xOffset and yOffset for each new set of columns
-      xOffset = marginLeft + (colIndex % 3) * colSpacing;
-      yOffset = marginTop + 50 + (i - 1) % 10 * rowSpacing + (rowIndex * 100); // Adjust yOffset for rows
+        // Calculate xOffset and yOffset using spacing parameters
+        xOffset = largeBoxX + boxMargin + colIndex * (boxWidth + colSpacing);
+        yOffset = largeBoxY + boxMargin + rowIndex * (boxHeight + rowSpacing);
 
-      // Add new page if necessary
-      if (yOffset > pageHeight - marginBottom - 20) {
-        doc.addPage();
-        yOffset = marginTop + 50; // Reset yOffset for new page
-      }
+        // Print the question number
+        doc.text(`${i}.`, xOffset + 5, yOffset + 12);
 
-      // Print the question number
-      doc.text(`${i}.`, xOffset, yOffset);
+        // Print the answer choices in circles
+        const choices = ['A', 'B', 'C', 'D'].slice(0, numChoices); // Adjust choices based on number of choices
+        choices.forEach((choice, index) => {
+            const choiceX = xOffset + 20 + (index * choiceSpacing); // Adjust position inside the box
+            doc.circle(choiceX, yOffset + 10, choiceCircleRadius); // Draw circle
 
-      // Print the answer choices in circles
-      const choices = ['A', 'B', 'C', 'D'].slice(0, numChoices); // Adjust choices based on number of choices
-      choices.forEach((choice, index) => {
-        const x = xOffset + 7 + (index * choiceSpacing);
-        const circleX = x + 3; // Adjust for additional space between circle and text
-        doc.circle(circleX, yOffset - 3, choiceCircleRadius); // Draw circle
-
-        // Center the letter inside the circle
-        doc.setFontSize(textSize);
-        const textWidth = doc.getTextWidth(choice);
-        const textX = circleX - (textWidth / 2);
-        const textY = yOffset + -1; // Adjust the vertical position of the text
-        doc.text(choice, textX, textY); // Add choice letter inside circle
-      });
+            // Center the letter inside the circle
+            doc.setFontSize(textSize);
+            const textWidth = doc.getTextWidth(choice);
+            const textX = choiceX - (textWidth / 2);
+            const textY = yOffset + 11; // Adjust the vertical position of the text
+            doc.text(choice, textX, textY); // Add choice letter inside circle
+        });
     }
 
     // Save the answer sheet PDF
     doc.save('answer_sheet.pdf');
-  };
-
+};
 
   const handlePrint = async (test) => {
     if (!test || !test.questions) {
@@ -455,7 +464,7 @@ function CreateQuestions(props) {
     if (file) {
       const fileType = file.name.split('.').pop().toLowerCase();
       let content = '';
-
+  
       try {
         if (fileType === 'pdf') {
           content = await readPdfFile(file);
@@ -470,15 +479,15 @@ function CreateQuestions(props) {
         console.error('Error reading file:', error);
         return;
       }
-
+  
       const lines = content.split('\n')
         .map(line => line.trim())
         .filter(line => line !== '');
-
+  
       const items = [];
       let currentQuestion = null;
       let directionsText = '';
-
+  
       lines.forEach(line => {
         if (/^directions:/i.test(line)) {
           directionsText = line.replace(/^directions:/i, '').trim();
@@ -512,16 +521,39 @@ function CreateQuestions(props) {
           }
         }
       });
-
+  
       if (currentQuestion) {
         currentQuestion.choices = currentQuestion.choices.slice(0, 4);
         items.push(currentQuestion);
       }
-
+  
       const itemCount = items.length;
+  
+      if (itemCount > 50) {
+        await Swal.fire({
+          title: 'Items Exceeded',
+          text: 'The number of items exceeds the maximum limit of 50. Only the first 50 items will be included.',
+          icon: 'warning',
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: 'OK'
+        });
+        // Only keep the first 50 items
+        items.length = 50;
+      } else if (itemCount < 40) {
+        await Swal.fire({
+          title: 'Insufficient Items',
+          text: 'The number of items is less than the required minimum of 40. Please include at least 40 items.',
+          icon: 'warning',
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: 'OK'
+        });
+        return; // Exit the function if the number of items is insufficient
+      }
+  
+      // Update state if the number of items is valid (40 or 50)
       setItemsInput(items);
       setDirections(directionsText); // Set the directions state
-
+  
       // Update the dropdown value and answer sheet
       setSelectedOption(itemCount);
       setAnswerSheet(items.map(item => ({
@@ -530,7 +562,7 @@ function CreateQuestions(props) {
       })));
     }
   };
-
+  
 
   const readPdfFile = async (file) => {
     const arrayBuffer = await file.arrayBuffer();
