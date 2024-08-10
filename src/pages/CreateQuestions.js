@@ -706,7 +706,7 @@ function CreateQuestions(props) {
 
   return (
     <Box sx={{ ml: isMobile ? 0 : 3, p: 2 }}>
-      <Typography variant="h4" sx={{ mt: isMobile ? 6 : 1, mb: 2 }}>Test Questions</Typography>
+      <Typography variant="h4" sx={{ mt: isMobile ? 6 : 1, mb: 2, fontWeight: 'bold' }}>Test Questions</Typography>
       <Grid container spacing={2} alignItems="center">
         <Grid item xs={12} sm={6}>
           <TextField
@@ -714,9 +714,18 @@ function CreateQuestions(props) {
             placeholder="Search..."
             value={searchTerm}
             onChange={handleSearch}
-            variant="outlined"
-            size="small"
-            sx={{ backgroundColor: 'white', borderRadius: 1 }}
+            size='small'
+            sx={{
+              backgroundColor: 'white',
+              borderRadius: 2
+            }}
+            InputProps={{
+              sx: {
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#818181'
+                }
+              }
+            }}
           />
         </Grid>
         <Grid item xs={12} sm={3}>
@@ -727,7 +736,13 @@ function CreateQuestions(props) {
             variant="outlined"
             size="small"
             displayEmpty
-            sx={{ backgroundColor: 'white', borderRadius: 1 }}
+            sx={{
+              backgroundColor: 'white',
+              borderRadius: 1,
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#818181',
+              },
+            }}
           >
             <MenuItem value="">All Test Types</MenuItem>
             {savedTests.map((test, index) => (
@@ -735,6 +750,7 @@ function CreateQuestions(props) {
             ))}
           </Select>
         </Grid>
+
         <Grid item xs={12} sm={3}>
           <Button
             fullWidth
@@ -758,13 +774,31 @@ function CreateQuestions(props) {
                 <Typography>Date: {test.date}</Typography>
                 <Typography>Items: {test.items}</Typography>
                 <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                  <IconButton color="primary" onClick={() => handlePrint(test)}>
+                  <IconButton color="primary" onClick={() => handlePrint(test)}
+                    sx={{
+                      color: '#1e88e5', // Custom color for download icon (blue)
+                      '&:hover': {
+                        color: '#1565c0', // Darker blue on hover
+                      },
+                    }}>
                     <FaDownload />
                   </IconButton>
-                  <IconButton color="secondary" onClick={() => handleEdit(index)}>
+                  <IconButton color="secondary" onClick={() => handleEdit(index)}
+                    sx={{
+                      color: '#fb8c00', // Custom color for edit icon (orange)
+                      '&:hover': {
+                        color: '#f57c00', // Darker orange on hover
+                      },
+                    }}
+                  >
                     <FaEdit />
                   </IconButton>
-                  <IconButton color="error" onClick={() => handleDelete(index, test.id)}>
+                  <IconButton color="error" onClick={() => handleDelete(index, test.id)}
+                    sx={{
+                      '&:hover': {
+                        color: '#d32f2f', // Red color on hover
+                      },
+                    }}>
                     <MdDelete />
                   </IconButton>
                 </Box>
@@ -840,13 +874,40 @@ function CreateQuestions(props) {
                     <TableCell align="center" sx={{ padding: '16px' }}>{test.date}</TableCell>
                     <TableCell align="center" sx={{ padding: '16px' }}>{test.items}</TableCell>
                     <TableCell align="center" sx={{ padding: '16px' }}>
-                      <IconButton color="primary" onClick={() => handlePrint(test)} sx={{ mx: 1 }}>
+                      <IconButton
+                        onClick={() => handlePrint(test)}
+                        sx={{
+                          mx: 1,
+                          color: '#fb8c00', // Custom color for edit icon (orange)
+                          '&:hover': {
+                            color: '#f57c00', // Darker orange on hover
+                          },
+                        }}
+                      >
                         <FaDownload fontSize='medium' />
                       </IconButton>
-                      <IconButton color="secondary" onClick={() => handleEdit(index)} sx={{ mx: 1 }}>
+                      <IconButton
+                        onClick={() => handleEdit(index)}
+                        sx={{
+                          mx: 1,
+                          color: '#1e88e5', // Custom color for download icon (blue)
+                          '&:hover': {
+                            color: '#1565c0', // Darker blue on hover
+                          },
+                        }}
+                      >
                         <FaEdit fontSize='medium' />
                       </IconButton>
-                      <IconButton color="error" onClick={() => handleDelete(index, test.id)} sx={{ mx: 1 }}>
+                      <IconButton
+                        color="error"
+                        onClick={() => handleDelete(index, test.id)}
+                        sx={{
+                          mx: 1,
+                          '&:hover': {
+                            color: '#d32f2f', // Red color on hover
+                          },
+                        }}
+                      >
                         <MdDelete fontSize='medium' />
                       </IconButton>
                     </TableCell>
@@ -861,7 +922,7 @@ function CreateQuestions(props) {
       {/* Modal for creating or editing test questions */}
       <ModalTestQuestion isOpen={isModalOpen} onClose={closeModal} onSave={handleSave}>
         <Box sx={{ p: 2 }}>
-          <Typography variant="h6">Create/Edit Test</Typography>
+          <Typography variant="h6" sx={{fontWeight: 'bold'}}>Create/Edit Test</Typography>
           <TextField
             fullWidth
             label="Exam Name"
@@ -881,8 +942,9 @@ function CreateQuestions(props) {
             InputLabelProps={{
               shrink: true,
             }}
+            
           />
-          <InputLabel sx={{ mt: 2 }}>Select Number of Items</InputLabel>
+          <InputLabel sx={{ mt: 2, color: 'black', fontWeight: 'bold' }}>Select Number of Items</InputLabel>
           <Select
             fullWidth
             value={selectedOption}

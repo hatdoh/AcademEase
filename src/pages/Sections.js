@@ -134,7 +134,7 @@ function Section() {
         <Box sx={{ padding: 2 }}>
             <Grid container spacing={2} mb={2}>
                 <Grid item xs={12} sx={{mt: isMobile ? 6: 2}}>
-                    <Typography variant="h4" gutterBottom>
+                    <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold'}}>
                         Section ({selectedSection})
                     </Typography>
                 </Grid>
@@ -145,7 +145,17 @@ function Section() {
                         fullWidth
                         value={searchAcadYear}
                         onChange={(e) => setSearchAcadYear(e.target.value)}
-                        sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                        sx={{
+                            backgroundColor: 'white',
+                            borderRadius: 2
+                        }}
+                        InputProps={{
+                            sx: {
+                                '& .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: '#818181'
+                                }
+                            }
+                        }}
                     />
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
@@ -155,7 +165,17 @@ function Section() {
                         fullWidth
                         value={searchGrade}
                         onChange={(e) => setSearchGrade(e.target.value)}
-                        sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                        sx={{
+                            backgroundColor: 'white',
+                            borderRadius: 2
+                        }}
+                        InputProps={{
+                            sx: {
+                                '& .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: '#818181'
+                                }
+                            }
+                        }}
                     />
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
@@ -165,7 +185,17 @@ function Section() {
                         fullWidth
                         value={searchSection}
                         onChange={(e) => setSearchSection(e.target.value)}
-                        sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                        sx={{
+                            backgroundColor: 'white',
+                            borderRadius: 2
+                        }}
+                        InputProps={{
+                            sx: {
+                                '& .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: '#818181'
+                                }
+                            }
+                        }}
                     />
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
@@ -174,7 +204,14 @@ function Section() {
                         onChange={handleSectionChange}
                         fullWidth
                         variant="outlined"
-                        sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                        sx={{
+                            mt: isMobile ? 0 : 2,
+                            backgroundColor: 'white',
+                            borderRadius: 1,
+                            '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: '#818181',
+                            },
+                        }}
                     >
                         {sectionList.map((section) => (
                             <MenuItem key={section} value={section}>
@@ -190,7 +227,7 @@ function Section() {
                         variant="contained"
                         color="primary"
                         startIcon={<MdAdd />}
-                        sx={{ mt: 1 }}
+                        sx={{ mt: isMobile ? 1 : 3 }}
                     >
                         Add Section
                     </Button>
@@ -200,7 +237,7 @@ function Section() {
             {
         isMobile ? (
             <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="h4" gutterBottom>
+                <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold'}}>
                     Section ({selectedSection})
                 </Typography>
                 {sortedStudents.map((student, index) => (
@@ -261,7 +298,6 @@ function Section() {
                                             style={{
                                                 textDecoration: 'none',
                                                 color: theme.palette.primary.main,
-                                                fontWeight: 'bold'
                                             }}
                                         >
                                             {getFullName(student)}

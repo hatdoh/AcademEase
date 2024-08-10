@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaSort } from 'react-icons/fa';
 import { MdAdd } from 'react-icons/md';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -144,7 +143,7 @@ function AttendanceSummary() {
         <Box sx={{ padding: 2 }}>
             <Grid container spacing={2} mb={2}>
                 <Grid item xs={12}>
-                    <Typography variant="h4">Attendance Summary ({selectedSection})</Typography>
+                    <Typography variant="h4" sx={{ fontWeight: 'bold', mt: isMobile ? 5 : 0 }}>Attendance Summary ({selectedSection})</Typography>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
                     <Select
@@ -152,7 +151,15 @@ function AttendanceSummary() {
                         onChange={handleSectionChange}
                         fullWidth
                         variant="outlined"
-                        sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                        size='small'
+                        sx={{
+                            mt: isMobile ? 0 : 2,
+                            backgroundColor: 'white',
+                            borderRadius: 1,
+                            '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: '#818181',
+                            },
+                        }}
                     >
                         {sectionList.map((section) => (
                             <MenuItem key={section} value={section}>
@@ -161,36 +168,66 @@ function AttendanceSummary() {
                         ))}
                     </Select>
                 </Grid>
-                <Grid item xs={12} sm={6} md={3} sx={{ mt: 2 }}>
-                    <DatePicker
-                        selected={startDate}
-                        onChange={(date) => setStartDate(date)}
-                        selectsStart
-                        startDate={startDate}
-                        endDate={endDate}
-                        placeholderText="From"
-                    />
+
+                <Grid item xs={12} sm={6} md={3} sx={{ ml: 5 }}>
+                    <Grid item xs={12} sm={6} md={3} sx={{ mt: 1 }}>
+                        <DatePicker
+                            selected={startDate}
+                            onChange={(date) => setStartDate(date)}
+                            selectsStart
+                            startDate={startDate}
+                            endDate={endDate}
+                            placeholderText="From"
+                            sx={{
+                                backgroundColor: 'white',
+                                borderRadius: 2,
+                                '& .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: '#818181',
+                                },
+                            }}
+                            InputProps={{
+                                sx: {
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                        borderColor: '#818181',
+                                    },
+                                },
+                            }}
+                        />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3} sx={{ mt: 1 }}>
+                        <DatePicker
+                            selected={endDate}
+                            onChange={(date) => setEndDate(date)}
+                            selectsEnd
+                            startDate={startDate}
+                            endDate={endDate}
+                            minDate={startDate}
+                            placeholderText="To"
+                            sx={{
+                                backgroundColor: 'white',
+                                borderRadius: 2,
+                                '& .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: '#818181',
+                                },
+                            }}
+                            InputProps={{
+                                sx: {
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                        borderColor: '#818181',
+                                    },
+                                },
+                            }}
+                        />
+                    </Grid>
                 </Grid>
-                <Grid item xs={12} sm={6} md={3} sx={{ mt: 2 }}>
-                    <DatePicker
-                        selected={endDate}
-                        onChange={(date) => setEndDate(date)}
-                        selectsEnd
-                        startDate={startDate}
-                        endDate={endDate}
-                        minDate={startDate}
-                        placeholderText="To"
-                    />
-                </Grid>
-                <Grid item xs={12} sm={6} md={3} sx={{ mt: 1 }}>
+                <Grid item xs={12} sm={6} md={3} sx={{ mt: isMobile ? 0 : 2 }}>
                     <Link to="/school-form" style={{ textDecoration: 'none' }}>
                         <Button
                             variant="contained"
                             color="primary"
-                            startIcon={<MdAdd />}
                             fullWidth={isMobile}
                         >
-                            Create SF2
+                            Create SF2 <MdAdd style={{ marginLeft: 2 }} />
                         </Button>
                     </Link>
                 </Grid>
@@ -224,33 +261,34 @@ function AttendanceSummary() {
                     <Table>
                         <TableHead>
                             <TableRow>
-                                <TableCell style={{fontWeight: 'bold'}}>Name</TableCell>
-                                <TableCell align='center' style={{fontWeight: 'bold'}}>Section</TableCell>
-                                <TableCell align='center' style={{fontWeight: 'bold'}}>
+                                <TableCell align="center" style={{ fontWeight: 'bold' }}>No</TableCell>
+                                <TableCell style={{ fontWeight: 'bold' }}>Name</TableCell>
+                                <TableCell align='center' style={{ fontWeight: 'bold' }}>Section</TableCell>
+                                <TableCell align='center' style={{ fontWeight: 'bold' }}>
                                     <TableSortLabel
                                         active={lateSortOrder !== null}
                                         direction={lateSortOrder || 'asc'}
                                         onClick={sortByLate}
                                     >
-                                        Total Late <FaSort />
+                                        Total Late
                                     </TableSortLabel>
                                 </TableCell>
-                                <TableCell align='center' style={{fontWeight: 'bold'}}>
+                                <TableCell align='center' style={{ fontWeight: 'bold' }}>
                                     <TableSortLabel
                                         active={absentSortOrder !== null}
                                         direction={absentSortOrder || 'asc'}
                                         onClick={sortByAbsent}
                                     >
-                                        Total Absent <FaSort />
+                                        Total Absent
                                     </TableSortLabel>
                                 </TableCell>
-                                <TableCell align="center" style={{fontWeight: 'bold'}}>
+                                <TableCell align="center" style={{ fontWeight: 'bold' }}>
                                     <TableSortLabel
                                         active={presentSortOrder !== null}
                                         direction={presentSortOrder || 'asc'}
                                         onClick={sortByPresent}
                                     >
-                                        Total Present <FaSort />
+                                        Total Present
                                     </TableSortLabel>
                                 </TableCell>
                             </TableRow>
@@ -258,12 +296,24 @@ function AttendanceSummary() {
                         <TableBody>
                             {filteredStudents.map((student, index) => (
                                 <TableRow key={student.id}>
+                                    <TableCell align="center">{index + 1}</TableCell>
                                     <TableCell>
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                             {student.image && (
-                                                <Avatar src={student.image} alt={student.name} sx={{ width: 40, height: 40, marginRight: 2 }} />
+                                                <Avatar
+                                                    src={student.image}
+                                                    alt={student.FName}
+                                                    sx={{ width: 60, height: 60, mr: 2 }}
+                                                />
                                             )}
-                                            <Link to={`/profile/${student.id}`} style={{ textDecoration: 'none', color: theme.palette.primary.main, fontWeight: 'bold' }}>
+                                            <Link
+                                                to={`/profile/${student.id}`}
+                                                style={{
+                                                    textDecoration: 'none',
+                                                    color: theme.palette.primary.main,
+                                                    fontWeight: 'bold'
+                                                }}
+                                            >
                                                 <Typography>{student.name}</Typography>
                                             </Link>
                                         </Box>

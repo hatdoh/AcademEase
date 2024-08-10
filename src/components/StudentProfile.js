@@ -5,7 +5,7 @@ import { db, storage } from '../config/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import Swal from 'sweetalert2';
 import { MdEdit } from 'react-icons/md';
-import { Button,  Container, Grid, Typography, TextField, InputLabel, Select, MenuItem, IconButton, FormControl, useMediaQuery, useTheme, Card, CardContent, CardMedia, CardActions, Box } from '@mui/material';
+import { Button, Container, Grid, Typography, TextField, InputLabel, Select, MenuItem, IconButton, FormControl, useMediaQuery, useTheme, Card, CardContent, CardMedia, CardActions, Box } from '@mui/material';
 
 function StudentProfile() {
     const { id } = useParams();
@@ -160,7 +160,7 @@ function StudentProfile() {
 
     return (
         <Container maxWidth="lg">
-            <Typography variant="h4" gutterBottom sx={{ mt: 3 }}>
+            <Typography variant="h4" gutterBottom sx={{ mt: 3, fontWeight: 'bold' }}>
                 Student Profile
             </Typography>
             <Grid container spacing={3}>
@@ -254,7 +254,7 @@ function StudentProfile() {
                     </Card>
                 </Grid>
                 <Grid item xs={12} sm={8}>
-                    <Typography variant="h6" sx={{mb: 1}}>
+                    <Typography variant="h6" sx={{ mb: 1 }}>
                         Personal Information
                     </Typography>
                     <form onSubmit={handleSubmit} sx={{ mt: 5 }}>
@@ -266,8 +266,17 @@ function StudentProfile() {
                                     value={student.LName || ''}
                                     onChange={handleInputChange}
                                     fullWidth
-                                    variant="outlined"
-                                    sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                    sx={{
+                                        backgroundColor: 'white',
+                                        borderRadius: 2
+                                    }}
+                                    InputProps={{
+                                        sx: {
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: '#818181'
+                                            }
+                                        }
+                                    }}
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
@@ -277,8 +286,17 @@ function StudentProfile() {
                                     value={student.FName || ''}
                                     onChange={handleInputChange}
                                     fullWidth
-                                    variant="outlined"
-                                    sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                    sx={{
+                                        backgroundColor: 'white',
+                                        borderRadius: 2
+                                    }}
+                                    InputProps={{
+                                        sx: {
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: '#818181'
+                                            }
+                                        }
+                                    }}
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
@@ -288,8 +306,17 @@ function StudentProfile() {
                                     value={student.MName || ''}
                                     onChange={handleInputChange}
                                     fullWidth
-                                    variant="outlined"
-                                    sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                    sx={{
+                                        backgroundColor: 'white',
+                                        borderRadius: 2
+                                    }}
+                                    InputProps={{
+                                        sx: {
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: '#818181'
+                                            }
+                                        }
+                                    }}
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
@@ -301,8 +328,17 @@ function StudentProfile() {
                                     onChange={handleInputChange}
                                     fullWidth
                                     InputLabelProps={{ shrink: true }}
-                                    variant="outlined"
-                                    sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                    sx={{
+                                        backgroundColor: 'white',
+                                        borderRadius: 2
+                                    }}
+                                    InputProps={{
+                                        sx: {
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: '#818181'
+                                            }
+                                        }
+                                    }}
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
@@ -312,8 +348,17 @@ function StudentProfile() {
                                     value={student.gender || ''}
                                     onChange={handleInputChange}
                                     fullWidth
-                                    variant="outlined"
-                                    sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                    sx={{
+                                        backgroundColor: 'white',
+                                        borderRadius: 2
+                                    }}
+                                    InputProps={{
+                                        sx: {
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: '#818181'
+                                            }
+                                        }
+                                    }}
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
@@ -324,8 +369,17 @@ function StudentProfile() {
                                     value={student.age || ''}
                                     onChange={handleInputChange}
                                     fullWidth
-                                    variant="outlined"
-                                    sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                    sx={{
+                                        backgroundColor: 'white',
+                                        borderRadius: 2
+                                    }}
+                                    InputProps={{
+                                        sx: {
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: '#818181'
+                                            }
+                                        }
+                                    }}
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
@@ -335,8 +389,17 @@ function StudentProfile() {
                                     value={student.address || ''}
                                     onChange={handleInputChange}
                                     fullWidth
-                                    variant="outlined"
-                                    sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                    sx={{
+                                        backgroundColor: 'white',
+                                        borderRadius: 2
+                                    }}
+                                    InputProps={{
+                                        sx: {
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: '#818181'
+                                            }
+                                        }
+                                    }}
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
@@ -347,8 +410,17 @@ function StudentProfile() {
                                     value={student.emailAddress || ''}
                                     onChange={handleInputChange}
                                     fullWidth
-                                    variant="outlined"
-                                    sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                    sx={{
+                                        backgroundColor: 'white',
+                                        borderRadius: 2
+                                    }}
+                                    InputProps={{
+                                        sx: {
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: '#818181'
+                                            }
+                                        }
+                                    }}
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
@@ -358,8 +430,17 @@ function StudentProfile() {
                                     value={student.contactNumber || ''}
                                     onChange={handleInputChange}
                                     fullWidth
-                                    variant="outlined"
-                                    sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                    sx={{
+                                        backgroundColor: 'white',
+                                        borderRadius: 2
+                                    }}
+                                    InputProps={{
+                                        sx: {
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: '#818181'
+                                            }
+                                        }
+                                    }}
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
@@ -369,19 +450,38 @@ function StudentProfile() {
                                     value={student.grade || ''}
                                     onChange={handleInputChange}
                                     fullWidth
-                                    variant="outlined"
-                                    sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                    sx={{
+                                        backgroundColor: 'white',
+                                        borderRadius: 2
+                                    }}
+                                    InputProps={{
+                                        sx: {
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: '#818181'
+                                            }
+                                        }
+                                    }}
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                                <FormControl fullWidth variant="outlined">
+                                <FormControl
+                                    fullWidth
+                                    sx={{
+                                        backgroundColor: 'white',
+                                        borderRadius: 2
+                                    }}
+                                >
                                     <InputLabel>Section</InputLabel>
                                     <Select
                                         name="section"
                                         value={student.section || ''}
                                         onChange={handleInputChange}
                                         label="Section"
-                                        sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                        sx={{
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: '#818181',
+                                            },
+                                        }}
                                     >
                                         {sections.map((section, index) => (
                                             <MenuItem key={index} value={section}>
@@ -392,7 +492,7 @@ function StudentProfile() {
                                 </FormControl>
                             </Grid>
                             <Grid item xs={12}>
-                                <Box display="flex" justifyContent="flex-end" gap={2}>
+                                <Box display="flex" justifyContent="flex-end" gap={1} sx={{ mb: isMobile ? 3 : 0 }}>
                                     <Button
                                         type="submit"
                                         variant="contained"
@@ -402,13 +502,8 @@ function StudentProfile() {
                                     </Button>
                                     <Button
                                         type="button"
-                                        variant="outlined"
-                                        sx={{
-                                            color: 'black', backgroundColor: 'white',
-                                            '&:hover': {
-                                                backgroundColor: '#bbbdbf',
-                                            },
-                                        }}
+                                        variant="contained"
+                                        color='secondary'
                                         onClick={handleCancel}
                                     >
                                         Back

@@ -187,9 +187,9 @@ function AddSection() {
 
     return (
         <Container maxWidth="lg">
-            <Box sx={{ padding: 2 }}>
-                <Box sx={{mt: isMobile ? 6 : 2, mb: 2}}>
-                    <Typography variant="h4" component="h2">
+            <Box sx={{ padding: isMobile ? 0 : 2 }}>
+                <Box sx={{ mt: isMobile ? 8 : 2, mb: 1 }}>
+                    <Typography variant="h4" component="h2" sx={{ fontWeight: 'bold' }}>
                         {editingSectionId ? 'Edit Section' : 'Add Section'}
                     </Typography>
                 </Box>
@@ -204,7 +204,17 @@ function AddSection() {
                                 value={acadYear}
                                 placeholder="Enter Academic Year (YYYY-YYYY)"
                                 onChange={(e) => setAcadYear(e.target.value)}
-                                sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                sx={{
+                                    backgroundColor: 'white',
+                                    borderRadius: 2
+                                }}
+                                InputProps={{
+                                    sx: {
+                                        '& .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: '#818181'
+                                        }
+                                    }
+                                }}
                             />
                         </Grid>
                         <Grid item xs={12} sm={6} md={4}>
@@ -215,7 +225,17 @@ function AddSection() {
                                 value={section}
                                 placeholder="Enter Section Name"
                                 onChange={(e) => setSection(e.target.value)}
-                                sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                sx={{
+                                    backgroundColor: 'white',
+                                    borderRadius: 2
+                                }}
+                                InputProps={{
+                                    sx: {
+                                        '& .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: '#818181'
+                                        }
+                                    }
+                                }}
                             />
                         </Grid>
                         <Grid item xs={12} sm={6} md={4}>
@@ -226,7 +246,17 @@ function AddSection() {
                                 type="time"
                                 value={startTime}
                                 onChange={(e) => setStartTime(e.target.value)}
-                                sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                sx={{
+                                    backgroundColor: 'white',
+                                    borderRadius: 2
+                                }}
+                                InputProps={{
+                                    sx: {
+                                        '& .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: '#818181'
+                                        }
+                                    }
+                                }}
                             />
                         </Grid>
                         <Grid item xs={12} sm={6} md={4}>
@@ -237,7 +267,17 @@ function AddSection() {
                                 type="time"
                                 value={endTime}
                                 onChange={(e) => setEndTime(e.target.value)}
-                                sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                sx={{
+                                    backgroundColor: 'white',
+                                    borderRadius: 2
+                                }}
+                                InputProps={{
+                                    sx: {
+                                        '& .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: '#818181'
+                                        }
+                                    }
+                                }}
                             />
                         </Grid>
                         <Grid item xs={12}>
@@ -247,7 +287,13 @@ function AddSection() {
                                 value={day}
                                 onChange={(e) => setDay(e.target.value)}
                                 label="Day"
-                                sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                                sx={{                            
+                                    backgroundColor: 'white',
+                                    borderRadius: 1,
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                        borderColor: '#818181',
+                                    },
+                                }}
                             >
                                 <MenuItem value="Monday">Monday</MenuItem>
                                 <MenuItem value="Tuesday">Tuesday</MenuItem>
@@ -267,7 +313,7 @@ function AddSection() {
                             {editingSectionId ? 'Update Section' : 'Add Section'}
                         </Button>
                         <Link to="/sections">
-                            <Button variant="outlined">Cancel</Button>
+                            <Button variant="contained" color='secondary'>Cancel</Button>
                         </Link>
                     </Box>
                 </Box>
@@ -284,7 +330,7 @@ function AddSection() {
                                     </Typography>
                                     <Typography variant="body2">{section.day}</Typography>
                                     <Typography variant="body2">{section.acadYear}</Typography>
-                                    <Box mt={2}>
+                                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
                                         <IconButton color="primary" onClick={() => handleEdit(section)}>
                                             <FaEdit />
                                         </IconButton>
@@ -301,28 +347,40 @@ function AddSection() {
                         <Table>
                             <TableHead>
                                 <TableRow>
-                                    <TableCell>Section</TableCell>
-                                    <TableCell>Start Time</TableCell>
-                                    <TableCell>End Time</TableCell>
-                                    <TableCell>Day</TableCell>
-                                    <TableCell>Academic Year</TableCell>
-                                    <TableCell>Actions</TableCell>
+                                    <TableCell align='center' sx={{fontWeight: 'bold'}}>Section</TableCell>
+                                    <TableCell align='center' sx={{fontWeight: 'bold'}}>Start Time</TableCell>
+                                    <TableCell align='center' sx={{fontWeight: 'bold'}}>End Time</TableCell>
+                                    <TableCell align='center' sx={{fontWeight: 'bold'}}>Day</TableCell>
+                                    <TableCell align='center' sx={{fontWeight: 'bold'}}>Academic Year</TableCell>
+                                    <TableCell align='center' sx={{fontWeight: 'bold'}}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {sections.map((section) => (
                                     <TableRow key={section.id}>
-                                        <TableCell>{section.section}</TableCell>
-                                        <TableCell>{convertTo12HourFormat(section.startTime)}</TableCell>
-                                        <TableCell>{convertTo12HourFormat(section.endTime)}</TableCell>
-                                        <TableCell>{section.day}</TableCell>
-                                        <TableCell>{section.acadYear}</TableCell>
-                                        <TableCell>
-                                            <IconButton color="primary" onClick={() => handleEdit(section)}>
-                                                <FaEdit />
+                                        <TableCell align='center'>{section.section}</TableCell>
+                                        <TableCell align='center'>{convertTo12HourFormat(section.startTime)}</TableCell>
+                                        <TableCell align='center'>{convertTo12HourFormat(section.endTime)}</TableCell>
+                                        <TableCell align='center'>{section.day}</TableCell>
+                                        <TableCell align='center'>{section.acadYear}</TableCell>
+                                        <TableCell align='center'>
+                                            <IconButton color="primary" onClick={() => handleEdit(section)}
+                                                sx={{
+                                                    mx: 1,
+                                                    color: '#1e88e5', // Custom color for download icon (blue)
+                                                    '&:hover': {
+                                                        color: '#1565c0', // Darker blue on hover
+                                                    },
+                                                }}>
+                                                <FaEdit fontSize='medium' />
                                             </IconButton>
-                                            <IconButton color="error" onClick={() => handleDelete(section.id)}>
-                                                <FaTrash />
+                                            <IconButton color="error" onClick={() => handleDelete(section.id)} sx={{
+                                                mx: 1,
+                                                '&:hover': {
+                                                    color: '#d32f2f', // Red color on hover
+                                                },
+                                            }}>
+                                                <FaTrash fontSize='medium' />
                                             </IconButton>
                                         </TableCell>
                                     </TableRow>
@@ -332,7 +390,7 @@ function AddSection() {
                     </TableContainer>
                 )}
             </Box>
-        </Container>
+        </Container >
     );
 }
 

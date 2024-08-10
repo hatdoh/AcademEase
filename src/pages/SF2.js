@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import Modal from 'react-modal';
-import { FaPrint } from "react-icons/fa";
-import { MdDelete, MdDateRange } from "react-icons/md";
-import { FaEdit } from "react-icons/fa";
-import DatePicker from "react-datepicker";
+import { Button, TextField, FormControl, InputLabel, Select, MenuItem, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box, Typography, Grid, IconButton } from '@mui/material';
+import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
+import { FaPrint, FaEdit } from "react-icons/fa";
+import { MdDelete, MdDateRange } from "react-icons/md";
 
+Modal.setAppElement('#root'); // Important for accessibility
 
 function SchoolFormTwo() {
     const [modalIsOpen, setModalIsOpen] = useState(false);
@@ -97,15 +98,14 @@ function SchoolFormTwo() {
             const dayOfWeek = currentDate.getDay();
 
             if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-                days.push(<td key={day} className='p-2 text-center'>{daysOfWeek[dayOfWeek - 1]}</td>);
+                days.push(<TableCell key={day} align="center">{daysOfWeek[dayOfWeek - 1]}</TableCell>);
             } else {
-                days.push(<td key={day} className='p-2 text-center'></td>);
+                days.push(<TableCell key={day} align="center"></TableCell>);
             }
         }
 
         return days;
     };
-
 
     const renderNoDaysOfWeek = () => {
         const daysOfWeek = ['M', 'T', 'W', 'TH', 'F'];
@@ -119,15 +119,15 @@ function SchoolFormTwo() {
 
             if (dayOfWeek !== 0 && dayOfWeek !== 6) {
                 days.push(
-                    <th key={day} className='p-2 text-center'>
+                    <TableCell key={day} align="center">
                         {day}
-                    </th>
+                    </TableCell>
                 );
             } else {
                 days.push(
-                    <th key={day} className='p-2 text-center'>
+                    <TableCell key={day} align="center">
                         {daysOfWeek[dayOfWeek - 1]}
-                    </th>
+                    </TableCell>
                 );
             }
         }
@@ -142,13 +142,19 @@ function SchoolFormTwo() {
         }
     };
 
-
     return (
-        <div className="ml-80 p-4">
-            <h2 className="text-2xl font-semibold mb-4">School Form 2 (SF2) Daily Attendance Report of Learners</h2>
-            <button onClick={() => openModal()} className='w-40 h-10 text-center shadow-sm py-2 rounded-md bg-blue-500 font-medium text-2xl text-white hover:bg-blue-700 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-blue-500 sm:text-sm top-4 right-4'>
+        <Box sx={{ padding: 2 }}>
+            <Typography variant="h5" gutterBottom>
+                School Form 2 (SF2) Daily Attendance Report of Learners
+            </Typography>
+            <Button
+                variant="contained"
+                color="primary"
+                onClick={() => openModal()}
+                sx={{ marginBottom: 2 }}
+            >
                 Create SF2
-            </button>
+            </Button>
 
             <Modal
                 isOpen={modalIsOpen}
@@ -157,125 +163,171 @@ function SchoolFormTwo() {
                 className="fixed inset-0 flex items-center justify-center z-50 overflow-y-auto"
                 overlayClassName="fixed inset-0 bg-gray-500 bg-opacity-25"
             >
-                <div className="bg-white rounded-lg p-8 border-solid border-2 border-indigo-600 w-full max-w-4xl">
-                    <form className='flex justify-center mb-4'>
-                        <div className="flex flex-col">
-                            <label className="block mb-2">School Year</label>
-                            <input
-                                type="text"
-                                className="border px-2 py-1 w-40 mb-4"
-                                placeholder="YYYY-YYYY"
-                                value={formData.schoolYear}
-                                onChange={handleSchoolYearChange}
-                            />
-                        </div>
-                        <div className="flex flex-col ml-10">
-                            <label className="block mb-2">Report for the Month of</label>
-                            <DatePicker
-                                selected={formData.month}
-                                onChange={date => handleDateChange(date)}
-                                dateFormat="MMMM yyyy"
-                                showMonthYearPicker
-                                className="border px-2 py-1 w-40 mb-4"
-                            />
-                        </div>
-                    </form>
-                    <form className='flex justify-center mb-4'>
-                        <div className="flex flex-col">
-                            <label className="block mb-2">Grade Level</label>
-                            <select
-                                value={formData.gradeLevel}
-                                onChange={(e) => handleInputChange('gradeLevel', e.target.value)}
-                                className="border px-2 py-1 pl-6 w-20 mb-4"
-                            >
-                                {[...Array(12)].map((_, index) => (
-                                    <option key={index + 1} value={index + 1}>{index + 1}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="flex flex-col ml-10">
-                            <label className="block mb-2">Section</label>
-                            <input type="text" value={formData.section} onChange={(e) => handleInputChange('section', e.target.value)} className="border px-2 py-1 w-60 mb-4" />
-                        </div>
-                    </form>
-                    <div className='overflow-x-auto'>
-                        <div className="overflow-y-auto max-h-96">
-                            <table className="min-w-full bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden">
-                                <thead className='text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400'>
-                                    <tr>
-                                        <th className="w-24 px-20"></th>
-                                        {renderNoDaysOfWeek()}
-                                        <th className='p-2'></th>
-                                        <th className='p-2'></th>
-                                        <th className='p-2'></th>
-                                    </tr>
-                                    <tr>
-                                        <th className="w-24 text-center uppercase">LEARNER'S NAME <br />(Last Name, First Name, Middle Name)</th>
-                                        {renderDaysOfWeek()}
-                                        <th className='p-2'>ABSENT</th>
-                                        <th className='p-2'>TARDY</th>
-                                        <th className='p-2'>REMARKS</th>
-                                    </tr>
-                                </thead>
-                                <tbody className='bg-white h-80'>
-                                    <td></td>
-                                </tbody>
-                            </table>
-                            <table className='mt-10'>
-                                <thead className='text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400'>   
-                                    <tr>
-                                        <th className='py-3 pr-10 text-center'>Month: <br></br> No of Days of Classes:</th>
-                                        <th className='py-3 px-4'>M</th>
-                                        <th className='py-3 px-4'>F</th>
-                                        <th className='py-3 px-8'>Total</th>
-                                    </tr>
-                                    <tr>
-                                        <th className='bg-white py-2 px-10'>* Enrolment as of (1st Friday of June)</th>
-                                        
-                                    </tr>
-                                    <tr>
-                                        <th className='bg-white py-2 px-10'>Late Enrollment during the month (beyond cut-off)</th>
-                                    </tr>
-                                    <tr>
-                                        <th className='bg-white py-2 px-10'>Registered Learners as of end of the month</th>
-                                    </tr>
-                                    <tr>
-                                        <th className='bg-white py-2 px-10'>Percentage of Enrolment as of end of the month</th>
-                                    </tr>
-                                    <tr>
-                                        <th className='bg-white py-2 px-10'>Average Daily Attendance</th>
-                                    </tr>
-                                    <tr>
-                                        <th className='bg-white py-2 px-10'>Percentage of Attendance for the month</th>
-                                    </tr>
-                                    <tr>
-                                        <th className='bg-white py-2 px-10'>Number of students absent for 5 consecutive days:</th>
-                                    </tr>
-                                    <tr>
-                                        <th className='bg-white py-2 px-10'>Drop out</th>
-                                    </tr>
-                                    <tr>
-                                        <th className='bg-white py-2 px-10'>Transferred out</th>
-                                    </tr>
-                                    <tr>
-                                        <th className='bg-white py-2 px-10'>Transferred in</th>
-                                    </tr>
-
-                                </thead>
-                            </table>
-                        </div>
-                    </div>
-                    <div className="flex justify-end mt-4">
-                        <button onClick={saveData} className='w-24 h-10 text-center shadow-sm py-2 rounded-md bg-blue-500 font-medium text-2xl text-white hover:bg-blue-700 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-blue-500 sm:ml-4 sm:text-sm'>
-                            Save
-                        </button>
-                        <button onClick={closeModal} className='w-24 h-10 text-center shadow-sm py-2 rounded-md bg-gray-500 font-medium text-2xl text-white hover:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-gray-500 sm:ml-4 sm:text-sm'>
-                            Cancel
-                        </button>
-                    </div>
-                </div>
+                <Box sx={{ bgcolor: 'background.paper', p: 4, borderRadius: 1, width: '80%', maxWidth: 800 }}>
+                    <Typography variant="h6" gutterBottom>
+                        {isEditing ? 'Edit SF2 Form' : 'Create SF2 Form'}
+                    </Typography>
+                    <Box component="form" sx={{ display: 'flex', flexDirection: 'column', mb: 2 }}>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    label="School Year"
+                                    variant="outlined"
+                                    fullWidth
+                                    value={formData.schoolYear}
+                                    onChange={handleSchoolYearChange}
+                                    placeholder="YYYY-YYYY"
+                                    sx={{ mb: 2 }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <DatePicker
+                                    selected={formData.month}
+                                    onChange={date => handleDateChange(date)}
+                                    dateFormat="MMMM yyyy"
+                                    showMonthYearPicker
+                                    customInput={<TextField label="Report for the Month of" variant="outlined" fullWidth />}
+                                />
+                            </Grid>
+                        </Grid>
+                        <Grid container spacing={2} sx={{ mb: 2 }}>
+                            <Grid item xs={12} sm={6}>
+                                <FormControl fullWidth>
+                                    <InputLabel>Grade Level</InputLabel>
+                                    <Select
+                                        value={formData.gradeLevel}
+                                        onChange={(e) => handleInputChange('gradeLevel', e.target.value)}
+                                    >
+                                        {[...Array(12)].map((_, index) => (
+                                            <MenuItem key={index + 1} value={index + 1}>{index + 1}</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    label="Section"
+                                    variant="outlined"
+                                    fullWidth
+                                    value={formData.section}
+                                    onChange={(e) => handleInputChange('section', e.target.value)}
+                                />
+                            </Grid>
+                        </Grid>
+                        <Box sx={{ overflowX: 'auto', mb: 2 }}>
+                            <TableContainer component={Paper}>
+                                <Table>
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell></TableCell>
+                                            {renderNoDaysOfWeek()}
+                                            <TableCell>ABSENT</TableCell>
+                                            <TableCell>TARDY</TableCell>
+                                            <TableCell>REMARKS</TableCell>
+                                        </TableRow>
+                                        <TableRow>
+                                            <TableCell>LEARNER'S NAME <br />(Last Name, First Name, Middle Name)</TableCell>
+                                            {renderDaysOfWeek()}
+                                            <TableCell></TableCell>
+                                            <TableCell></TableCell>
+                                            <TableCell></TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {/* Render table body rows here */}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        </Box>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    label="Name of Learner"
+                                    variant="outlined"
+                                    fullWidth
+                                    value={formData.nameOfLearner}
+                                    onChange={(e) => handleInputChange('nameOfLearner', e.target.value)}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    label="Total Days Absent"
+                                    variant="outlined"
+                                    fullWidth
+                                    type="number"
+                                    value={formData.totalDaysAbsent}
+                                    onChange={(e) => handleInputChange('totalDaysAbsent', e.target.value)}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    label="Total Days Tardy"
+                                    variant="outlined"
+                                    fullWidth
+                                    type="number"
+                                    value={formData.totalDaysTardy}
+                                    onChange={(e) => handleInputChange('totalDaysTardy', e.target.value)}
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <TextField
+                                    label="Remarks"
+                                    variant="outlined"
+                                    fullWidth
+                                    multiline
+                                    rows={4}
+                                    value={formData.remarks}
+                                    onChange={(e) => handleInputChange('remarks', e.target.value)}
+                                />
+                            </Grid>
+                        </Grid>
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                            <Button onClick={closeModal} sx={{ mr: 2 }}>Cancel</Button>
+                            <Button variant="contained" color="primary" onClick={saveData}>Save</Button>
+                        </Box>
+                    </Box>
+                </Box>
             </Modal>
-        </div>
+
+            <Box sx={{ mt: 2 }}>
+                <TableContainer component={Paper}>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Actions</TableCell>
+                                <TableCell>School Year</TableCell>
+                                <TableCell>Month</TableCell>
+                                <TableCell>Grade Level</TableCell>
+                                <TableCell>Section</TableCell>
+                                <TableCell>Name of Learner</TableCell>
+                                <TableCell>Total Days Absent</TableCell>
+                                <TableCell>Total Days Tardy</TableCell>
+                                <TableCell>Remarks</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {savedForms.map((form, index) => (
+                                <TableRow key={index}>
+                                    <TableCell>
+                                        <IconButton onClick={() => openModal(index)}><FaEdit /></IconButton>
+                                        <IconButton onClick={() => deleteForm(index)}><MdDelete /></IconButton>
+                                        <IconButton onClick={() => downloadForm(form)}><FaPrint /></IconButton>
+                                    </TableCell>
+                                    <TableCell>{form.schoolYear}</TableCell>
+                                    <TableCell>{form.month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</TableCell>
+                                    <TableCell>{form.gradeLevel}</TableCell>
+                                    <TableCell>{form.section}</TableCell>
+                                    <TableCell>{form.nameOfLearner}</TableCell>
+                                    <TableCell>{form.totalDaysAbsent}</TableCell>
+                                    <TableCell>{form.totalDaysTardy}</TableCell>
+                                    <TableCell>{form.remarks}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </Box>
+        </Box>
     );
 }
 

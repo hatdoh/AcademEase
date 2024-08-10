@@ -275,7 +275,7 @@ function SchoolForm() {
 
 
     return (
-        <div className="ml-80 p-4">
+        <div className=" ml-2 p-4">
             <h2 className="text-2xl font-semibold mb-4">School Form 2 (SF2) Daily Attendance Report of Learners</h2>
                 <div className="rounded-lg w-full border-gray-700 max-w-5xl">
                     <form className='flex justify-left'>

@@ -99,9 +99,9 @@ function Dashboard() {
                         <Table sx={{ minWidth: 650, borderRadius: 2 }}>
                             <TableHead>
                                 <TableRow>
-                                    <TableCell align="center" sx={{ fontWeight: 'bold'}}>{`${presentCount} Present`}</TableCell>
-                                    <TableCell align="center" sx={{ fontWeight: 'bold'}}>{`${lateCount} Late`}</TableCell>
-                                    <TableCell align="center" sx={{ fontWeight: 'bold'}}>{`${absentCount} Absent`}</TableCell>
+                                    <TableCell  align="center" sx={{ fontWeight: 'bold', fontSize: '1.2rem'}}>{`${presentCount} Present`}</TableCell>
+                                    <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1.2rem'}}>{`${lateCount} Late`}</TableCell>
+                                    <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1.2rem'}}>{`${absentCount} Absent`}</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -109,7 +109,7 @@ function Dashboard() {
                                     <TableCell sx={{overflowY: 'auto', maxHeight: '60vh' }}>
                                         {attendanceData.present.map(student => (
                                             <Box key={student.id} display="flex" alignItems="center" p={1} sx={{ cursor: 'pointer', '&:hover': { backgroundColor: '#f5f5f5' }, borderRadius: 1 }}>
-                                                <Avatar src={student.image} alt={student.name} sx={{ width: 40, height: 40, mr: 2 }} />
+                                                <Avatar src={student.image} alt={student.name} sx={{ width: 60, height: 60, mr: 2 }} />
                                                 <Link to={`/profile/${student.id}`} style={{ textDecoration: 'none', color: '#1e88e5' }}>
                                                     {`${student.FName} ${student.MName} ${student.LName}`}
                                                 </Link>
@@ -119,7 +119,7 @@ function Dashboard() {
                                     <TableCell sx={{overflowY: 'auto', maxHeight: '60vh' }}>
                                         {attendanceData.late.map(student => (
                                             <Box key={student.id} display="flex" alignItems="center" p={1} sx={{ cursor: 'pointer', '&:hover': { backgroundColor: '#f5f5f5' }, borderRadius: 1 }}>
-                                                <Avatar src={student.image} alt={student.name} sx={{ width: 40, height: 40, mr: 2 }} />
+                                                <Avatar src={student.image} alt={student.name} sx={{ width: 60, height: 60, mr: 2 }} />
                                                 <Link to={`/profile/${student.id}`} style={{ textDecoration: 'none', color: '#1e88e5' }}>
                                                     {`${student.FName} ${student.MName} ${student.LName}`}
                                                 </Link>
@@ -129,7 +129,7 @@ function Dashboard() {
                                     <TableCell sx={{ overflowY: 'auto', maxHeight: '60vh' }}>
                                         {attendanceData.absent.map(student => (
                                             <Box key={student.id} display="flex" alignItems="center" p={1} sx={{ cursor: 'pointer', '&:hover': { backgroundColor: '#f5f5f5' }, borderRadius: 1 }}>
-                                                <Avatar src={student.image} alt={student.name} sx={{ width: 40, height: 40, mr: 2 }} />
+                                                <Avatar src={student.image} alt={student.name} sx={{ width: 60, height: 60, mr: 2 }} />
                                                 <Link to={`/profile/${student.id}`} style={{ textDecoration: 'none', color: '#1e88e5' }}>
                                                     {`${student.FName} ${student.MName} ${student.LName}`}
                                                 </Link>

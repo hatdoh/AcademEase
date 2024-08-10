@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { MdDelete } from "react-icons/md";
+import { Box, Button, MenuItem, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Paper, Avatar, useMediaQuery, useTheme } from '@mui/material';
 
-// Your students data...
 const students = [
     // ... your students data
 ];
@@ -9,9 +8,11 @@ const students = [
 function ItemAnalysis() {
     const [selectedSection, setSelectedSection] = useState('All');
     const [sectionList, setSectionList] = useState(['All', 'A', 'B', 'C']); // Initial section list
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // Check if the screen size is small (mobile)
 
-    const handleSectionChange = (section) => {
-        setSelectedSection(section);
+    const handleSectionChange = (event) => {
+        setSelectedSection(event.target.value);
     };
 
     const deleteSection = (sectionName) => {
@@ -38,52 +39,90 @@ function ItemAnalysis() {
     };
 
     return (
-        <div className="ml-80 p-4">
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-4">
-                    <h2 className="text-2xl ml-2 font-semibold text-gray-800">Section ({selectedSection})</h2>
-                </div>
-                <div className="flex items-center space-x-4">
-                    <select
-                        className="mt-1 block w-40 px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+        <Box sx={{ padding: 2 }}>
+            <Box sx={{
+                display: 'flex',
+                flexDirection: isMobile ? 'column' : 'row',
+                justifyContent: 'space-between',
+                mb: 2
+            }}>
+                <Typography variant='h4' sx={{ mt: isMobile ? 6 : 1, fontWeight: 'bold' }}>Section ({selectedSection})</Typography>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        marginTop: isMobile ? 1 : 0,
+                    }}
+                >
+                    <Select
                         value={selectedSection}
-                        onChange={(e) => handleSectionChange(e.target.value)}
+                        onChange={handleSectionChange}
+                        sx={{
+                            backgroundColor: 'white',
+                            borderRadius: 2,
+                            minWidth: isMobile ? '100%' : 150,
+                            mt: isMobile ? 1 : 0,
+                            '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: '#818181',
+                            },
+                        }}
+                        MenuProps={{
+                            PaperProps: {
+                                sx: {
+                                    backgroundColor: 'white',
+                                    borderRadius: 2,
+                                    '& .MuiMenuItem-root': {
+                                        borderBottom: '1px solid #f0f0f0', // Optional: Add border between items
+                                    },
+                                    '& .MuiMenuItem-root:hover': {
+                                        backgroundColor: '#f0f0f0', // Optional: Change background color on hover
+                                    },
+                                },
+                            },
+                        }}
                     >
                         {sectionList.map((section) => (
-                            <option key={section} value={section}>{section === 'All' ? 'All Sections' : `Section ${section}`}</option>
+                            <MenuItem key={section} value={section}>
+                                {section === 'All' ? 'All Sections' : `Section ${section}`}
+                            </MenuItem>
                         ))}
-                    </select>
-                    {selectedSection !== 'All' && (
-                        <button
-                            onClick={() => deleteSection(selectedSection)}
-                            className="flex items-center right-0 top-0 mt-1 mr-1 px-2 py-1 bg-red-600 text-white text-xs rounded-full hover:bg-red-700 focus:outline-none"
-                        >
-                            <MdDelete />
-                        </button>
-                    )}
-                </div>
-            </div>
+                    </Select>
+                </Box>
+            </Box>
 
-            <div className="overflow-x-auto">
-                <div className="overflow-y-auto max-h-screen"> {/* Container to make the table scrollable */}
-                    <table className="min-w-full bg-white border border-gray-200 shadow-lg rounded-lg overflow-hidden">
-                        <thead className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
-                            <tr>
-                                <th className="px-6 py-3 text-left uppercase">Question</th>
-                                <th className="px-6 py-3 text-left uppercase">No.</th>
-                                <th className="px-6 py-3 text-left uppercase">% Correct Answer A</th>
-                                <th className="px-6 py-3 text-left uppercase">% Correct Answer B</th>
-                                <th className="px-6 py-3 text-left uppercase">% Correct Answer C</th>
-                                <th className="px-6 py-3 text-left uppercase">% Correct Answer D</th>
-                            </tr>
-                        </thead>
-                        <tbody className="text-sm text-gray-700">
-                            {/* Table rows */}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+            <TableContainer component={Paper}>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell sx={{ fontWeight: 'bold' }} align='center'>Question</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }} align='center'>No.</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }} align='center'>% Correct Answer A</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }} align='center'>% Correct Answer B</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }} align='center'>% Correct Answer C</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }} align='center'>% Correct Answer D</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {filteredStudents.map((student, index) => (
+                            <TableRow key={student.id}>
+                                <TableCell>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: isMobile ? 'column' : 'row' }}>
+                                        {student.image && (
+                                            <Avatar src={getImagePath(student.image)} alt={student.name} sx={{ width: 40, height: 40, marginBottom: isMobile ? 1 : 0, marginRight: isMobile ? 0 : 2 }} />
+                                        )}
+                                        {student.name}
+                                    </Box>
+                                </TableCell>
+                                <TableCell>{student.section}</TableCell>
+                                <TableCell>{student.totalPresent}</TableCell>
+                                <TableCell>{student.totalLate}</TableCell>
+                                <TableCell>{student.totalAbsent}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+        </Box>
     );
 }
 

@@ -3,8 +3,23 @@ import { getAdminDetails, updateAdminDetails, logout, getCurrentUser, updatePass
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { auth } from '../config/firebase';
+import {
+  TextField,
+  Button,
+  Grid,
+  Container,
+  Typography,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
+  useMediaQuery
+} from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 
 function AdminDetails() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // Check if screen size is mobile
   const [admin, setAdmin] = useState({
     uid: '',
     email: '',
@@ -111,15 +126,11 @@ function AdminDetails() {
           navigate('/login');
         });
       } else {
-        // For non-password updates, just show a success message without redirection
         Swal.fire({
           title: 'Saved',
           text: "Details updated successfully!",
           icon: 'success',
           confirmButtonColor: '#3085d6'
-        }).then(() => {
-          // Optionally, refresh the admin details or update the state
-          // setAdmin({ ... }); // Update state if needed
         });
       }
     } catch (error) {
@@ -132,6 +143,7 @@ function AdminDetails() {
       });
     }
   };
+
   const handleLogout = () => {
     Swal.fire({
       title: 'Logout',
@@ -150,137 +162,242 @@ function AdminDetails() {
   };
 
   return (
-    <div className='ml-80 p-4'>
-      <h2 className='text-2xl font-bold mb-4'>Admin Details</h2>
-      <div className='flex flex-col'>
-        <div className='flex mb-4'>
-          <div className='flex-1 mr-2'>
-            <label className='mb-2 font-medium'>Last Name</label>
-            <input
-              type='text'
-              name='lastName'
-              value={admin.lastName}
-              onChange={handleInputChange}
-              className='p-2 border border-gray-300 rounded-md w-full'
-            />
-          </div>
-          <div className='flex-1 mx-2'>
-            <label className='mb-2 font-medium'>First Name</label>
-            <input
-              type='text'
-              name='firstName'
-              value={admin.firstName}
-              onChange={handleInputChange}
-              className='p-2 border border-gray-300 rounded-md w-full'
-            />
-          </div>
-          <div className='flex-1 ml-2'>
-            <label className='mb-2 font-medium'>Middle Name</label>
-            <input
-              type='text'
-              name='middleName'
-              value={admin.middleName}
-              onChange={handleInputChange}
-              className='p-2 border border-gray-300 rounded-md w-full'
-            />
-          </div>
-        </div>
-        <label className='mb-2 font-medium'>Email</label>
-        <input
-          type='email'
-          name='email'
-          value={admin.email}
-          onChange={handleInputChange}
-          className='mb-4 p-2 border border-gray-300 rounded-md'
-          disabled
-        />
-        <div className='flex mb-4'>
-          <div className='mr-2'>
-            <label className='mb-2 mr-2 font-medium'>Date of Birth</label>
-            <input
-              type='date'
-              name='dob'
-              value={admin.dob}
-              onChange={handleInputChange}
-              className='mb-4 p-2 border border-gray-300 rounded-md w-full'
-            />
-          </div>
-          <div className='mx-2'>
-            <label className='mb-2 mr-2 font-medium'>Gender</label>
-            <select
-              name='gender'
+    <Container maxWidth="md" sx={{ mt: isMobile ? 8 : 4, ml: isMobile ? 0 : 3 }}>
+      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
+        Admin Details
+      </Typography>
+      <Grid container spacing={isMobile ? 2 : 3}>
+        <Grid item xs={12} md={4}>
+          <TextField
+            label="Last Name"
+            name="lastName"
+            value={admin.lastName}
+            onChange={handleInputChange}
+            fullWidth
+            sx={{
+              backgroundColor: 'white',
+              borderRadius: 2
+            }}
+            InputProps={{
+              sx: {
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#818181'
+                }
+              }
+            }}
+          />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <TextField
+            label="First Name"
+            name="firstName"
+            value={admin.firstName}
+            onChange={handleInputChange}
+            fullWidth
+            sx={{
+              backgroundColor: 'white',
+              borderRadius: 2
+            }}
+            InputProps={{
+              sx: {
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#818181'
+                }
+              }
+            }}
+          />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <TextField
+            label="Middle Name"
+            name="middleName"
+            value={admin.middleName}
+            onChange={handleInputChange}
+            fullWidth
+            sx={{
+              backgroundColor: 'white',
+              borderRadius: 2
+            }}
+            InputProps={{
+              sx: {
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#818181'
+                }
+              }
+            }}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <TextField
+            label="Email"
+            name="email"
+            value={admin.email}
+            onChange={handleInputChange}
+            fullWidth
+            disabled
+            sx={{
+              backgroundColor: 'white',
+              borderRadius: 2
+            }}
+            InputProps={{
+              sx: {
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#818181'
+                }
+              }
+            }}
+          />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <TextField
+            label="Date of Birth"
+            name="dob"
+            value={admin.dob}
+            onChange={handleInputChange}
+            type="date"
+            InputLabelProps={{ shrink: true }}
+            fullWidth
+            sx={{
+              backgroundColor: 'white',
+              borderRadius: 2
+            }}
+            InputProps={{
+              sx: {
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#818181'
+                }
+              }
+            }}
+          />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <FormControl fullWidth
+            sx={{
+              backgroundColor: 'white',
+              borderRadius: 2
+            }}>
+            <InputLabel>Gender</InputLabel>
+            <Select
+              name="gender"
               value={admin.gender}
               onChange={handleInputChange}
-              className='mb-4 p-2 border border-gray-300 rounded-md w-full'
+              fullWidth
+              sx={{
+                '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#818181',
+                },
+            }}
             >
-              <option value=''>Select Gender</option>
-              <option value='male'>Male</option>
-              <option value='female'>Female</option>
-              <option value='other'>Other</option>
-            </select>
-          </div>
-          <div className='ml-2'>
-            <label className='mb-2 mr-2 font-medium'>Phone Number</label>
-            <input
-              type='tel'
-              name='phoneNumber'
-              value={admin.phoneNumber}
-              onChange={handleInputChange}
-              className='mb-4 p-2 border border-gray-300 rounded-md w-full'
-              maxLength='11'
-            />
-          </div>
-        </div>
-
-        <div className='flex mb-4'>
-          <div className='mr-2'>
-            <label className='mb-2 font-medium'>Old Password</label>
-            <input
-              type='password'
-              name='formerPassword'
-              value={formerPassword}
-              onChange={(e) => setFormerPassword(e.target.value)}
-              className='mb-4 p-2 border border-gray-300 rounded-md w-full'
-            />
-          </div>
-          <div className='mx-2'>
-            <label className='mb-2 font-medium'>New Password</label>
-            <input
-              type='password'
-              name='newPassword'
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className='mb-4 p-2 border border-gray-300 rounded-md w-full'
-            />
-          </div>
-          <div className='ml-2'>
-            <label className='mb-2 font-medium'>Repeat Password</label>
-            <input
-              type='password'
-              name='confirmPassword'
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className='mb-4 p-2 border border-gray-300 rounded-md w-full'
-            />
-          </div>
-        </div>
-
-        <div className='flex items-center'>
-          <button
+              <MenuItem value=""><em>Select Gender</em></MenuItem>
+              <MenuItem value="male">Male</MenuItem>
+              <MenuItem value="female">Female</MenuItem>
+              <MenuItem value="other">Other</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <TextField
+            label="Phone Number"
+            name="phoneNumber"
+            value={admin.phoneNumber}
+            onChange={handleInputChange}
+            fullWidth
+            inputProps={{ maxLength: 11 }}
+            sx={{
+              backgroundColor: 'white',
+              borderRadius: 2
+            }}
+            InputProps={{
+              sx: {
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#818181'
+                }
+              }
+            }}
+          />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <TextField
+            label="Old Password"
+            name="formerPassword"
+            value={formerPassword}
+            onChange={(e) => setFormerPassword(e.target.value)}
+            type="password"
+            fullWidth
+            sx={{
+              backgroundColor: 'white',
+              borderRadius: 2
+            }}
+            InputProps={{
+              sx: {
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#818181'
+                }
+              }
+            }}
+          />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <TextField
+            label="New Password"
+            name="newPassword"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            type="password"
+            fullWidth
+            sx={{
+              backgroundColor: 'white',
+              borderRadius: 2
+            }}
+            InputProps={{
+              sx: {
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#818181'
+                }
+              }
+            }}
+          />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <TextField
+            label="Repeat Password"
+            name="confirmPassword"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            type="password"
+            fullWidth
+            sx={{
+              backgroundColor: 'white',
+              borderRadius: 2
+            }}
+            InputProps={{
+              sx: {
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#818181'
+                }
+              }
+            }}
+          />
+        </Grid>
+        <Grid item xs={12} display="flex" justifyContent='flex-start' sx={{ mb: 3 }}>
+          <Button
+            variant="contained"
+            color="primary"
             onClick={handleSave}
-            className='px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition duration-300 mr-2'
+            sx={{ mr: 2 }}
           >
             Save
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
             onClick={handleLogout}
-            className='px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition duration-300'
           >
             Logout
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </Grid>
+      </Grid>
+    </Container>
   );
 }
 
