@@ -21,6 +21,7 @@ import SchoolForm from './components/SchoolForm';
 import ViewAttendanceSummary from './components/ViewAttendanceSummary';
 import FaceRecognition from './pages/FaceRecognition';
 import './index.css'; 
+import ViewGrades from './components/ViewGrades';
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -58,6 +59,7 @@ function App() {
           <Route path="/add-section" element={<PrivateRoute authenticated={authenticated} element={<AddSection />} />} />
           <Route path="/school-form" element={<PrivateRoute authenticated={authenticated} element={<SchoolForm />} />} />
           <Route path="/profile/:id" element={<StudentProfile />} />
+          <Route path="/view-grades/:id" element={<ViewGrades />} />
           <Route path="/view-attendance-summary/:id" element={<ViewAttendanceSummary />} />
           <Route path="/attendance-summary" element={<PrivateRoute authenticated={authenticated} element={<AttendanceSummary />} />} />
           <Route path="/create-questions" element={<PrivateRoute authenticated={authenticated} element={<CreateQuestions />} />} />
