@@ -2,18 +2,7 @@ import React, { useState } from 'react';
 import { addAccount } from '../utils/Authentication';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import {
-  TextField,
-  Button,
-  Grid,
-  Container,
-  Typography,
-  Select,
-  MenuItem,
-  InputLabel,
-  FormControl,
-  useMediaQuery
-} from '@mui/material';
+import { TextField, Button, Grid, Container, Typography, Select, MenuItem, InputLabel, FormControl, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
 function AddAccount() {
@@ -43,6 +32,10 @@ function AddAccount() {
   const validatePassword = (password) => {
     const regex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     return regex.test(password);
+  };
+
+  const handleBack = () => {
+    navigate(-1); // Go back to the previous page
   };
 
   const handleSave = async () => {
@@ -331,6 +324,14 @@ function AddAccount() {
             sx={{ mr: 2 }}
           >
             Save
+          </Button>
+
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handleBack}
+          >
+            Back
           </Button>
         </Grid>
       </Grid>

@@ -99,14 +99,14 @@ function Dashboard() {
                         <Table sx={{ minWidth: 650, borderRadius: 2 }}>
                             <TableHead>
                                 <TableRow>
-                                    <TableCell  align="center" sx={{ fontWeight: 'bold', fontSize: '1.2rem'}}>{`${presentCount} Present`}</TableCell>
+                                    <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1.2rem'}}>{`${presentCount} Present`}</TableCell>
                                     <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1.2rem'}}>{`${lateCount} Late`}</TableCell>
                                     <TableCell align="center" sx={{ fontWeight: 'bold', fontSize: '1.2rem'}}>{`${absentCount} Absent`}</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 <TableRow>
-                                    <TableCell sx={{overflowY: 'auto', maxHeight: '60vh' }}>
+                                    <TableCell sx={{overflowY: 'auto', maxHeight: '60vh', verticalAlign: 'top' }}>
                                         {attendanceData.present.map(student => (
                                             <Box key={student.id} display="flex" alignItems="center" p={1} sx={{ cursor: 'pointer', '&:hover': { backgroundColor: '#f5f5f5' }, borderRadius: 1 }}>
                                                 <Avatar src={student.image} alt={student.name} sx={{ width: 60, height: 60, mr: 2 }} />
@@ -116,7 +116,7 @@ function Dashboard() {
                                             </Box>
                                         ))}
                                     </TableCell>
-                                    <TableCell sx={{overflowY: 'auto', maxHeight: '60vh' }}>
+                                    <TableCell sx={{overflowY: 'auto', maxHeight: '60vh', verticalAlign: 'top' }}>
                                         {attendanceData.late.map(student => (
                                             <Box key={student.id} display="flex" alignItems="center" p={1} sx={{ cursor: 'pointer', '&:hover': { backgroundColor: '#f5f5f5' }, borderRadius: 1 }}>
                                                 <Avatar src={student.image} alt={student.name} sx={{ width: 60, height: 60, mr: 2 }} />
@@ -126,7 +126,7 @@ function Dashboard() {
                                             </Box>
                                         ))}
                                     </TableCell>
-                                    <TableCell sx={{ overflowY: 'auto', maxHeight: '60vh' }}>
+                                    <TableCell sx={{ overflowY: 'auto', maxHeight: '60vh', verticalAlign: 'top' }}>
                                         {attendanceData.absent.map(student => (
                                             <Box key={student.id} display="flex" alignItems="center" p={1} sx={{ cursor: 'pointer', '&:hover': { backgroundColor: '#f5f5f5' }, borderRadius: 1 }}>
                                                 <Avatar src={student.image} alt={student.name} sx={{ width: 60, height: 60, mr: 2 }} />

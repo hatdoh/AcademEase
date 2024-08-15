@@ -3,14 +3,14 @@ import { Grid, Paper, TextField, Typography, Box } from "@mui/material";
 
 function ViewGrades() {
     const [grades, setGrades] = useState({
-        writtenWorks: Array(10).fill(''),
-        performanceTasks: Array(10).fill(''),
+        writtenWorks: Array(9).fill(''),
+        performanceTasks: Array(9).fill(''),
         periodicalTest: '',
     });
 
     const [highestScores, setHighestScores] = useState({
-        writtenWorks: Array(10).fill(''),
-        performanceTasks: Array(10).fill(''),
+        writtenWorks: Array(9).fill(''),
+        performanceTasks: Array(9).fill(''),
         periodicalTest: '',
     });
 
@@ -60,7 +60,7 @@ function ViewGrades() {
         return (calculatePercentageScore(category) * weight) / 100;
     };
 
-    const calculateFinalGrade = () => {
+    const calculateInitialGrade = () => {
         const writtenWorksTotal = calculateCategoryTotal('writtenWorks');
         const performanceTasksTotal = calculateCategoryTotal('performanceTasks');
         const periodicalTestScore = parseFloat(grades.periodicalTest) || 0;
@@ -74,6 +74,56 @@ function ViewGrades() {
         const periodicalTestAverage = (periodicalTestScore / (periodicalTestHighest || 1)) * 0.2;
 
         return (writtenWorksAverage + performanceTasksAverage + periodicalTestAverage) * 100;
+    };
+
+    const transmuteGrade = (initialGrade) => {
+        if (initialGrade == 100) return 100;
+        if (initialGrade >= 98.40) return 99;
+        if (initialGrade >= 96.80) return 98;
+        if (initialGrade >= 95.20) return 97;
+        if (initialGrade >= 93.60) return 96;
+        if (initialGrade >= 92.00) return 95;
+        if (initialGrade >= 90.40) return 94;
+        if (initialGrade >= 88.80) return 93;
+        if (initialGrade >= 87.20) return 92;
+        if (initialGrade >= 85.60) return 91;
+        if (initialGrade >= 84.00) return 90;
+        if (initialGrade >= 82.40) return 89;
+        if (initialGrade >= 80.80) return 88;
+        if (initialGrade >= 79.20) return 87;
+        if (initialGrade >= 77.60) return 86;
+        if (initialGrade >= 76.00) return 85;
+        if (initialGrade >= 74.40) return 84;
+        if (initialGrade >= 72.80) return 83;
+        if (initialGrade >= 71.20) return 82;
+        if (initialGrade >= 69.60) return 81;
+        if (initialGrade >= 68.00) return 80;
+        if (initialGrade >= 66.40) return 79;
+        if (initialGrade >= 64.80) return 78;
+        if (initialGrade >= 63.20) return 77;
+        if (initialGrade >= 61.60) return 76;
+        if (initialGrade >= 60.00) return 75;
+        if (initialGrade >= 56.00) return 74;
+        if (initialGrade >= 52.00) return 73;
+        if (initialGrade >= 48.00) return 72;
+        if (initialGrade >= 44.00) return 71;
+        if (initialGrade >= 40.00) return 70;
+        if (initialGrade >= 36.00) return 69;
+        if (initialGrade >= 32.00) return 68;
+        if (initialGrade >= 28.00) return 67;
+        if (initialGrade >= 24.00) return 66;
+        if (initialGrade >= 20.00) return 65;
+        if (initialGrade >= 16.00) return 64;
+        if (initialGrade >= 12.00) return 63;
+        if (initialGrade >= 8.00) return 62;
+        if (initialGrade >= 4.00) return 61;
+        if (initialGrade >= 3.99) return 60;
+        return 0;
+    };
+
+    const calculateFinalGrade = () => {
+        const initialGrade = calculateInitialGrade();
+        return transmuteGrade(initialGrade);
     };
 
     return (
@@ -106,7 +156,7 @@ function ViewGrades() {
                             <strong>WS</strong>
                         </Grid>
                     </Grid>
-                    
+
                     <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
                         {highestScores.writtenWorks.map((score, i) => (
                             <Grid item xs={1} key={i} sx={{ borderRight: '1px solid #ddd', padding: 1 }}>
@@ -125,7 +175,7 @@ function ViewGrades() {
                             <strong>{calculateCategoryTotalHighest('writtenWorks')}</strong>
                         </Grid>
                     </Grid>
-                    
+
                     <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
                         {grades.writtenWorks.map((grade, i) => (
                             <Grid item xs={1} key={i} sx={{ borderRight: '1px solid #ddd', padding: 1 }}>
@@ -147,7 +197,7 @@ function ViewGrades() {
                             <strong>{calculatePercentageScore('writtenWorks').toFixed(2)}%</strong>
                         </Grid>
                         <Grid item xs={1} sx={{ textAlign: 'center', padding: 1 }}>
-                            <strong>{calculateWeightedScore('writtenWorks', 20).toFixed(2)}</strong>
+                            <strong>{calculateWeightedScore('writtenWorks', 20).toFixed(2)}%</strong>
                         </Grid>
                     </Grid>
 
@@ -155,7 +205,7 @@ function ViewGrades() {
                         PERFORMANCE TASKS (60%)
                     </Grid>
                     <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
-                        {Array.from({ length: 10 }, (_, i) => (
+                        {Array.from({ length: 9 }, (_, i) => (
                             <Grid item xs={1} key={i} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
                                 PT {i + 1}
                             </Grid>
@@ -170,7 +220,7 @@ function ViewGrades() {
                             <strong>WS</strong>
                         </Grid>
                     </Grid>
-                    
+
                     <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
                         {highestScores.performanceTasks.map((score, i) => (
                             <Grid item xs={1} key={i} sx={{ borderRight: '1px solid #ddd', padding: 1 }}>
@@ -189,7 +239,7 @@ function ViewGrades() {
                             <strong>{calculateCategoryTotalHighest('performanceTasks')}</strong>
                         </Grid>
                     </Grid>
-                    
+
                     <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
                         {grades.performanceTasks.map((grade, i) => (
                             <Grid item xs={1} key={i} sx={{ borderRight: '1px solid #ddd', padding: 1 }}>
@@ -211,7 +261,7 @@ function ViewGrades() {
                             <strong>{calculatePercentageScore('performanceTasks').toFixed(2)}%</strong>
                         </Grid>
                         <Grid item xs={1} sx={{ textAlign: 'center', padding: 1 }}>
-                            <strong>{calculateWeightedScore('performanceTasks', 60).toFixed(2)}</strong>
+                            <strong>{calculateWeightedScore('performanceTasks', 60).toFixed(2)}%</strong>
                         </Grid>
                     </Grid>
 
@@ -248,7 +298,28 @@ function ViewGrades() {
                             />
                         </Grid>
                     </Grid>
-
+                    <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
+                        <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
+                            <strong>PS</strong>
+                        </Grid>
+                        <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
+                            <strong>{calculatePercentageScore('periodicalTest').toFixed(2)}%</strong>
+                        </Grid>
+                        <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
+                            <strong>WS</strong>
+                        </Grid>
+                        <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
+                            <strong>{calculateWeightedScore('periodicalTest', 20).toFixed(2)}%</strong>
+                        </Grid>
+                    </Grid>
+                    <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
+                        <Grid item xs={6} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1, fontSize: '1.25rem' }}>
+                            <strong>Inital Grade</strong>
+                        </Grid>
+                        <Grid item xs={6} sx={{ textAlign: 'center', padding: 1, fontSize: '1.25rem' }}>
+                            <strong>{calculateInitialGrade().toFixed(2)}</strong>
+                        </Grid>
+                    </Grid>
                     <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
                         <Grid item xs={6} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1, fontSize: '1.5rem' }}>
                             <strong>Final Grade</strong>
@@ -259,7 +330,7 @@ function ViewGrades() {
                     </Grid>
                 </Grid>
             </Paper>
-        </Box>
+        </Box >
     );
 }
 
