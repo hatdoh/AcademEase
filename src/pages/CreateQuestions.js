@@ -332,81 +332,102 @@ function CreateQuestions(props) {
   const generateAnswerSheetPDF = async (numQuestions, numChoices) => {
     const doc = new jsPDF({ format: 'a4' });
 
-    // Define margins based on A4 size
-    const marginTop = 10; // margin from top
-    const marginBottom = 20; // margin from bottom
-    const marginLeft = 30; // margin from left
-    const marginRight = 15; // margin from right
+    // Define margins and page width
+    const marginTop = 10;
+    const marginLeft = 20;
+    const marginRight = 15;
     const pageWidth = doc.internal.pageSize.width;
-    const pageHeight = doc.internal.pageSize.height;
 
-    // Print the header text
+    // Header text
     doc.text('Answer Sheets', marginLeft + 53, marginTop);
-    doc.text('Name: ____________________', marginLeft, marginTop + 10);
-    doc.text('Student ID Number: ___________________', marginLeft, marginTop + 20);
-    doc.text('Set: ____', marginLeft, marginTop + 30);
+    doc.text('Name: ', marginLeft, marginTop + 10);
+    doc.text('Student ID Number: ', marginLeft, marginTop + 20);
+    doc.text('Set: ', marginLeft, marginTop + 30);
 
-    // Print the "Score" label and draw the small box next to it
+    // Score label and box
     const scoreX = marginLeft;
     const scoreY = marginTop + 40;
     doc.text('Score', scoreX, scoreY);
-    const scoreBoxWidth = 40;
-    const scoreBoxHeight = 12;
-    doc.rect(scoreX + 25, scoreY - 5, scoreBoxWidth, scoreBoxHeight); // Draw the small box next to "Score"
+    doc.rect(scoreX + 25, scoreY - 5, 40, 12);
 
-    // Draw a large box below the "Score" box
-    const largeBoxWidth = 180; // Width of the large box
-    const largeBoxHeight = 165; // Height of the large box
-    const largeBoxX = (pageWidth - largeBoxWidth) / 2; // Center the large box horizontally
-    const largeBoxY = scoreY + 10; // Position the large box below the "Score" box
-    doc.rect(largeBoxX, largeBoxY, largeBoxWidth, largeBoxHeight); // Draw the large box
+    // Calculate column and box dimensions
+    const columnMargin = 20;
+    const numColumns = 3;
+    const colWidth = (pageWidth - marginLeft - marginRight - (numColumns - 1) * columnMargin) / numColumns;
+    const colHeight = 104; // Adjust height for two rows
+    const colY = scoreY + 15;
 
-    // Define spacing and sizes for the box contents
-    const boxMargin = 1; // Margin around the content inside each box
-    const rowSpacing =-136; // Vertical spacing between rows of boxes
-    const colSpacing =-10; // Horizontal spacing between columns of boxes
-    const boxWidth = (largeBoxWidth - 2 * boxMargin - 2 * colSpacing) / 3; // Width of each box in 3 columns
-    const boxHeight = (largeBoxHeight - 2 * boxMargin - 2 * rowSpacing) / 3; // Height of each box in 2 rows
-    const choiceSpacing = 10; // Horizontal spacing between answer choices
-    const choiceCircleRadius = 4; // Radius of the circles for answer choices
-    const textSize = 12; // Font size for answer choices
+    // Define padding values
+    const boxPaddingTop = 2; // Padding from top
+    const boxPaddingBottom = 2; // Padding from bottom
+    const boxPaddingLeft = 5; // Increased padding from left
+    const boxPaddingRight = 10; // Padding from right
+
+    // Define the positions for each row (top and bottom)
+    const rowPositions = [colY, colY + colHeight + 10];
+
+    // Draw the column boxes for the first row and the first two columns of the second row
+    for (let row = 0; row < 2; row++) {
+        for (let col = 0; col < numColumns; col++) {
+            if (row === 1 && col === 2) continue; // Skip the third column in the second row
+            const rectX = marginLeft + col * (colWidth + columnMargin);
+            doc.rect(
+                rectX + boxPaddingLeft, 
+                rowPositions[row] + boxPaddingTop, 
+                colWidth + 10 - boxPaddingLeft - boxPaddingRight, 
+                colHeight - boxPaddingTop - boxPaddingBottom
+            );
+        }
+    }
+
+    // Define spacing for contents
+    const rowSpacing = 2;
+    const choiceSpacing = (colWidth - boxPaddingLeft - boxPaddingRight) / (numChoices - 1); // Adjust based on padding
+    const choiceCircleRadius = 4;
+    const textSize = 12;
+    const questionPaddingTop = 1;
 
     let xOffset, yOffset;
 
-    // Set the font size for the answer choices
     doc.setFontSize(11);
 
-    // Positioning for each question and answer choices
+    // Positioning for questions and answer choices
     for (let i = 1; i <= numQuestions; i++) {
-        // Calculate row and column index
-        const rowIndex = Math.floor((i - 1) / 3);
-        const colIndex = (i - 1) % 3;
+        let colIndex = Math.floor((i - 1) / 10) % 3; // Determine column based on question number
+        let rowIndex = Math.floor((i - 1) / 30); // Determine row (first or second row)
 
-        // Calculate xOffset and yOffset using spacing parameters
-        xOffset = largeBoxX + boxMargin + colIndex * (boxWidth + colSpacing);
-        yOffset = largeBoxY + boxMargin + rowIndex * (boxHeight + rowSpacing);
+        // Skip placing questions in the second row, third column
+        if (rowIndex === 1 && colIndex === 2) continue;
 
-        // Print the question number
-        doc.text(`${i}.`, xOffset + 5, yOffset + 12);
+        // Calculate the positions
+        xOffset = marginLeft + colIndex * (colWidth + columnMargin) + 1; // Adjust xOffset for question margin
+        yOffset = rowPositions[rowIndex] + rowSpacing + ((i - 1) % 10) * (choiceCircleRadius * 2 + rowSpacing) + questionPaddingTop;
 
-        // Print the answer choices in circles
-        const choices = ['A', 'B', 'C', 'D'].slice(0, numChoices); // Adjust choices based on number of choices
+        // Print question number outside the box
+        doc.text(`${i}.`, xOffset - 10, yOffset + 5);
+
+        // Print answer choices inside circles
+        const choices = ['A', 'B', 'C', 'D'].slice(0, numChoices);
+
         choices.forEach((choice, index) => {
-            const choiceX = xOffset + 20 + (index * choiceSpacing); // Adjust position inside the box
-            doc.circle(choiceX, yOffset + 10, choiceCircleRadius); // Draw circle
+            const choiceX = xOffset + boxPaddingLeft + (index * choiceSpacing) + choiceCircleRadius;
+
+            // Draw empty circle
+            doc.circle(choiceX, yOffset + choiceCircleRadius, choiceCircleRadius);
 
             // Center the letter inside the circle
             doc.setFontSize(textSize);
             const textWidth = doc.getTextWidth(choice);
             const textX = choiceX - (textWidth / 2);
-            const textY = yOffset + 11; // Adjust the vertical position of the text
-            doc.text(choice, textX, textY); // Add choice letter inside circle
+            const textY = yOffset + choiceCircleRadius + 2; // Adjust Y to fit better inside the circle
+            doc.text(choice, textX, textY);
         });
     }
 
-    // Save the answer sheet PDF
+    // Save the PDF
     doc.save('answer_sheet.pdf');
 };
+
 
   const handlePrint = async (test) => {
     if (!test || !test.questions) {
