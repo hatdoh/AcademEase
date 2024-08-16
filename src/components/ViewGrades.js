@@ -1,7 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Grid, Paper, TextField, Typography, Box } from "@mui/material";
+import { db } from "../config/firebase";
+import { doc, getDoc } from 'firebase/firestore';
+import { useParams } from "react-router-dom";
 
 function ViewGrades() {
+
+    const [student, setStudent] = useState({
+        grade: '',
+        section: ''
+    });
+    
+    const [loading, setLoading] = useState(true);
+    const { id } = useParams();
+
     const [grades, setGrades] = useState({
         writtenWorks: Array(9).fill(''),
         performanceTasks: Array(9).fill(''),
@@ -13,6 +25,30 @@ function ViewGrades() {
         performanceTasks: Array(9).fill(''),
         periodicalTest: '',
     });
+
+    useEffect(() => {
+        const fetchStudent = async () => {
+            try {
+                const docRef = doc(db, 'students', id);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const studentData = docSnap.data();
+                    setStudent({
+                        grade: studentData.grade,
+                        section: studentData.section
+                    });
+                } else {
+                    console.error('No such document!');
+                }
+                setLoading(false);
+            } catch (error) {
+                console.error('Error fetching student:', error);
+                setLoading(false);
+            }
+        };
+
+        fetchStudent();
+    }, [id]);
 
     const handleGradeChange = (event, index, category) => {
         const newGrades = { ...grades };
@@ -132,7 +168,7 @@ function ViewGrades() {
             <Paper sx={{ padding: 2, borderRadius: 2 }}>
                 <Grid container spacing={1} sx={{ border: '1px solid #ddd', borderRadius: 1 }}>
                     <Grid item xs={12} sx={{ backgroundColor: '#f5f5f5', textAlign: 'center', fontWeight: 'bold', borderBottom: '1px solid #ddd', padding: 1 }}>
-                        GRADE & SECTION: G9 - RESPONSIBLE
+                        GRADE & SECTION: {student.grade} - {student.section}
                     </Grid>
                     <Grid item xs={12} sx={{ backgroundColor: '#f5f5f5', textAlign: 'center', fontWeight: 'bold', borderBottom: '1px solid #ddd', padding: 1 }}>
                         SUBJECT: TLE - COOKERY

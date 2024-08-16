@@ -3,18 +3,7 @@ import { getAdminDetails, updateAdminDetails, logout, getCurrentUser, updatePass
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { auth } from '../config/firebase';
-import {
-  TextField,
-  Button,
-  Grid,
-  Container,
-  Typography,
-  Select,
-  MenuItem,
-  InputLabel,
-  FormControl,
-  useMediaQuery
-} from '@mui/material';
+import { TextField, Button, Grid, Container, Typography, Select, MenuItem, InputLabel, FormControl, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
 function AdminDetails() {
