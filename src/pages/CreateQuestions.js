@@ -100,15 +100,14 @@ function CreateQuestions(props) {
     setTestName(e.target.value);
   };
 
-  const handleAnswerClick = (answerIndex, optionIndex) => {
-    setAnswerSheet(prevAnswerSheet =>
-      prevAnswerSheet.map((answer, index) => ({
-        ...answer,
-        selected: index === answerIndex ? optionIndex : answer.selected
-      }))
-    );
+  const shuffleArray = (array) => {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
   };
-
+  
   const handleSave = () => {
     if (!testName || testName.trim() === '') {
       Swal.fire({
@@ -118,7 +117,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-
+  
     if (!selectedDate) {
       Swal.fire({
         icon: 'error',
@@ -127,7 +126,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-
+  
     if (!selectedOption) {
       Swal.fire({
         icon: 'error',
@@ -136,7 +135,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-
+  
     if (!directions || directions.trim() === '') {
       Swal.fire({
         icon: 'error',
@@ -145,7 +144,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-
+  
     if (itemsInput.some(item => !item.question || item.question.trim() === '')) {
       Swal.fire({
         icon: 'error',
@@ -154,7 +153,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-
+  
     if (itemsInput.some(item => item.choices.some(choice => !choice.text || choice.text.trim() === ''))) {
       Swal.fire({
         icon: 'error',
@@ -163,7 +162,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-
+  
     if (itemsInput.some(item => !item.correctAnswer || item.correctAnswer.trim() === '')) {
       Swal.fire({
         icon: 'error',
@@ -172,47 +171,67 @@ function CreateQuestions(props) {
       });
       return;
     }
-
+  
+    // Use the current itemsInput with randomized questions and original choices
+    const randomizedQuestionsA = shuffleArray(itemsInput.map(item => ({
+      ...item,
+      choices: item.choices // Choices are not randomized
+    })));
+    const randomizedQuestionsB = shuffleArray(itemsInput.map(item => ({
+      ...item,
+      choices: item.choices // Choices are not randomized
+    })));
+  
     const newTest = {
       name: testName,
       date: selectedDate,
       items: selectedOption,
-      directions: directions, // Include directions
-      questions: itemsInput.map((item, index) => ({
-        question: item.question,
-        choices: item.choices.map(choice => ({
-          id: choice.id,
-          text: choice.text,
-          checked: choice.checked
+      directions: directions,
+      questions: {
+        A: randomizedQuestionsA.map((item) => ({
+          question: item.question,
+          choices: item.choices.map(choice => ({
+            id: choice.id,
+            text: choice.text,
+            checked: choice.checked
+          })),
+          correctAnswer: item.correctAnswer
         })),
-        correctAnswer: item.correctAnswer
-      }))
+        B: randomizedQuestionsB.map((item) => ({
+          question: item.question,
+          choices: item.choices.map(choice => ({
+            id: choice.id,
+            text: choice.text,
+            checked: choice.checked
+          })),
+          correctAnswer: item.correctAnswer
+        }))
+      }
     };
-
+  
     const successMessage = () => {
       Swal.fire({
         icon: 'success',
         title: 'Success!',
         text: 'Test updated successfully!',
       });
-      closeModal(); // Close modal after successful save
+      closeModal();
     };
-
+  
     const resetForm = () => {
       setTestName('');
       setSelectedDate(null);
       setSelectedOption(null);
-      setDirections(''); // Clear directions field
+      setDirections('');
       setItemsInput([]);
     };
-
+  
     if (editIndex !== null) {
-      // Edit existing test
       const editRef = ref(db, `data/tests/${savedTests[editIndex].id}`);
       set(editRef, newTest)
         .then(() => {
           successMessage();
-          resetForm(); // Reset the form after save
+          resetForm();
         })
         .catch((error) => {
           Swal.fire({
@@ -222,11 +241,10 @@ function CreateQuestions(props) {
           });
         });
     } else {
-      // Save new test
       push(ref(db, 'data/tests'), newTest)
         .then(() => {
           successMessage();
-          resetForm(); // Reset the form after save
+          resetForm();
         })
         .catch((error) => {
           Swal.fire({
@@ -237,7 +255,7 @@ function CreateQuestions(props) {
         });
     }
   };
-
+    
   const handleDelete = (index, testId) => {
     Swal.fire({
       title: 'Are you sure?',
@@ -274,24 +292,30 @@ function CreateQuestions(props) {
 
   const handleEdit = (index) => {
     const test = savedTests[index];
-
+  
     setTestName(test.name || '');
     setSelectedDate(test.date || '');
     setSelectedOption(test.items || '');
-    setItemsInput(test.questions.map(q => ({
+  
+    // Ensure test.questions is an array
+    const questions = Array.isArray(test.questions) ? test.questions : [];
+  
+    setItemsInput(questions.map(q => ({
       question: q.question || '',
-      choices: q.choices.map(choice => ({
+      choices: Array.isArray(q.choices) ? q.choices.map(choice => ({
         id: choice.id || '',
         text: choice.text || '',
         checked: choice.checked || false
-      })),
+      })) : [], // Default to empty array if q.choices is not an array
       correctAnswer: q.correctAnswer || ''  // Ensure correctAnswer is set
     })));
+  
     setAnswerSheet(test.answerSheet || '');
     setEditIndex(index);
     openModal();
   };
-
+  
+  
 
   const handleAddChoice = (questionIndex) => {
     const newItemsInput = [...itemsInput];
@@ -429,51 +453,63 @@ function CreateQuestions(props) {
 };
 
 
-  const handlePrint = async (test) => {
-    if (!test || !test.questions) {
-      console.error('Selected test or questions are undefined');
-      return;
-    }
+const handlePrint = async (test) => {
+  if (!test || !test.questions) {
+    console.error('Selected test or questions are undefined');
+    return;
+  }
 
-    const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: 'Do you want to generate the PDF files for this test?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, generate!'
-    });
+  const result = await Swal.fire({
+    title: 'Are you sure?',
+    text: 'Do you want to generate the PDF files for this test?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, generate!'
+  });
 
-    if (result.isConfirmed) {
-      const questionsA = generateRandomSequence(test.questions);
-      const questionsB = generateRandomSequence(test.questions);
+  if (result.isConfirmed) {
+    const questionsA = test.questions.A;
+    const questionsB = test.questions.B;
 
-      try {
-        await generatePDF(questionsA, 'A', test.directions); // Pass directions
-        await generatePDF(questionsB, 'B', test.directions); // Pass directions
-        await generateAnswerSheetPDF(test.questions.length, test.questions[0].choices.length);
+    try {
+      await generatePDF(questionsA, 'A', test.directions);
+      await generatePDF(questionsB, 'B', test.directions);
+      await generateAnswerSheetPDF(test.questions.A.length, test.questions.A[0].choices.length);
 
-        Swal.fire({
-          icon: 'success',
-          title: 'Success!',
-          text: 'PDFs have been generated successfully!',
-        });
-      } catch (error) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error!',
-          text: `Failed to generate PDFs: ${error.message}`,
-        });
-      }
-    } else {
       Swal.fire({
-        icon: 'info',
-        title: 'Cancelled',
-        text: 'PDF generation has been cancelled.',
+        icon: 'success',
+        title: 'Success!',
+        text: 'PDFs have been generated successfully!',
+      });
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: `Failed to generate PDFs: ${error.message}`,
       });
     }
-  };
+  } else {
+    Swal.fire({
+      icon: 'info',
+      title: 'Cancelled',
+      text: 'PDF generation has been cancelled.',
+    });
+  }
+};
+
+const handleRandomize = () => {
+  // Randomize only the questions, keeping the choices unchanged
+  const randomizedQuestions = shuffleArray(itemsInput.map(item => ({
+    ...item,
+    // Keep choices in the original order
+    choices: item.choices
+  })));
+
+  setItemsInput(randomizedQuestions);
+};
+
 
   const filteredTests = savedTests.filter((test) =>
     test.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -618,15 +654,6 @@ function CreateQuestions(props) {
     });
 
     return text;
-  };
-
-  const generateRandomSequence = (questions) => {
-    const shuffled = [...questions];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
   };
 
   const generatePDF = async (questions, testName, directions) => {
@@ -1005,9 +1032,6 @@ function CreateQuestions(props) {
             variant="outlined"
             sx={{ mt: 1 }}
           >
-            <MenuItem value="10">10 Items</MenuItem>
-            <MenuItem value="20">20 Items</MenuItem>
-            <MenuItem value="30">30 Items</MenuItem>
             <MenuItem value="40">40 Items</MenuItem>
             <MenuItem value="50">50 Items</MenuItem>
           </Select>
@@ -1022,6 +1046,15 @@ function CreateQuestions(props) {
               />
             </IconButton>
             <Typography sx={{ ml: 1 }}>{selectedFile ? selectedFile.name : 'No file selected'}</Typography>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={handleRandomize}
+              sx={{ ml: 2 }}
+            >
+              Randomize Questions & Answers
+            </Button>
+
           </Box>
           <TextField
             fullWidth
