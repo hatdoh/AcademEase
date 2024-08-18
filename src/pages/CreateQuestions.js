@@ -297,10 +297,14 @@ function CreateQuestions(props) {
     setSelectedDate(test.date || '');
     setSelectedOption(test.items || '');
   
-    // Ensure test.questions is an array
-    const questions = Array.isArray(test.questions) ? test.questions : [];
+    // Ensure test.questions is an object with A and B arrays
+    const questionsA = Array.isArray(test.questions?.A) ? test.questions.A : [];
+    const questionsB = Array.isArray(test.questions?.B) ? test.questions.B : [];
   
-    setItemsInput(questions.map(q => ({
+    // Combine questions A and B into one array for editing
+    const combinedQuestions = [...questionsA, ...questionsB];
+  
+    setItemsInput(combinedQuestions.map(q => ({
       question: q.question || '',
       choices: Array.isArray(q.choices) ? q.choices.map(choice => ({
         id: choice.id || '',
@@ -315,8 +319,6 @@ function CreateQuestions(props) {
     openModal();
   };
   
-  
-
   const handleAddChoice = (questionIndex) => {
     const newItemsInput = [...itemsInput];
     newItemsInput[questionIndex].choices.push({ id: newItemsInput[questionIndex].choices.length, text: '' });
@@ -327,20 +329,6 @@ function CreateQuestions(props) {
       prevAnswerSheet.map((answer, index) => ({
         ...answer,
         options: index === questionIndex ? [...answer.options, String.fromCharCode(65 + answer.options.length)] : answer.options
-      }))
-    );
-  };
-
-  const handleRemoveChoice = (questionIndex) => {
-    const newItemsInput = [...itemsInput];
-    newItemsInput[questionIndex].choices.pop();
-    setItemsInput(newItemsInput);
-
-    // Update answer sheet when removing a choice
-    setAnswerSheet(prevAnswerSheet =>
-      prevAnswerSheet.map((answer, index) => ({
-        ...answer,
-        options: index === questionIndex ? answer.options.slice(0, -1) : answer.options
       }))
     );
   };
