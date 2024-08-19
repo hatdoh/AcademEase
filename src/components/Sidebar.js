@@ -14,7 +14,7 @@ import { FiLogOut } from "react-icons/fi";
 import { Drawer, List, ListItem, ListItemIcon, ListItemText, Typography, IconButton, useMediaQuery, AppBar, Toolbar } from '@mui/material';
 import { Menu as MenuIcon } from '@mui/icons-material';
 import { styled } from '@mui/system';
-import logo from "../res/img/logo.png";
+import logo from "../res/img/logo1.png";
 
 const drawerWidth = 240;
 
@@ -42,7 +42,7 @@ const LogoContainer = styled('div')(({ theme }) => ({
 const LogoText = styled(Typography)(({ theme }) => ({
   fontWeight: 'bold',
   fontSize: '1.25rem',
-  marginLeft: theme.spacing(2),
+  marginLeft: theme.spacing(1),
 }));
 
 function Sidebar() {
