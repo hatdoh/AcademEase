@@ -1,28 +1,64 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import Swal from 'sweetalert2';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import { Button, TextField, MenuItem, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Typography, Box, Container, Grid, useTheme, useMediaQuery, Card, CardContent } from '@mui/material';
+import { getCurrentUser, isSuperAdminLoggedIn } from '../utils/Authentication';
 
 function AddSection() {
     const [section, setSection] = useState('');
+    const [subject, setSubject] = useState('');
     const [startTime, setStartTime] = useState('');
     const [endTime, setEndTime] = useState('');
     const [day, setDay] = useState('Monday');
     const [acadYear, setAcadYear] = useState('');
     const [sections, setSections] = useState([]);
     const [editingSectionId, setEditingSectionId] = useState(null);
+    const [teachers, setTeachers] = useState({});
+    const [isSuperAdmin, setIsSuperAdmin] = useState(false); // Add state for super admin
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     useEffect(() => {
         const fetchSections = async () => {
+            const currentUser = getCurrentUser(); // Get the currently logged-in user
+            const isSuperAdminStatus = isSuperAdminLoggedIn(); // Check if the user is a super admin
+            setIsSuperAdmin(isSuperAdminStatus); // Set super admin status
+
+            if (!currentUser) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Ooops...',
+                    text: 'You must be logged in to view sections!',
+                });
+                return;
+            }
+
             const sectionsCollection = collection(db, 'sections');
-            const sectionSnapshot = await getDocs(sectionsCollection);
+            let q;
+
+            if (isSuperAdminStatus) {
+                q = query(sectionsCollection);
+            } else {
+                q = query(sectionsCollection, where('teacherUID', '==', currentUser.uid));
+            }
+
+            const sectionSnapshot = await getDocs(q);
             const sectionList = sectionSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setSections(sectionList);
+
+            if (isSuperAdminStatus) {
+                const teachersCollection = collection(db, 'teachers-info');
+                const teacherSnapshot = await getDocs(teachersCollection);
+                const teacherList = teacherSnapshot.docs.reduce((acc, doc) => {
+                    const teacherData = doc.data();
+                    acc[teacherData.uid] = teacherData.firstName + ' ' + teacherData.lastName;
+                    return acc;
+                }, {});
+                setTeachers(teacherList);
+            }
         };
 
         fetchSections();
@@ -30,6 +66,17 @@ function AddSection() {
 
     const handleSave = async (e) => {
         e.preventDefault();
+
+        const currentUser = getCurrentUser(); // Get the currently logged-in user
+
+        if (!currentUser) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Ooops...',
+                text: 'You must be logged in to add a section!',
+            });
+            return;
+        }
 
         if (acadYear.trim() === '') {
             Swal.fire({
@@ -49,15 +96,26 @@ function AddSection() {
             return;
         }
 
+        if (subject.trim() === '') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Ooops...',
+                text: 'Please enter a subject name!',
+            });
+            return;
+        }
+
         if (editingSectionId) {
             try {
                 const sectionDoc = doc(db, 'sections', editingSectionId);
                 await updateDoc(sectionDoc, {
                     section,
+                    subject,
                     startTime,
                     endTime,
                     day,
                     acadYear,
+                    teacherUID: currentUser.uid, // Add teacher's UID
                 });
 
                 Swal.fire({
@@ -66,10 +124,11 @@ function AddSection() {
                     text: 'Section updated successfully!',
                 });
 
-                const updatedSections = sections.map(sec => sec.id === editingSectionId ? { ...sec, section, startTime, endTime, day, acadYear } : sec);
+                const updatedSections = sections.map(sec => sec.id === editingSectionId ? { ...sec, section, subject, startTime, endTime, day, acadYear, teacherUID: currentUser.uid } : sec);
                 setSections(updatedSections);
                 setEditingSectionId(null);
                 setSection('');
+                setSubject('');
                 setStartTime('');
                 setEndTime('');
                 setDay('Monday');
@@ -102,10 +161,12 @@ function AddSection() {
                 const sectionsCollection = collection(db, 'sections');
                 const docRef = await addDoc(sectionsCollection, {
                     section,
+                    subject,
                     startTime,
                     endTime,
                     day,
                     acadYear,
+                    teacherUID: currentUser.uid, // Add teacher's UID
                 });
 
                 Swal.fire({
@@ -114,8 +175,9 @@ function AddSection() {
                     text: 'Section added successfully!',
                 });
 
-                setSections([...sections, { id: docRef.id, section, startTime, endTime, day, acadYear }]);
+                setSections([...sections, { id: docRef.id, section, subject, startTime, endTime, day, acadYear, teacherUID: currentUser.uid }]);
                 setSection('');
+                setSubject('');
                 setStartTime('');
                 setEndTime('');
                 setDay('Monday');
@@ -135,6 +197,7 @@ function AddSection() {
     const handleEdit = (section) => {
         setEditingSectionId(section.id);
         setSection(section.section);
+        setSubject(section.subject);
         setStartTime(section.startTime);
         setEndTime(section.endTime);
         setDay(section.day);
@@ -242,6 +305,27 @@ function AddSection() {
                             <TextField
                                 fullWidth
                                 variant="outlined"
+                                label="Subject Name"
+                                value={subject}
+                                placeholder="Enter Subject Name"
+                                onChange={(e) => setSubject(e.target.value)}
+                                sx={{
+                                    backgroundColor: 'white',
+                                    borderRadius: 2
+                                }}
+                                InputProps={{
+                                    sx: {
+                                        '& .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: '#818181'
+                                        }
+                                    }
+                                }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={4}>
+                            <TextField
+                                fullWidth
+                                variant="outlined"
                                 label="Start Time"
                                 type="time"
                                 value={startTime}
@@ -287,7 +371,7 @@ function AddSection() {
                                 value={day}
                                 onChange={(e) => setDay(e.target.value)}
                                 label="Day"
-                                sx={{                            
+                                sx={{
                                     backgroundColor: 'white',
                                     borderRadius: 1,
                                     '& .MuiOutlinedInput-notchedOutline': {
@@ -343,51 +427,62 @@ function AddSection() {
                         ))}
                     </Box>
                 ) : (
-                    <TableContainer component={Paper}>
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell align='center' sx={{fontWeight: 'bold'}}>Section</TableCell>
-                                    <TableCell align='center' sx={{fontWeight: 'bold'}}>Start Time</TableCell>
-                                    <TableCell align='center' sx={{fontWeight: 'bold'}}>End Time</TableCell>
-                                    <TableCell align='center' sx={{fontWeight: 'bold'}}>Day</TableCell>
-                                    <TableCell align='center' sx={{fontWeight: 'bold'}}>Academic Year</TableCell>
-                                    <TableCell align='center' sx={{fontWeight: 'bold'}}>Actions</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {sections.map((section) => (
-                                    <TableRow key={section.id}>
-                                        <TableCell align='center'>{section.section}</TableCell>
-                                        <TableCell align='center'>{convertTo12HourFormat(section.startTime)}</TableCell>
-                                        <TableCell align='center'>{convertTo12HourFormat(section.endTime)}</TableCell>
-                                        <TableCell align='center'>{section.day}</TableCell>
-                                        <TableCell align='center'>{section.acadYear}</TableCell>
-                                        <TableCell align='center'>
-                                            <IconButton color="primary" onClick={() => handleEdit(section)}
-                                                sx={{
+                    <Box>
+                        <Typography variant="h5" component="h3" sx={{ fontWeight: 'bold', mb: 1 }}>
+                            Sections
+                        </Typography>
+                        <TableContainer component={Paper}>
+                            <Table>
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell align='center' sx={{ fontWeight: 'bold' }}>Section</TableCell>
+                                        <TableCell align='center' sx={{ fontWeight: 'bold' }}>Subject</TableCell>
+                                        <TableCell align='center' sx={{ fontWeight: 'bold' }}>Start Time</TableCell>
+                                        <TableCell align='center' sx={{ fontWeight: 'bold' }}>End Time</TableCell>
+                                        <TableCell align='center' sx={{ fontWeight: 'bold' }}>Day</TableCell>
+                                        <TableCell align='center' sx={{ fontWeight: 'bold' }}>Academic Year</TableCell>
+                                        {isSuperAdmin && <TableCell align='center' sx={{ fontWeight: 'bold' }}>Teacher</TableCell>}
+                                        <TableCell align='center' sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {sections.map(section => (
+                                        <TableRow key={section.id}>
+                                            <TableCell align='center'>{section.section}</TableCell>
+                                            <TableCell align='center'>{section.subject}</TableCell>
+                                            <TableCell align='center'>{convertTo12HourFormat(section.startTime)}</TableCell>
+                                            <TableCell align='center'>{convertTo12HourFormat(section.endTime)}</TableCell>
+                                            <TableCell align='center'>{section.day}</TableCell>
+                                            <TableCell align='center'>{section.acadYear}</TableCell>
+                                            {isSuperAdmin && (
+                                                <TableCell align='center'>{teachers[section.teacherUID] || 'Unknown'}</TableCell>
+                                            )}
+                                            <TableCell align='center'>
+                                                <IconButton onClick={() => handleEdit(section)}  sx={{
                                                     mx: 1,
-                                                    color: '#1e88e5', // Custom color for download icon (blue)
+                                                    color: '#1e88e5', // (blue)
                                                     '&:hover': {
                                                         color: '#1565c0', // Darker blue on hover
                                                     },
                                                 }}>
-                                                <FaEdit fontSize='medium' />
-                                            </IconButton>
-                                            <IconButton color="error" onClick={() => handleDelete(section.id)} sx={{
+                                                    <FaEdit fontSize='medium' />
+                                                </IconButton>
+                                                <IconButton onClick={() => handleDelete(section.id)} sx={{
                                                 mx: 1,
+                                                color: '#db1a1a', // red
                                                 '&:hover': {
-                                                    color: '#d32f2f', // Red color on hover
+                                                    color: '#ff0000', // Red color on hover
                                                 },
                                             }}>
-                                                <FaTrash fontSize='medium' />
-                                            </IconButton>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
+                                                    <FaTrash fontSize='medium'/>
+                                                </IconButton>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    </Box>
                 )}
             </Box>
         </Container >

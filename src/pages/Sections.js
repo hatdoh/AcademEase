@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { MdAdd, MdArrowUpward, MdArrowDownward } from 'react-icons/md';
 import { Link } from 'react-router-dom';
-import { collection, getDocs, onSnapshot } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { Grid, Typography, TextField, Select, MenuItem, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel, Paper, Box, Avatar, IconButton, useTheme, useMediaQuery } from '@mui/material';
+import { getCurrentUser, isSuperAdminLoggedIn } from '../utils/Authentication'; // Import added
+import { Grid, Typography, TextField, Select, MenuItem, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel, Paper, Box, Avatar, useTheme, useMediaQuery } from '@mui/material';
 
 function Section() {
     const [selectedSection, setSelectedSection] = useState('All');
@@ -16,7 +17,8 @@ function Section() {
     const [searchGrade, setSearchGrade] = useState('');
     const [searchSection, setSearchSection] = useState('');
     const [sortColumn, setSortColumn] = useState('LName');
-    const [sortDirection, setSortDirection] = useState('asc'); // 'asc' or 'desc'
+    const [sortDirection, setSortDirection] = useState('asc');
+    const [isSuperAdmin, setIsSuperAdmin] = useState(false); // State to track super admin status
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -26,21 +28,42 @@ function Section() {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
                 setUser(user);
+                // Check if the user is a super admin directly
+                const checkAdmin = isSuperAdminLoggedIn();
+                setIsSuperAdmin(checkAdmin);
             } else {
                 setUser(null);
+                setIsSuperAdmin(false);
             }
         });
-
+    
         return () => unsubscribe();
     }, []);
 
     useEffect(() => {
         if (user) {
-            const fetchStudentsAndSections = async () => {
+            const fetchSectionsAndStudents = async () => {
                 try {
+                    let sections = [];
+                    if (isSuperAdmin) {
+                        // Fetch all sections if super admin
+                        const allSectionsSnapshot = await getDocs(collection(db, 'sections'));
+                        sections = allSectionsSnapshot.docs.map(doc => doc.data().section);
+                        setSectionList(['All', ...sections]);
+                    } else {
+                        // Fetch sections added by the current user (teacher)
+                        const sectionsQuery = query(collection(db, 'sections'), where('teacherUID', '==', user.uid));
+                        const sectionsSnapshot = await getDocs(sectionsQuery);
+                        sections = sectionsSnapshot.docs.map(doc => doc.data().section);
+                        setSectionList(['All', ...sections]);
+                    }
+
+                    // Fetch students
                     const studentsCollection = collection(db, 'students');
                     const studentSnapshot = await getDocs(studentsCollection);
-                    const studentList = studentSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+                    const studentList = studentSnapshot.docs
+                        .map(doc => ({ id: doc.id, ...doc.data() }))
+                        .filter(student => sections.includes(student.section)); // Filter students by sections
                     setStudents(studentList);
 
                     // Calculate section counts
@@ -56,25 +79,13 @@ function Section() {
                     setSectionCounts(counts);
 
                 } catch (error) {
-                    console.error('Error fetching students:', error);
+                    console.error('Error fetching data:', error);
                 }
             };
 
-            fetchStudentsAndSections();
+            fetchSectionsAndStudents();
         }
-    }, [user]);
-
-    useEffect(() => {
-        if (user) {
-            const sectionsCollection = collection(db, 'sections');
-            const unsubscribeSections = onSnapshot(sectionsCollection, (snapshot) => {
-                const sections = ['All', ...new Set(snapshot.docs.map((doc) => doc.data().section))];
-                setSectionList(sections);
-            });
-
-            return () => unsubscribeSections();
-        }
-    }, [user]);
+    }, [user, isSuperAdmin]);
 
     const handleSectionChange = (event) => {
         setSelectedSection(event.target.value);
@@ -129,12 +140,13 @@ function Section() {
     const getFullName = (student) => {
         return `${student.LName}, ${student.FName} ${student.MName}`;
     };
+    
 
     return (
         <Box sx={{ padding: 2 }}>
             <Grid container spacing={2} mb={2}>
-                <Grid item xs={12} sx={{mt: isMobile ? 6: 2}}>
-                    <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold'}}>
+                <Grid item xs={12} sx={{ mt: isMobile ? 6 : 2 }}>
+                    <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
                         Section ({selectedSection})
                     </Typography>
                 </Grid>
@@ -234,89 +246,86 @@ function Section() {
                 </Grid>
             </Grid>
 
-            {
-        isMobile ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold'}}>
-                    Section ({selectedSection})
-                </Typography>
-                {sortedStudents.map((student, index) => (
-                    <Box key={student.id} sx={{ border: '1px solid', borderRadius: 1, padding: 2, mb: 2 }}>
-                        {student.image && (
-                            <Avatar src={student.image} alt={student.FName} sx={{ width: 80, height: 80, mt: 1 }} />
-                        )}
-                        <Typography variant="h6" gutterBottom>
-                            {index + 1}. {getFullName(student)}
-                        </Typography>
-                        <Typography variant="body1"><strong>Grade:</strong> {student.grade}</Typography>
-                        <Typography variant="body1"><strong>Section:</strong> {student.section}</Typography>
-                        <Typography variant="body1"><strong>Gender:</strong> {student.gender}</Typography>
-                        <Typography variant="body1"><strong>Contact Number:</strong> {student.contactNumber}</Typography>
-                        <Link to={`/profile/${student.id}`} style={{ textDecoration: 'none', color: theme.palette.primary.main }}>
-                            View Profile
-                        </Link>
-                    </Box>
-                ))}
-            </Box>
-        ) : (
-            <TableContainer component={Paper} sx={{ display: 'flex', justifyContent: 'center' }}>
-                <Table sx={{ minWidth: 650, width: '100%' }}>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell align="center" style={{fontWeight: 'bold'}}>No</TableCell>
-                            <TableCell>
-                                <TableSortLabel
-                                    active={sortColumn === 'LName'}
-                                    direction={sortColumn === 'LName' ? sortDirection : 'asc'}
-                                    onClick={() => handleSort('LName')}
-                                    style={{fontWeight: 'bold'}}
-                                >
-                                    Name
-                                </TableSortLabel>
-                            </TableCell>
-                            <TableCell align="center" style={{fontWeight: 'bold'}}>Grade</TableCell>
-                            <TableCell align="center" style={{fontWeight: 'bold'}}>Section</TableCell>
-                            <TableCell align="center" style={{fontWeight: 'bold'}}>Gender</TableCell>
-                            <TableCell align="center" style={{fontWeight: 'bold'}}>Contact Number</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {sortedStudents.map((student, index) => (
-                            <TableRow key={student.id}>
-                                <TableCell align="center">{index + 1}</TableCell>
+            {isMobile ? (
+                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                    <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
+                        Section ({selectedSection})
+                    </Typography>
+                    {sortedStudents.map((student, index) => (
+                        <Box key={student.id} sx={{ border: '1px solid', borderRadius: 1, padding: 2, mb: 2 }}>
+                            {student.image && (
+                                <Avatar src={student.image} alt={student.FName} sx={{ width: 80, height: 80, mt: 1 }} />
+                            )}
+                            <Typography variant="h6" gutterBottom>
+                                {index + 1}. {getFullName(student)}
+                            </Typography>
+                            <Typography variant="body1"><strong>Grade:</strong> {student.grade}</Typography>
+                            <Typography variant="body1"><strong>Section:</strong> {student.section}</Typography>
+                            <Typography variant="body1"><strong>Gender:</strong> {student.gender}</Typography>
+                            <Typography variant="body1"><strong>Contact Number:</strong> {student.contactNumber}</Typography>
+                            <Link to={`/profile/${student.id}`} style={{ textDecoration: 'none', color: theme.palette.primary.main }}>
+                                View Profile
+                            </Link>
+                        </Box>
+                    ))}
+                </Box>
+            ) : (
+                <TableContainer component={Paper} sx={{ display: 'flex', justifyContent: 'center' }}>
+                    <Table sx={{ minWidth: 650, width: '100%' }}>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell align="center" style={{ fontWeight: 'bold' }}>No</TableCell>
                                 <TableCell>
-                                    <Box sx={{ display: 'flex', alignItems: 'center'}}>
-                                        {student.image && (
-                                            <Avatar
-                                                src={student.image}
-                                                alt={student.FName}
-                                                sx={{ width: 60, height: 60, mr: 2 }}
-                                            />
-                                        )}
-                                        <Link
-                                            to={`/profile/${student.id}`}
-                                            style={{
-                                                textDecoration: 'none',
-                                                color: theme.palette.primary.main,
-                                            }}
-                                        >
-                                            {getFullName(student)}
-                                        </Link>
-                                    </Box>
+                                    <TableSortLabel
+                                        active={sortColumn === 'LName'}
+                                        direction={sortColumn === 'LName' ? sortDirection : 'asc'}
+                                        onClick={() => handleSort('LName')}
+                                        style={{ fontWeight: 'bold' }}
+                                    >
+                                        Name
+                                    </TableSortLabel>
                                 </TableCell>
-                                <TableCell align="center">{student.grade}</TableCell>
-                                <TableCell align="center">{student.section}</TableCell>
-                                <TableCell align="center">{student.gender}</TableCell>
-                                <TableCell align="center">{student.contactNumber}</TableCell>
+                                <TableCell align="center" style={{ fontWeight: 'bold' }}>Grade</TableCell>
+                                <TableCell align="center" style={{ fontWeight: 'bold' }}>Section</TableCell>
+                                <TableCell align="center" style={{ fontWeight: 'bold' }}>Gender</TableCell>
+                                <TableCell align="center" style={{ fontWeight: 'bold' }}>Contact Number</TableCell>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
-        )
-    }
-        </Box >
-
+                        </TableHead>
+                        <TableBody>
+                            {sortedStudents.map((student, index) => (
+                                <TableRow key={student.id}>
+                                    <TableCell align="center">{index + 1}</TableCell>
+                                    <TableCell>
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                            {student.image && (
+                                                <Avatar
+                                                    src={student.image}
+                                                    alt={student.FName}
+                                                    sx={{ width: 60, height: 60, mr: 2 }}
+                                                />
+                                            )}
+                                            <Link
+                                                to={`/profile/${student.id}`}
+                                                style={{
+                                                    textDecoration: 'none',
+                                                    color: theme.palette.primary.main,
+                                                }}
+                                            >
+                                                {getFullName(student)}
+                                            </Link>
+                                        </Box>
+                                    </TableCell>
+                                    <TableCell align="center">{student.grade}</TableCell>
+                                    <TableCell align="center">{student.section}</TableCell>
+                                    <TableCell align="center">{student.gender}</TableCell>
+                                    <TableCell align="center">{student.contactNumber}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            )}
+        </Box>
     );
 }
 
