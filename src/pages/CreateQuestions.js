@@ -15,6 +15,7 @@ import Swal from 'sweetalert2';
 import morenoLogo from '../res/img/moreno-logo.jpg'
 import DepedLogo from '../res/img/deped-logo.jpg'
 import { Box, Button, Grid, IconButton, MenuItem, Paper, Select, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography, Checkbox, InputLabel, useTheme, useMediaQuery, Card, CardContent } from '@mui/material';
+import { getCurrentUser, isSuperAdminLoggedIn } from '../utils/Authentication';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.js`;
 
@@ -45,14 +46,22 @@ function CreateQuestions(props) {
   // Load saved tests from Firebase on component mount
   useEffect(() => {
     const testsRef = ref(db, 'data/tests');
+    const currentUser = getCurrentUser(); // Assume this gets the current logged-in user
+    const isSuperAdmin = isSuperAdminLoggedIn(); // Assume this checks if the user is a super admin
+
     onValue(testsRef, (snapshot) => {
       const tests = [];
       snapshot.forEach((childSnapshot) => {
-        tests.push({ id: childSnapshot.key, ...childSnapshot.val() });
+        const test = { id: childSnapshot.key, ...childSnapshot.val() };
+
+        if (isSuperAdmin || test.createdBy === currentUser.uid) {
+          tests.push(test);
+        }
       });
       setSavedTests(tests.reverse()); // Reverse to show latest first
     });
   }, []);
+
 
   const openModal = () => {
     setIsModalOpen(true);
@@ -107,7 +116,7 @@ function CreateQuestions(props) {
     }
     return array;
   };
-  
+
   const handleSave = () => {
     if (!testName || testName.trim() === '') {
       Swal.fire({
@@ -117,7 +126,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-  
+
     if (!selectedDate) {
       Swal.fire({
         icon: 'error',
@@ -126,7 +135,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-  
+
     if (!selectedOption) {
       Swal.fire({
         icon: 'error',
@@ -135,7 +144,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-  
+
     if (!directions || directions.trim() === '') {
       Swal.fire({
         icon: 'error',
@@ -144,7 +153,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-  
+
     if (itemsInput.some(item => !item.question || item.question.trim() === '')) {
       Swal.fire({
         icon: 'error',
@@ -153,7 +162,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-  
+
     if (itemsInput.some(item => item.choices.some(choice => !choice.text || choice.text.trim() === ''))) {
       Swal.fire({
         icon: 'error',
@@ -162,7 +171,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-  
+
     if (itemsInput.some(item => !item.correctAnswer || item.correctAnswer.trim() === '')) {
       Swal.fire({
         icon: 'error',
@@ -171,7 +180,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-  
+
     // Use the current itemsInput with randomized questions and original choices
     const randomizedQuestionsA = shuffleArray(itemsInput.map(item => ({
       ...item,
@@ -181,12 +190,13 @@ function CreateQuestions(props) {
       ...item,
       choices: item.choices // Choices are not randomized
     })));
-  
+
     const newTest = {
       name: testName,
       date: selectedDate,
       items: selectedOption,
       directions: directions,
+      createdBy: getCurrentUser().uid, // Add this line to save the creator's UID
       questions: {
         A: randomizedQuestionsA.map((item) => ({
           question: item.question,
@@ -208,7 +218,8 @@ function CreateQuestions(props) {
         }))
       }
     };
-  
+
+
     const successMessage = () => {
       Swal.fire({
         icon: 'success',
@@ -217,7 +228,7 @@ function CreateQuestions(props) {
       });
       closeModal();
     };
-  
+
     const resetForm = () => {
       setTestName('');
       setSelectedDate(null);
@@ -225,7 +236,7 @@ function CreateQuestions(props) {
       setDirections('');
       setItemsInput([]);
     };
-  
+
     if (editIndex !== null) {
       const editRef = ref(db, `data/tests/${savedTests[editIndex].id}`);
       set(editRef, newTest)
@@ -255,7 +266,7 @@ function CreateQuestions(props) {
         });
     }
   };
-    
+
   const handleDelete = (index, testId) => {
     Swal.fire({
       title: 'Are you sure?',
@@ -292,18 +303,18 @@ function CreateQuestions(props) {
 
   const handleEdit = (index) => {
     const test = savedTests[index];
-  
+
     setTestName(test.name || '');
     setSelectedDate(test.date || '');
     setSelectedOption(test.items || '');
-  
+
     // Ensure test.questions is an object with A and B arrays
     const questionsA = Array.isArray(test.questions?.A) ? test.questions.A : [];
     const questionsB = Array.isArray(test.questions?.B) ? test.questions.B : [];
-  
+
     // Combine questions A and B into one array for editing
     const combinedQuestions = [...questionsA, ...questionsB];
-  
+
     setItemsInput(combinedQuestions.map(q => ({
       question: q.question || '',
       choices: Array.isArray(q.choices) ? q.choices.map(choice => ({
@@ -313,12 +324,12 @@ function CreateQuestions(props) {
       })) : [], // Default to empty array if q.choices is not an array
       correctAnswer: q.correctAnswer || ''  // Ensure correctAnswer is set
     })));
-  
+
     setAnswerSheet(test.answerSheet || '');
     setEditIndex(index);
     openModal();
   };
-  
+
   const handleAddChoice = (questionIndex) => {
     const newItemsInput = [...itemsInput];
     newItemsInput[questionIndex].choices.push({ id: newItemsInput[questionIndex].choices.length, text: '' });
@@ -380,16 +391,16 @@ function CreateQuestions(props) {
 
     // Draw the column boxes for the first row and the first two columns of the second row
     for (let row = 0; row < 2; row++) {
-        for (let col = 0; col < numColumns; col++) {
-            if (row === 1 && col === 2) continue; // Skip the third column in the second row
-            const rectX = marginLeft + col * (colWidth + columnMargin);
-            doc.rect(
-                rectX + boxPaddingLeft, 
-                rowPositions[row] + boxPaddingTop, 
-                colWidth + 10 - boxPaddingLeft - boxPaddingRight, 
-                colHeight - boxPaddingTop - boxPaddingBottom
-            );
-        }
+      for (let col = 0; col < numColumns; col++) {
+        if (row === 1 && col === 2) continue; // Skip the third column in the second row
+        const rectX = marginLeft + col * (colWidth + columnMargin);
+        doc.rect(
+          rectX + boxPaddingLeft,
+          rowPositions[row] + boxPaddingTop,
+          colWidth + 10 - boxPaddingLeft - boxPaddingRight,
+          colHeight - boxPaddingTop - boxPaddingBottom
+        );
+      }
     }
 
     // Define spacing for contents
@@ -405,98 +416,98 @@ function CreateQuestions(props) {
 
     // Positioning for questions and answer choices
     for (let i = 1; i <= numQuestions; i++) {
-        let colIndex = Math.floor((i - 1) / 10) % 3; // Determine column based on question number
-        let rowIndex = Math.floor((i - 1) / 30); // Determine row (first or second row)
+      let colIndex = Math.floor((i - 1) / 10) % 3; // Determine column based on question number
+      let rowIndex = Math.floor((i - 1) / 30); // Determine row (first or second row)
 
-        // Skip placing questions in the second row, third column
-        if (rowIndex === 1 && colIndex === 2) continue;
+      // Skip placing questions in the second row, third column
+      if (rowIndex === 1 && colIndex === 2) continue;
 
-        // Calculate the positions
-        xOffset = marginLeft + colIndex * (colWidth + columnMargin) + 1; // Adjust xOffset for question margin
-        yOffset = rowPositions[rowIndex] + rowSpacing + ((i - 1) % 10) * (choiceCircleRadius * 2 + rowSpacing) + questionPaddingTop;
+      // Calculate the positions
+      xOffset = marginLeft + colIndex * (colWidth + columnMargin) + 1; // Adjust xOffset for question margin
+      yOffset = rowPositions[rowIndex] + rowSpacing + ((i - 1) % 10) * (choiceCircleRadius * 2 + rowSpacing) + questionPaddingTop;
 
-        // Print question number outside the box
-        doc.text(`${i}.`, xOffset - 10, yOffset + 5);
+      // Print question number outside the box
+      doc.text(`${i}.`, xOffset - 10, yOffset + 5);
 
-        // Print answer choices inside circles
-        const choices = ['A', 'B', 'C', 'D'].slice(0, numChoices);
+      // Print answer choices inside circles
+      const choices = ['A', 'B', 'C', 'D'].slice(0, numChoices);
 
-        choices.forEach((choice, index) => {
-            const choiceX = xOffset + boxPaddingLeft + (index * choiceSpacing) + choiceCircleRadius;
+      choices.forEach((choice, index) => {
+        const choiceX = xOffset + boxPaddingLeft + (index * choiceSpacing) + choiceCircleRadius;
 
-            // Draw empty circle
-            doc.circle(choiceX, yOffset + choiceCircleRadius, choiceCircleRadius);
+        // Draw empty circle
+        doc.circle(choiceX, yOffset + choiceCircleRadius, choiceCircleRadius);
 
-            // Center the letter inside the circle
-            doc.setFontSize(textSize);
-            const textWidth = doc.getTextWidth(choice);
-            const textX = choiceX - (textWidth / 2);
-            const textY = yOffset + choiceCircleRadius + 2; // Adjust Y to fit better inside the circle
-            doc.text(choice, textX, textY);
-        });
+        // Center the letter inside the circle
+        doc.setFontSize(textSize);
+        const textWidth = doc.getTextWidth(choice);
+        const textX = choiceX - (textWidth / 2);
+        const textY = yOffset + choiceCircleRadius + 2; // Adjust Y to fit better inside the circle
+        doc.text(choice, textX, textY);
+      });
     }
 
     // Save the PDF
     doc.save('answer_sheet.pdf');
-};
+  };
 
 
-const handlePrint = async (test) => {
-  if (!test || !test.questions) {
-    console.error('Selected test or questions are undefined');
-    return;
-  }
+  const handlePrint = async (test) => {
+    if (!test || !test.questions) {
+      console.error('Selected test or questions are undefined');
+      return;
+    }
 
-  const result = await Swal.fire({
-    title: 'Are you sure?',
-    text: 'Do you want to generate the PDF files for this test?',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#3085d6',
-    cancelButtonColor: '#d33',
-    confirmButtonText: 'Yes, generate!'
-  });
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Do you want to generate the PDF files for this test?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, generate!'
+    });
 
-  if (result.isConfirmed) {
-    const questionsA = test.questions.A;
-    const questionsB = test.questions.B;
+    if (result.isConfirmed) {
+      const questionsA = test.questions.A;
+      const questionsB = test.questions.B;
 
-    try {
-      await generatePDF(questionsA, 'A', test.directions);
-      await generatePDF(questionsB, 'B', test.directions);
-      await generateAnswerSheetPDF(test.questions.A.length, test.questions.A[0].choices.length);
+      try {
+        await generatePDF(questionsA, 'A', test.directions);
+        await generatePDF(questionsB, 'B', test.directions);
+        await generateAnswerSheetPDF(test.questions.A.length, test.questions.A[0].choices.length);
 
+        Swal.fire({
+          icon: 'success',
+          title: 'Success!',
+          text: 'PDFs have been generated successfully!',
+        });
+      } catch (error) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: `Failed to generate PDFs: ${error.message}`,
+        });
+      }
+    } else {
       Swal.fire({
-        icon: 'success',
-        title: 'Success!',
-        text: 'PDFs have been generated successfully!',
-      });
-    } catch (error) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Error!',
-        text: `Failed to generate PDFs: ${error.message}`,
+        icon: 'info',
+        title: 'Cancelled',
+        text: 'PDF generation has been cancelled.',
       });
     }
-  } else {
-    Swal.fire({
-      icon: 'info',
-      title: 'Cancelled',
-      text: 'PDF generation has been cancelled.',
-    });
-  }
-};
+  };
 
-const handleRandomize = () => {
-  // Randomize only the questions, keeping the choices unchanged
-  const randomizedQuestions = shuffleArray(itemsInput.map(item => ({
-    ...item,
-    // Keep choices in the original order
-    choices: item.choices
-  })));
+  const handleRandomize = () => {
+    // Randomize only the questions, keeping the choices unchanged
+    const randomizedQuestions = shuffleArray(itemsInput.map(item => ({
+      ...item,
+      // Keep choices in the original order
+      choices: item.choices
+    })));
 
-  setItemsInput(randomizedQuestions);
-};
+    setItemsInput(randomizedQuestions);
+  };
 
 
   const filteredTests = savedTests.filter((test) =>
@@ -509,7 +520,7 @@ const handleRandomize = () => {
     if (file) {
       const fileType = file.name.split('.').pop().toLowerCase();
       let content = '';
-  
+
       try {
         if (fileType === 'pdf') {
           content = await readPdfFile(file);
@@ -524,15 +535,15 @@ const handleRandomize = () => {
         console.error('Error reading file:', error);
         return;
       }
-  
+
       const lines = content.split('\n')
         .map(line => line.trim())
         .filter(line => line !== '');
-  
+
       const items = [];
       let currentQuestion = null;
       let directionsText = '';
-  
+
       lines.forEach(line => {
         if (/^directions:/i.test(line)) {
           directionsText = line.replace(/^directions:/i, '').trim();
@@ -566,14 +577,14 @@ const handleRandomize = () => {
           }
         }
       });
-  
+
       if (currentQuestion) {
         currentQuestion.choices = currentQuestion.choices.slice(0, 4);
         items.push(currentQuestion);
       }
-  
+
       const itemCount = items.length;
-  
+
       if (itemCount > 50) {
         await Swal.fire({
           title: 'Items Exceeded',
@@ -594,11 +605,11 @@ const handleRandomize = () => {
         });
         return; // Exit the function if the number of items is insufficient
       }
-  
+
       // Update state if the number of items is valid (40 or 50)
       setItemsInput(items);
       setDirections(directionsText); // Set the directions state
-  
+
       // Update the dropdown value and answer sheet
       setSelectedOption(itemCount);
       setAnswerSheet(items.map(item => ({
@@ -607,7 +618,7 @@ const handleRandomize = () => {
       })));
     }
   };
-  
+
 
   const readPdfFile = async (file) => {
     const arrayBuffer = await file.arrayBuffer();
@@ -990,7 +1001,7 @@ const handleRandomize = () => {
       {/* Modal for creating or editing test questions */}
       <ModalTestQuestion isOpen={isModalOpen} onClose={closeModal} onSave={handleSave}>
         <Box sx={{ p: 2 }}>
-          <Typography variant="h6" sx={{fontWeight: 'bold'}}>Create/Edit Test</Typography>
+          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>Create/Edit Test</Typography>
           <TextField
             fullWidth
             label="Exam Name"
@@ -1010,7 +1021,7 @@ const handleRandomize = () => {
             InputLabelProps={{
               shrink: true,
             }}
-            
+
           />
           <InputLabel sx={{ mt: 2, color: 'black', fontWeight: 'bold' }}>Select Number of Items</InputLabel>
           <Select
