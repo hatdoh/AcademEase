@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import Modal from 'react-modal';
-import { Button, TextField, FormControl, InputLabel, Select, MenuItem, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box, Typography, Grid, IconButton } from '@mui/material';
+import { Button, TextField, FormControl, InputLabel, Select, MenuItem, Table, TableContainer, TableHead, TableRow, TableCell, Paper, Box, Typography, Grid } from '@mui/material';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-import { FaPrint, FaEdit } from "react-icons/fa";
-import { MdDelete, MdDateRange } from "react-icons/md";
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { TableBody } from '@mui/material';
+
 
 Modal.setAppElement('#root'); // Important for accessibility
 
@@ -22,9 +24,7 @@ function SchoolFormTwo() {
         totalDaysTardy: '',
         remarks: ''
     });
-    const [savedForms, setSavedForms] = useState([]);
     const [isEditing, setIsEditing] = useState(false);
-    const [currentFormIndex, setCurrentFormIndex] = useState(null);
 
     const handleInputChange = (field, value) => {
         setFormData({ ...formData, [field]: value });
@@ -34,57 +34,8 @@ function SchoolFormTwo() {
         setFormData({ ...formData, month: date });
     };
 
-    const openModal = (index = null) => {
-        if (index !== null) {
-            setIsEditing(true);
-            setCurrentFormIndex(index);
-            setFormData(savedForms[index]);
-        } else {
-            setIsEditing(false);
-            setCurrentFormIndex(null);
-            setFormData({
-                schoolID: '',
-                schoolYear: '',
-                schoolName: '',
-                gradeLevel: '',
-                section: '',
-                month: new Date(),
-                nameOfLearner: '',
-                totalDaysAbsent: '',
-                totalDaysTardy: '',
-                remarks: ''
-            });
-        }
-        setModalIsOpen(true);
-    };
-
     const closeModal = () => {
         setModalIsOpen(false);
-    };
-
-    const saveData = () => {
-        if (isEditing) {
-            const updatedForms = [...savedForms];
-            updatedForms[currentFormIndex] = formData;
-            setSavedForms(updatedForms);
-        } else {
-            setSavedForms([...savedForms, formData]);
-        }
-        closeModal();
-    };
-
-    const deleteForm = (index) => {
-        const updatedForms = savedForms.filter((_, i) => i !== index);
-        setSavedForms(updatedForms);
-    };
-
-    const downloadForm = (form) => {
-        const element = document.createElement("a");
-        const file = new Blob([JSON.stringify(form, null, 2)], { type: 'application/json' });
-        element.href = URL.createObjectURL(file);
-        element.download = `SF2-${form.schoolID}-${form.schoolYear}-${form.month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}.json`;
-        document.body.appendChild(element);
-        element.click();
     };
 
     const renderDaysOfWeek = () => {
@@ -142,20 +93,50 @@ function SchoolFormTwo() {
         }
     };
 
+    const handleDownloadPDF = () => {
+        console.log('Download PDF function called');
+        const doc = new jsPDF();
+
+        // Title
+        doc.setFontSize(16);
+        doc.text('School Form 2 (SF2) Daily Attendance Report of Learners', 14, 20);
+
+        // Form data
+        doc.setFontSize(12);
+        doc.text(`School ID: ${formData.schoolID}`, 14, 30);
+        doc.text(`School Year: ${formData.schoolYear}`, 14, 36);
+        doc.text(`Name of School: ${formData.schoolName}`, 14, 42);
+        doc.text(`Grade Level: ${formData.gradeLevel}`, 14, 48);
+        doc.text(`Section: ${formData.section}`, 14, 54);
+        doc.text(`Report for the Month of: ${formData.month.toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}`, 14, 60);
+
+        // Table
+        const headers = [['LEARNER\'S NAME (Last Name, First Name, Middle Name)', 'M', 'T', 'W', 'TH', 'F', 'ABSENT', 'TARDY', 'REMARKS']];
+        const data = [
+            [formData.nameOfLearner, '', '', '', '', '', formData.totalDaysAbsent, formData.totalDaysTardy, formData.remarks],
+            // Add more rows here as needed
+        ];
+
+        doc.autoTable({
+            startY: 70,
+            head: headers,
+            body: data,
+        });
+
+        // Footer
+        doc.text('MALE | Total Per Day', 14, doc.lastAutoTable.finalY + 10);
+        doc.text('FEMALE | Total Per Day', 14, doc.lastAutoTable.finalY + 16);
+        doc.text('Combined TOTAL PER DAY', 14, doc.lastAutoTable.finalY + 22);
+
+        // Save the PDF
+        doc.save('SF2_Daily_Attendance_Report.pdf');
+    };
+
     return (
         <Box sx={{ padding: 2 }}>
             <Typography variant="h5" gutterBottom>
                 School Form 2 (SF2) Daily Attendance Report of Learners
             </Typography>
-            <Button
-                variant="contained"
-                color="primary"
-                onClick={() => openModal()}
-                sx={{ marginBottom: 2 }}
-            >
-                Create SF2
-            </Button>
-
             <Modal
                 isOpen={modalIsOpen}
                 onRequestClose={closeModal}
@@ -239,94 +220,12 @@ function SchoolFormTwo() {
                                 </Table>
                             </TableContainer>
                         </Box>
-                        <Grid container spacing={2}>
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    label="Name of Learner"
-                                    variant="outlined"
-                                    fullWidth
-                                    value={formData.nameOfLearner}
-                                    onChange={(e) => handleInputChange('nameOfLearner', e.target.value)}
-                                />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    label="Total Days Absent"
-                                    variant="outlined"
-                                    fullWidth
-                                    type="number"
-                                    value={formData.totalDaysAbsent}
-                                    onChange={(e) => handleInputChange('totalDaysAbsent', e.target.value)}
-                                />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    label="Total Days Tardy"
-                                    variant="outlined"
-                                    fullWidth
-                                    type="number"
-                                    value={formData.totalDaysTardy}
-                                    onChange={(e) => handleInputChange('totalDaysTardy', e.target.value)}
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField
-                                    label="Remarks"
-                                    variant="outlined"
-                                    fullWidth
-                                    multiline
-                                    rows={4}
-                                    value={formData.remarks}
-                                    onChange={(e) => handleInputChange('remarks', e.target.value)}
-                                />
-                            </Grid>
-                        </Grid>
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                            <Button onClick={closeModal} sx={{ mr: 2 }}>Cancel</Button>
-                            <Button variant="contained" color="primary" onClick={saveData}>Save</Button>
-                        </Box>
+                        <Button variant="contained" color="primary" sx={{ marginLeft: 10 }}onClick={handleDownloadPDF}>
+                            Download PDF
+                        </Button>
                     </Box>
                 </Box>
             </Modal>
-
-            <Box sx={{ mt: 2 }}>
-                <TableContainer component={Paper}>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>Actions</TableCell>
-                                <TableCell>School Year</TableCell>
-                                <TableCell>Month</TableCell>
-                                <TableCell>Grade Level</TableCell>
-                                <TableCell>Section</TableCell>
-                                <TableCell>Name of Learner</TableCell>
-                                <TableCell>Total Days Absent</TableCell>
-                                <TableCell>Total Days Tardy</TableCell>
-                                <TableCell>Remarks</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {savedForms.map((form, index) => (
-                                <TableRow key={index}>
-                                    <TableCell>
-                                        <IconButton onClick={() => openModal(index)}><FaEdit /></IconButton>
-                                        <IconButton onClick={() => deleteForm(index)}><MdDelete /></IconButton>
-                                        <IconButton onClick={() => downloadForm(form)}><FaPrint /></IconButton>
-                                    </TableCell>
-                                    <TableCell>{form.schoolYear}</TableCell>
-                                    <TableCell>{form.month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</TableCell>
-                                    <TableCell>{form.gradeLevel}</TableCell>
-                                    <TableCell>{form.section}</TableCell>
-                                    <TableCell>{form.nameOfLearner}</TableCell>
-                                    <TableCell>{form.totalDaysAbsent}</TableCell>
-                                    <TableCell>{form.totalDaysTardy}</TableCell>
-                                    <TableCell>{form.remarks}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            </Box>
         </Box>
     );
 }
