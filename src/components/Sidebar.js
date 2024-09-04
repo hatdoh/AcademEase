@@ -5,8 +5,6 @@ import Swal from 'sweetalert2';
 import { MdDashboard } from "react-icons/md";
 import { SiGoogleclassroom } from "react-icons/si";
 import { BsPersonSquare } from "react-icons/bs";
-import { FaRegCalendarMinus } from "react-icons/fa";
-import { PiExam } from "react-icons/pi";
 import { FaClipboardQuestion } from "react-icons/fa6";
 import { GrUserAdmin } from "react-icons/gr";
 import { IoPersonAddSharp } from "react-icons/io5";
