@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { getAdminDetails, getSuperAdmin, isSuperAdminLoggedIn, logout } from '../utils/Authentication';
+import { isSuperAdminLoggedIn, logout } from '../utils/Authentication';
 import Swal from 'sweetalert2';
 import { MdDashboard } from "react-icons/md";
 import { SiGoogleclassroom } from "react-icons/si";
@@ -10,7 +10,7 @@ import { FaClipboardQuestion } from "react-icons/fa6";
 import { GrUserAdmin } from "react-icons/gr";
 import { IoPersonAddSharp } from "react-icons/io5";
 import { FiLogOut } from "react-icons/fi";
-import { Drawer, List, ListItem, ListItemIcon, ListItemText, Typography, IconButton, useMediaQuery, AppBar, Toolbar } from '@mui/material';
+import { Drawer, List, ListItem, ListItemIcon, ListItemText, Typography, IconButton, useMediaQuery, AppBar, Toolbar, Box } from '@mui/material';
 import { Menu as MenuIcon } from '@mui/icons-material';
 import { styled } from '@mui/system';
 import logo from "../res/img/logo1.png";
@@ -29,6 +29,9 @@ const SidebarDrawer = styled(Drawer)(({ theme }) => ({
     boxSizing: 'border-box',
     backgroundColor: '#091e5d',
     color: '#FFFFFF',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
   },
 }));
 
@@ -77,48 +80,18 @@ function Sidebar() {
     { title: "Attendance Summary", icon: <BsPersonSquare size={16} />, link: "/attendance-summary" },
     { title: "Item Analysis", icon: <PiExam size={16} />, link: "/item-analysis" },
     { title: "Create Test Questions", icon: <FaClipboardQuestion size={16} />, link: "/create-questions" },
+    { title: "Admin", icon: <GrUserAdmin size={16} />, link: "/admin-details" },
   ];
 
   const superAdminMenus = [
-    ...defaultMenus,
+    { title: "Teachers", icon: <BsPersonSquare size={16} />, link: "/teachers" },
     { title: "Add Account", icon: <IoPersonAddSharp size={16} />, link: "/add-account" },
-    { title: "Logout", icon: <FiLogOut size={16} />, link: "#", onClick: handleLogout }
   ];
 
   const [menus, setMenus] = useState(defaultMenus);
 
   useEffect(() => {
-    const fetchAdminDetails = async () => {
-      try {
-        const adminDetails = await getAdminDetails();
-        console.log('Admin Details:', adminDetails);
-      } catch (error) {
-        console.error('Failed to fetch admin details:', error.message);
-      }
-    };
-
-    const fetchSuperAdmin = async () => {
-      try {
-        const superAdmin = await getSuperAdmin();
-        console.log('Super Admin:', superAdmin);
-      } catch (error) {
-        console.error('Failed to fetch super admin:', error.message);
-      }
-    };
-
-    fetchAdminDetails();
-    fetchSuperAdmin();
-  }, []);
-
-  useEffect(() => {
-    if (isSuperAdminLoggedIn()) {
-      setMenus(superAdminMenus);
-    } else {
-      setMenus([
-        ...defaultMenus,
-        { title: "Admin", icon: <GrUserAdmin size={16} />, link: "/admin-details" },
-      ]);
-    }
+    setMenus(isSuperAdminLoggedIn() ? superAdminMenus : defaultMenus);
   }, []);
 
   useEffect(() => {
@@ -139,36 +112,53 @@ function Sidebar() {
   };
 
   const drawerContent = (
-    <div>
-      <LogoContainer>
-        <IconButton component={Link} to={"/"}>
-          <img src={logo} alt="Logo" style={{ width: 40, height: 40 }} />
-        </IconButton>
-        <LogoText variant="h6" noWrap>
-          AcademEase
-        </LogoText>
-      </LogoContainer>
-      <List>
-        {menus.map((menu, index) => (
+    <Box display="flex" flexDirection="column" height="100%">
+      <div>
+        <LogoContainer>
+          <IconButton component={Link} to={"/"}>
+            <img src={logo} alt="Logo" style={{ width: 40, height: 40 }} />
+          </IconButton>
+          <LogoText variant="h6" noWrap>
+            AcademEase
+          </LogoText>
+        </LogoContainer>
+        <List>
+          {menus.map((menu, index) => (
+            <ListItem
+              button
+              key={index}
+              component={Link}
+              to={menu.link}
+              selected={selectedMenu === menu.title}
+              onClick={() => {
+                handleMenuClick(menu.title);
+              }}
+            >
+              <ListItemIcon style={{ color: '#FFFFFF' }}>
+                {menu.icon}
+              </ListItemIcon>
+              <ListItemText primary={menu.title} />
+            </ListItem>
+          ))}
+        </List>
+      </div>
+      {isSuperAdminLoggedIn() && (
+        <List>
           <ListItem
             button
-            key={index}
             component={Link}
-            to={menu.link}
-            selected={selectedMenu === menu.title}
-            onClick={() => {
-              handleMenuClick(menu.title);
-              menu.onClick && menu.onClick();
-            }}
+            to="#"
+            onClick={handleLogout}
+            sx={{ mt: isMobile ? 53 : 42 }}
           >
             <ListItemIcon style={{ color: '#FFFFFF' }}>
-              {menu.icon}
+              <FiLogOut size={16} />
             </ListItemIcon>
-            <ListItemText primary={menu.title} />
+            <ListItemText primary="Logout" />
           </ListItem>
-        ))}
-      </List>
-    </div>
+        </List>
+      )}
+    </Box>
   );
 
   return (

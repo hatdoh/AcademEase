@@ -22,6 +22,8 @@ import ViewAttendanceSummary from './components/ViewAttendanceSummary';
 import FaceRecognition from './pages/FaceRecognition';
 import './index.css'; 
 import ViewGrades from './components/ViewGrades';
+import Teachers from './super-admin/Teachers';
+import TeacherDetails from './super-admin/TeacherDetails';
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -68,6 +70,8 @@ function App() {
           <Route path="/account" element={<PrivateRoute authenticated={authenticated} element={<Admin />} />} />
           <Route path="/admin-details" element={<PrivateRoute authenticated={authenticated} element={<AdminDetails />} />} />
           <Route path="/add-account" element={<PrivateRoute authenticated={authenticated} element={<AddAccount />} />} />
+          <Route path="/teachers" element={<PrivateRoute authenticated={authenticated} element={<Teachers />} />} />
+          <Route path="/teacher-details/:id" element={<PrivateRoute authenticated={authenticated} element={<TeacherDetails />} />} />
           <Route path="/face-recognition" element={<PrivateRoute authenticated={authenticated} element={<FaceRecognition />} />} />
         </Routes>
       </div>
