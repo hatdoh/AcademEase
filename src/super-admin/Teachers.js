@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../config/firebase';
-import { Link } from 'react-router-dom';
-import { collection, getDocs } from 'firebase/firestore';
-import { Box, Grid, Typography, TextField, CircularProgress, Paper, Avatar, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, useMediaQuery, useTheme } from '@mui/material';
+import { Link, useNavigate } from 'react-router-dom';
+import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
+import { Box, Grid, Typography, TextField, CircularProgress, Paper, Avatar, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, useMediaQuery, useTheme, IconButton } from '@mui/material';
+import { FaEdit, FaTrash } from 'react-icons/fa';
+import Swal from 'sweetalert2';
 
 function Teachers() {
     const [teachers, setTeachers] = useState([]);
@@ -11,6 +13,7 @@ function Teachers() {
 
     const theme = useTheme();
     const isMobile = useMediaQuery('(max-width:600px)');
+    const navigate = useNavigate(); // React Router's useNavigate hook
 
     useEffect(() => {
         const fetchTeachers = async () => {
@@ -30,6 +33,33 @@ function Teachers() {
 
         fetchTeachers();
     }, []);
+
+    const handleDelete = async (teacherId) => {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    await deleteDoc(doc(db, 'teachers-info', teacherId));
+                    setTeachers(teachers.filter(teacher => teacher.id !== teacherId));
+                    Swal.fire('Deleted!', 'Teacher account has been deleted.', 'success');
+                } catch (error) {
+                    console.error('Error deleting teacher:', error);
+                    Swal.fire('Error!', 'There was an error deleting the account.', 'error');
+                }
+            }
+        });
+    };
+
+    const handleEdit = (teacher) => {
+        navigate(`/teacher-details/${teacher.id}`); // Navigating to teacher details page
+    };
 
     const filteredTeachers = teachers.filter(teacher => {
         const fullName = `${teacher.firstName || ''} ${teacher.middleName || ''} ${teacher.lastName || ''}`.trim();
@@ -81,6 +111,9 @@ function Teachers() {
                                 {index + 1}. {`${teacher.firstName} ${teacher.middleName} ${teacher.lastName}`.trim()}
                             </Typography>
                             <Typography variant="body1"><strong>Email:</strong> {teacher.email}</Typography>
+                            <Link to={`/teacher-details/${teacher.id}`} style={{ textDecoration: 'none', color: theme.palette.primary.main }}>
+                                View Details
+                            </Link>
                         </Box>
                     ))}
                 </Box>
@@ -90,8 +123,9 @@ function Teachers() {
                         <TableHead>
                             <TableRow>
                                 <TableCell align="center" style={{ fontWeight: 'bold', fontSize: '1rem' }}>No</TableCell>
-                                <TableCell align='center' style={{ fontWeight: 'bold', fontSize: '1rem' }}>Name</TableCell>
+                                <TableCell align="center" style={{ fontWeight: 'bold', fontSize: '1rem' }}>Name</TableCell>
                                 <TableCell align="center" style={{ fontWeight: 'bold', fontSize: '1rem' }}>Email</TableCell>
+                                <TableCell align="center" style={{ fontWeight: 'bold', fontSize: '1rem' }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -110,6 +144,26 @@ function Teachers() {
                                         </Link>
                                     </TableCell>
                                     <TableCell align="center" style={{ fontSize: '1rem' }}>{teacher.email}</TableCell>
+                                    <TableCell align="center">
+                                        <IconButton onClick={() => handleEdit(teacher)} sx={{
+                                            mx: 1,
+                                            color: '#1e88e5', // blue
+                                            '&:hover': {
+                                                color: '#1565c0', // Darker blue on hover
+                                            },
+                                        }}>
+                                            <FaEdit fontSize="medium" />
+                                        </IconButton>
+                                        <IconButton onClick={() => handleDelete(teacher.id)} sx={{
+                                            mx: 1,
+                                            color: '#db1a1a', // red
+                                            '&:hover': {
+                                                color: '#ff0000', // Red on hover
+                                            },
+                                        }}>
+                                            <FaTrash fontSize="medium" />
+                                        </IconButton>
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
