@@ -4,7 +4,7 @@ import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where } 
 import { db } from '../config/firebase';
 import Swal from 'sweetalert2';
 import { FaEdit, FaTrash } from 'react-icons/fa';
-import { Button, TextField, MenuItem, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Typography, Box, Container, Grid, useTheme, useMediaQuery, Card, CardContent } from '@mui/material';
+import { Button, TextField, MenuItem, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Typography, Box, Container, Grid, useTheme, useMediaQuery, Card, CardContent, InputLabel, FormControl } from '@mui/material';
 import { getCurrentUser, isSuperAdminLoggedIn } from '../utils/Authentication';
 
 function AddSection() {
@@ -13,6 +13,7 @@ function AddSection() {
     const [startTime, setStartTime] = useState('');
     const [endTime, setEndTime] = useState('');
     const [day, setDay] = useState('Monday');
+    const [grade, setGrade] = useState('');
     const [acadYear, setAcadYear] = useState('');
     const [sections, setSections] = useState([]);
     const [editingSectionId, setEditingSectionId] = useState(null);
@@ -87,6 +88,15 @@ function AddSection() {
             return;
         }
 
+        if (grade === '') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Ooops...',
+                text: 'Please select a grade!',
+            });
+            return;
+        }
+
         if (section.trim() === '') {
             Swal.fire({
                 icon: 'error',
@@ -115,6 +125,7 @@ function AddSection() {
                     endTime,
                     day,
                     acadYear,
+                    grade,
                     teacherUID: currentUser.uid, // Add teacher's UID
                 });
 
@@ -166,6 +177,7 @@ function AddSection() {
                     endTime,
                     day,
                     acadYear,
+                    grade,
                     teacherUID: currentUser.uid, // Add teacher's UID
                 });
 
@@ -279,6 +291,32 @@ function AddSection() {
                                     }
                                 }}
                             />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={4}>
+                            <FormControl fullWidth
+                                sx={{
+                                    backgroundColor: 'white',
+                                    borderRadius: 2
+                                }}>
+                                <InputLabel>Grade</InputLabel>
+                                <Select
+                                    name="grade"
+                                    value={grade}
+                                    onChange={(e) => setGrade(e.target.value)}
+                                    fullWidth
+                                    sx={{
+                                        '& .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: '#818181',
+                                        },
+                                    }}
+                                >
+                                    <MenuItem value=""><em>Select Grade</em></MenuItem>
+                                    <MenuItem value="7">7</MenuItem>
+                                    <MenuItem value="8">8</MenuItem>
+                                    <MenuItem value="9">9</MenuItem>
+                                    <MenuItem value="10">10</MenuItem>
+                                </Select>
+                            </FormControl>
                         </Grid>
                         <Grid item xs={12} sm={6} md={4}>
                             <TextField
@@ -408,7 +446,8 @@ function AddSection() {
                         {sections.map((section) => (
                             <Card key={section.id} sx={{ marginBottom: 2 }}>
                                 <CardContent>
-                                    <Typography variant="h6">{section.section}</Typography>
+                                    <Typography variant="h6"><strong>Grade {section.grade}</strong> {section.section}</Typography>
+                                    <Typography variant="body2">{section.subject}</Typography>
                                     <Typography variant="body2">
                                         {convertTo12HourFormat(section.startTime)} - {convertTo12HourFormat(section.endTime)}
                                     </Typography>
@@ -435,11 +474,12 @@ function AddSection() {
                             <Table>
                                 <TableHead>
                                     <TableRow>
+                                        <TableCell align='center' sx={{ fontWeight: 'bold' }}>Grade</TableCell>
                                         <TableCell align='center' sx={{ fontWeight: 'bold' }}>Section</TableCell>
                                         <TableCell align='center' sx={{ fontWeight: 'bold' }}>Subject</TableCell>
+                                        <TableCell align='center' sx={{ fontWeight: 'bold' }}>Day</TableCell>
                                         <TableCell align='center' sx={{ fontWeight: 'bold' }}>Start Time</TableCell>
                                         <TableCell align='center' sx={{ fontWeight: 'bold' }}>End Time</TableCell>
-                                        <TableCell align='center' sx={{ fontWeight: 'bold' }}>Day</TableCell>
                                         <TableCell align='center' sx={{ fontWeight: 'bold' }}>Academic Year</TableCell>
                                         {isSuperAdmin && <TableCell align='center' sx={{ fontWeight: 'bold' }}>Teacher</TableCell>}
                                         <TableCell align='center' sx={{ fontWeight: 'bold' }}>Actions</TableCell>
@@ -448,17 +488,18 @@ function AddSection() {
                                 <TableBody>
                                     {sections.map(section => (
                                         <TableRow key={section.id}>
+                                            <TableCell align='center'>{section.grade}</TableCell>
                                             <TableCell align='center'>{section.section}</TableCell>
                                             <TableCell align='center'>{section.subject}</TableCell>
+                                            <TableCell align='center'>{section.day}</TableCell>
                                             <TableCell align='center'>{convertTo12HourFormat(section.startTime)}</TableCell>
                                             <TableCell align='center'>{convertTo12HourFormat(section.endTime)}</TableCell>
-                                            <TableCell align='center'>{section.day}</TableCell>
                                             <TableCell align='center'>{section.acadYear}</TableCell>
                                             {isSuperAdmin && (
                                                 <TableCell align='center'>{teachers[section.teacherUID] || 'Unknown'}</TableCell>
                                             )}
                                             <TableCell align='center'>
-                                                <IconButton onClick={() => handleEdit(section)}  sx={{
+                                                <IconButton onClick={() => handleEdit(section)} sx={{
                                                     mx: 1,
                                                     color: '#1e88e5', // (blue)
                                                     '&:hover': {
@@ -468,13 +509,13 @@ function AddSection() {
                                                     <FaEdit fontSize='medium' />
                                                 </IconButton>
                                                 <IconButton onClick={() => handleDelete(section.id)} sx={{
-                                                mx: 1,
-                                                color: '#db1a1a', // red
-                                                '&:hover': {
-                                                    color: '#ff0000', // Red color on hover
-                                                },
-                                            }}>
-                                                    <FaTrash fontSize='medium'/>
+                                                    mx: 1,
+                                                    color: '#db1a1a', // red
+                                                    '&:hover': {
+                                                        color: '#ff0000', // Red color on hover
+                                                    },
+                                                }}>
+                                                    <FaTrash fontSize='medium' />
                                                 </IconButton>
                                             </TableCell>
                                         </TableRow>
