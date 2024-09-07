@@ -362,51 +362,54 @@ function CreateQuestions(props) {
     const pageWidth = doc.internal.pageSize.width;
 
     // Header text
-    doc.text('Answer Sheets', marginLeft + 53, marginTop);
-    doc.text('Name: ', marginLeft, marginTop + 10);
-    doc.text('Student ID Number: ', marginLeft, marginTop + 20);
-    doc.text('Set: ', marginLeft, marginTop + 30);
+    doc.text('Answer Sheets', marginLeft + 70, marginTop);
+    doc.text('Name:________________________________ ', marginLeft, marginTop + 10);
+    doc.text('Grade/Section:________________ ', marginLeft, marginTop + 20);
+    doc.text('Date:________________', marginLeft, marginTop + 30);
+    doc.text('LRN: ', marginLeft, marginTop + 40);
 
-    // Score label and box
-    const scoreX = marginLeft;
-    const scoreY = marginTop + 40;
-    doc.text('Score', scoreX, scoreY);
-    doc.rect(scoreX + 25, scoreY - 5, 40, 12);
+    // Add 12 squares next to "LRN" in one line
+    const squareSize = 8; // Size of each square
+    const squareSpacing = 0; // Space between squares
+    const startX = marginLeft + 15; // Position next to "LRN"
+    const startY = marginTop + 36; // Align with LRN text
 
-    // Calculate column and box dimensions
+    for (let i = 0; i < 12; i++) {
+        const squareX = startX + (squareSize + squareSpacing) * i; // Calculate position for each square
+        doc.rect(squareX, startY, squareSize, squareSize); // Draw square
+    }
+
+    // Calculate dimensions for two columns
     const columnMargin = 20;
-    const numColumns = 3;
-    const colWidth = (pageWidth - marginLeft - marginRight - (numColumns - 1) * columnMargin) / numColumns;
-    const colHeight = 104; // Adjust height for two rows
-    const colY = scoreY + 15;
+    const colWidth = (pageWidth - marginLeft - marginRight - columnMargin) / 2;
+    const colHeight = 225; // Adjust height
+    const colY = startY + 15;
 
     // Define padding values
-    const boxPaddingTop = 2; // Padding from top
-    const boxPaddingBottom = 2; // Padding from bottom
-    const boxPaddingLeft = 5; // Increased padding from left
-    const boxPaddingRight = 10; // Padding from right
+    const boxPaddingTop = -0.5;
+    const boxPaddingBottom = 2;
+    const boxPaddingLeft = 5;
+    const boxPaddingRight = 40;
 
-    // Define the positions for each row (top and bottom)
-    const rowPositions = [colY, colY + colHeight + 10];
+    // Define row positions
+    const rowPositions = [colY];
 
-    // Draw the column boxes for the first row and the first two columns of the second row
-    for (let row = 0; row < 2; row++) {
-      for (let col = 0; col < numColumns; col++) {
-        if (row === 1 && col === 2) continue; // Skip the third column in the second row
+    // Draw the two column boxes
+    for (let col = 0; col < 2; col++) {
         const rectX = marginLeft + col * (colWidth + columnMargin);
+        let dynamicHeight = col === 0 ? colHeight : (numQuestions === 50 ? 152 : 80); // Dynamic height for the second column
         doc.rect(
-          rectX + boxPaddingLeft,
-          rowPositions[row] + boxPaddingTop,
-          colWidth + 10 - boxPaddingLeft - boxPaddingRight,
-          colHeight - boxPaddingTop - boxPaddingBottom
+            rectX + boxPaddingLeft,
+            rowPositions[0] + boxPaddingTop,
+            colWidth + 10 - boxPaddingLeft - boxPaddingRight,
+            dynamicHeight - boxPaddingTop - boxPaddingBottom
         );
-      }
     }
 
     // Define spacing for contents
-    const rowSpacing = 2;
-    const choiceSpacing = (colWidth - boxPaddingLeft - boxPaddingRight) / (numChoices - 1); // Adjust based on padding
-    const choiceCircleRadius = 4;
+    const rowSpacing = 0.5;
+    const choiceSpacing = (colWidth - boxPaddingLeft - boxPaddingRight) / (numChoices - 1);
+    const choiceCircleRadius = 3.4;
     const textSize = 12;
     const questionPaddingTop = 1;
 
@@ -416,40 +419,39 @@ function CreateQuestions(props) {
 
     // Positioning for questions and answer choices
     for (let i = 1; i <= numQuestions; i++) {
-      let colIndex = Math.floor((i - 1) / 10) % 3; // Determine column based on question number
-      let rowIndex = Math.floor((i - 1) / 30); // Determine row (first or second row)
+        let colIndex = i <= 30 ? 0 : 1; // First 30 questions in the first column, the rest in the second column
 
-      // Skip placing questions in the second row, third column
-      if (rowIndex === 1 && colIndex === 2) continue;
+        // Calculate positions
+        xOffset = marginLeft + colIndex * (colWidth + columnMargin) + 1;
+        const questionIndex = colIndex === 0 ? i : i - 30;
+        yOffset = rowPositions[0] + rowSpacing + (questionIndex - 1) * (choiceCircleRadius * 2 + rowSpacing) + questionPaddingTop;
 
-      // Calculate the positions
-      xOffset = marginLeft + colIndex * (colWidth + columnMargin) + 1; // Adjust xOffset for question margin
-      yOffset = rowPositions[rowIndex] + rowSpacing + ((i - 1) % 10) * (choiceCircleRadius * 2 + rowSpacing) + questionPaddingTop;
+        // Print question number outside the box
+        doc.text(`${i}.`, xOffset - 10, yOffset + 5);
 
-      // Print question number outside the box
-      doc.text(`${i}.`, xOffset - 10, yOffset + 5);
+        // Print answer choices inside circles
+        const choices = ['A', 'B', 'C', 'D'].slice(0, numChoices);
 
-      // Print answer choices inside circles
-      const choices = ['A', 'B', 'C', 'D'].slice(0, numChoices);
+        choices.forEach((choice, index) => {
+            const choiceX = xOffset + boxPaddingLeft + (index * choiceSpacing) + choiceCircleRadius;
 
-      choices.forEach((choice, index) => {
-        const choiceX = xOffset + boxPaddingLeft + (index * choiceSpacing) + choiceCircleRadius;
+            // Draw empty circle
+            doc.circle(choiceX, yOffset + choiceCircleRadius, choiceCircleRadius);
 
-        // Draw empty circle
-        doc.circle(choiceX, yOffset + choiceCircleRadius, choiceCircleRadius);
-
-        // Center the letter inside the circle
-        doc.setFontSize(textSize);
-        const textWidth = doc.getTextWidth(choice);
-        const textX = choiceX - (textWidth / 2);
-        const textY = yOffset + choiceCircleRadius + 2; // Adjust Y to fit better inside the circle
-        doc.text(choice, textX, textY);
-      });
+            // Center the letter inside the circle
+            doc.setFontSize(textSize);
+            const textWidth = doc.getTextWidth(choice);
+            const textX = choiceX - (textWidth / 2);
+            const textY = yOffset + choiceCircleRadius + 2; // Adjust Y to fit better inside the circle
+            doc.text(choice, textX, textY);
+        });
     }
 
     // Save the PDF
     doc.save('answer_sheet.pdf');
-  };
+};
+
+
 
 
   const handlePrint = async (test) => {

@@ -10,9 +10,9 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { MdArrowUpward, MdArrowDownward } from 'react-icons/md';
-
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import * as XLSX from 'xlsx';
 
 function SchoolForm() {
     const [selectedSection, setSelectedSection] = useState('All');
@@ -241,102 +241,33 @@ function SchoolForm() {
         }
     };
 
-    function generatePDF(data) {
-        const doc = new jsPDF('landscape'); // Set to landscape to fit more content
-    
-        // Title and form header
-        doc.setFontSize(14);
-        doc.text("School Form 2 (SF2) Daily Attendance Report of Learners", 90, 10);
-        doc.setFontSize(10);
-        doc.text("(This replaced Form 1, Form 2 & STS Form 4 - Absenteeism and Dropout Profile)", 90, 18);
-    
-        // Define the positions and sizes for rectangles
-        const x = 35;
-        const y = 30;
-        const rectWidth = 35;
-        const rectHeight = 10;
-        const spacing = 15;
-    
-        // Draw rectangles and add text
-        doc.setFontSize(10);
-        
-        // Rectangle for School ID
-        doc.rect(x + 20, y, rectWidth, rectHeight);
-        doc.text("School ID: " + data.schoolId, x + 2, y + 7);
-    
-        // Rectangle for School Year
-        doc.rect(x + 35 + rectWidth + spacing, y, rectWidth, rectHeight);
-        doc.text("School Year: " + data.schoolYear, x + 10 + rectWidth + spacing + 2, y + 7);
-    
-        // Rectangle for Report Month
-        doc.rect(x + 130 + rectWidth + spacing, y, rectWidth + 10, rectHeight);
-        doc.text("Report for the Month of: " + data.reportMonth, x + 90 + rectWidth + spacing + 2, y + 7);
-    
-        // Rectangle for School Name
-        doc.rect(x, y + rectHeight + spacing, rectWidth + 80, rectHeight);
-        doc.text("Name of School: " + data.schoolName, x + 2, y + rectHeight + spacing + 7);
-    
-        // Rectangle for Grade Level
-        doc.rect(x + rectWidth + spacing, y + rectHeight + spacing, rectWidth, rectHeight);
-        doc.text("Grade Level: " + data.gradeLevel, x + rectWidth + spacing + 2, y + rectHeight + spacing + 7);
-    
-        // Rectangle for Section
-        doc.rect(x + 2 * (rectWidth + spacing), y + rectHeight + spacing, rectWidth + 30, rectHeight);
-        doc.text("Section: " + data.section, x + 2 * (rectWidth + spacing) + 2, y + rectHeight + spacing + 7);
-    
-        // Table headers
-        const headers = [
-            ["LEARNER'S NAME (Last Name, First Name, Middle Name)", "2", "3", "4", "5", "6", "9", "10", "11", "12", "13", "16", "17", "18", "19", "20", "23", "24", "25", "26", "27", "30", "Total for the Month", "REMARK/S"]
+    const exportToExcel = () => {
+        const worksheetData = [
+            ["School ID", formData.schoolID],
+            ["School Year", formData.schoolYear],
+            ["Name of School", formData.schoolName],
+            ["Grade Level", formData.gradeLevel],
+            ["Report for the Month of", formData.month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })],
+            [],
+            ["Name of Learner", "Total Days Absent", "Total Days Tardy", "Remarks"]
         ];
-    
-        // Example row, replace with your actual data
-        const rows = [
-            ["Doe, John A.", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "12", "Present"],
-            // More rows can be added here
-        ];
-    
-        // Add table to PDF
-        doc.autoTable({
-            startY: y + 3 * (rectHeight + spacing),
-            head: headers,
-            body: rows,
-            theme: 'grid',
-            styles: {
-                fontSize: 8,
-                cellPadding: 2,
-            },
-            headStyles: {
-                fillColor: [200, 200, 200],
-            },
+
+        sortedAndFilteredStudents.forEach(student => {
+            worksheetData.push([
+                getFullName(student),
+                formData.totalDaysAbsent,
+                formData.totalDaysTardy,
+                formData.remarks
+            ]);
         });
-    
-        // Adding Male and Female totals
-        let finalY = doc.lastAutoTable.finalY + 10;
-        doc.setFontSize(10);
-        doc.text("MALE | TOTAL Per Day", 15, finalY);
-        doc.text("FEMALE | TOTAL Per Day", 15, finalY + 5);
-        doc.text("Combined TOTAL PER DAY", 15, finalY + 10);
-    
-        // Add the guidelines section
-        finalY += 20;
-        doc.setFontSize(8);
-        doc.text("GUIDELINES:", 15, finalY);
-        doc.text("1. The attendance shall be accomplished daily. Refer to the codes for checking learners' attendance.", 15, finalY + 10);
-        doc.text("2. Dates shall be written in the preceding columns beside Learner's Name.", 15, finalY + 20);
-        doc.text("3. To compute the following:", 15, finalY + 30);
-        doc.text("a. Percentage of Enrolment = Registered Learner as of End of the Month x 100", 15, finalY + 40);
-        doc.text("b. Average Daily Attendance = Total Daily Attendance / Number of School Days in reporting month", 15, finalY + 50);
-        doc.text("c. Percentage of Attendance for the month = Average daily attendance x 100", 15, finalY + 60);
-        doc.text("d. Every End of the month, the class adviser will submit this form to the office of the principal for recording of summary table into the School Form 4. Once signed by the principal, this form should be returned to the adviser.", 15, finalY + 70);
-        doc.text("e. The adviser will extend necessary intervention including but not limited to home visitation to learner/s that committed 5 consecutive days of absences or those with potentials of dropping out", 15, finalY + 80);
-        doc.text("f. Attendance performance of learner is expected to reflect in Form 137 and Form 138 every grading period.", 15, finalY + 90);
-    
-        // Add page 2 details, etc., if needed
-    
-        // Save the PDF
-        doc.save("SF2_Daily_Attendance_Report.pdf");
-    }    
-    
+
+        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "School Form 2");
+
+        XLSX.writeFile(workbook, `SchoolForm2_${formData.month.getFullYear()}_${formData.month.getMonth() + 1}.xlsx`);
+    };
+
     return (
         <div className=" ml-2 p-4 pdf-content">
             <h2 className="text-2xl font-semibold mb-4">School Form 2 (SF2) Daily Attendance Report of Learners</h2>
@@ -521,9 +452,9 @@ function SchoolForm() {
                     </table>
                 </div>
                 <div className="flex justify-end space-x-4 mt-4">
-                    <button onClick={generatePDF} className='w-24 h-10 text-center shadow-sm py-2 rounded-md bg-blue-500 font-medium text-2xl text-white hover:bg-blue-700 focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-blue-500 sm:ml-4 sm:text-sm'>
-                        Save as PDF
-                    </button>
+                        <button type="button" onClick={saveData}>
+                            {isEditing ? 'Update Entry' : 'Add Entry'}
+                        </button>
                     <Link
                         to="/attendance-summary"
                         className="inline-block rounded border-2 border-neutral-400 bg-neutral-100 px-4 py-2 mr-3 text-xs font-medium leading-normal text-neutral-600 shadow-light-3 transition duration-150 ease-in-out hover:bg-neutral-200 hover:shadow-light-2 focus:bg-neutral-200 focus:shadow-light-2 focus:outline-none focus:ring-0 active:bg-neutral-200 active:shadow-light-2 motion-reduce:transition-none dark:shadow-black/30 dark:hover:shadow-dark-strong dark:focus:shadow-dark-strong dark:active:shadow-dark-strong"
