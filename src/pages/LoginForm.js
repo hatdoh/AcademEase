@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; 
-import { login } from '../utils/Authentication';
-import MorenoLogo from '../res/img/moreno-logo.jpg';
-import { auth } from '../config/firebase';
+import { Link, useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../config/firebase';
+import { isSuperAdminLoggedIn, getCurrentUser } from '../utils/Authentication';
+import MorenoLogo from '../res/img/moreno-logo.jpg';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
@@ -16,7 +16,14 @@ function LoginForm() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate('/');
+      
+      // Check if the logged-in user is a super admin
+      const currentUser = getCurrentUser();
+      if (currentUser && isSuperAdminLoggedIn()) {
+        navigate("/teachers");
+      } else {
+        navigate("/");
+      }
     } catch (error) {
       setError('Invalid email or password');
     }
