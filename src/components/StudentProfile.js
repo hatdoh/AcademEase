@@ -146,7 +146,7 @@ function StudentProfile() {
                 Swal.fire('Success', 'Student details updated successfully', 'success');
 
                 setIsEditingImage(false);
-                navigate('/sections');
+                navigate('/');
             } catch (error) {
                 console.error('Error updating student:', error.message);
                 Swal.fire('Error', error.message, 'error');
@@ -155,7 +155,7 @@ function StudentProfile() {
     };
 
     const handleCancel = () => {
-        navigate('/sections');
+        navigate('/');
     };
 
     return (
