@@ -41,55 +41,59 @@ function AttendanceSummary() {
 
     useEffect(() => {
         const fetchAttendanceData = async () => {
-            const currentUser = getCurrentUser();  // Get the current user
+            const currentUser = getCurrentUser();
             const attendanceCollection = collection(db, 'attendance');
             let attendanceQuery = attendanceCollection;
-
+    
             const querySnapshot = await getDocs(attendanceQuery);
             const attendanceData = querySnapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data(),
             }));
-
+    
+            console.log('Fetched attendance data:', attendanceData); // Debugging
+    
             const studentData = attendanceData.reduce((acc, record) => {
                 const { id, FName, LName, MName, section, remarks, image, grade } = record;
                 const key = `${ LName } ${ FName } ${ MName }-${ section }`;
-
+    
                 if (!acc[key]) {
                     acc[key] = {
                         id,
                         name: `${ LName }, ${ FName } ${ MName }`,
-                    grade,
+                        grade,
                         section,
                         image: image || 'defaultImageURL',
-                            totalLate: 0,
-                                totalAbsent: 0,
-                                    totalPresent: 0,
+                        totalLate: 0,
+                        totalAbsent: 0,
+                        totalPresent: 0,
                     };
-            }
-
+                }
+    
                 if (remarks === 'late') acc[key].totalLate += 1;
-            if (remarks === 'absent') acc[key].totalAbsent += 1;
-            if (remarks === 'present') acc[key].totalPresent += 1;
-
-            return acc;
-        }, { });
-
-    setStudents(Object.values(studentData));
-};
-
-const fetchSectionData = async () => {
-    const currentUser = getCurrentUser();  // Get the current user
-    const sectionsQuery = query(collection(db, 'sections'), where('teacherUID', '==', currentUser.uid));  // Filter by current teacher
-    const querySnapshot = await getDocs(sectionsQuery);
-    const sections = querySnapshot.docs.map(doc => doc.data().section);
-    setSectionList(['All', ...sections]);
-    setModalSections(sections);  // Populate modal dropdown
-};
-
-fetchAttendanceData();
-fetchSectionData();
+                if (remarks === 'absent') acc[key].totalAbsent += 1;
+                if (remarks === 'present') acc[key].totalPresent += 1;
+    
+                return acc;
+            }, { });
+    
+            setStudents(Object.values(studentData));
+            setAttendance(attendanceData); // Ensure attendance data is set
+        };
+    
+        const fetchSectionData = async () => {
+            const currentUser = getCurrentUser();
+            const sectionsQuery = query(collection(db, 'sections'), where('teacherUID', '==', currentUser.uid));
+            const querySnapshot = await getDocs(sectionsQuery);
+            const sections = querySnapshot.docs.map(doc => doc.data().section);
+            setSectionList(['All', ...sections]);
+            setModalSections(sections);
+        };
+    
+        fetchAttendanceData();
+        fetchSectionData();
     }, []);
+    
 
 const handleSectionChange = (event) => {
     setSelectedSection(event.target.value);
@@ -104,14 +108,32 @@ const closeSF2Modal = () => setOpenModal(false);  // Close modal
 
 const handleGenerateSF2 = async () => {
     try {
-        // Load the existing Excel file (static template with all formatting)
-        const existingFile = '/SF2_Template.xlsx'; // Path to the existing file in public directory
-        const response = await fetch(existingFile);
+        console.log('Attendance data at generate time:', attendance); // Debugging: Check attendance data
+        console.log('Student data:', students); // Debugging: Check student data
+
+        if (attendance.length === 0) {
+            console.error('Attendance data is empty.');
+            alert('No attendance data available.');
+            return; // Exit early if no data is available
+        }
+
+        // Ensure the template file is in the 'public/resources/' folder
+        const templateFile = `${process.env.PUBLIC_URL}/resources/SF2_Template.xlsx`;
+        console.log('Fetching template from:', templateFile); // Debugging: Check file path
+
+        const response = await fetch(templateFile);
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch the template file. Check the file path or network issue.');
+        }
+
         const arrayBuffer = await response.arrayBuffer();
         const workbook = new ExcelJS.Workbook();
-        
+
         // Load the workbook from the buffer
         await workbook.xlsx.load(arrayBuffer);
+        console.log('Template file loaded successfully.'); // Debugging: Ensure file loaded
+
         const worksheet = workbook.getWorksheet(1); // Assuming first sheet
 
         const startRowForNames = 14;
@@ -119,38 +141,57 @@ const handleGenerateSF2 = async () => {
         const startRowForDates = 11;
         const startRowForAttendance = 14;
 
+        // Filter students by the selected section
+        const filteredStudents = students.filter(student => student.section === selectedSection);
+
+        if (filteredStudents.length === 0) {
+            console.warn('No students found for the selected section.');
+            alert('No students found for the selected section.');
+            // Optionally, skip the Excel data generation or keep the file blank for this section
+            return; // Exit early if no students are in the selected section
+        }
+
         // Write learner names in column B starting from row 14
-        students.forEach((student, index) => {
+        filteredStudents.forEach((student, index) => {
+            console.log(`Writing student ${index}:`, student); // Debugging: Check student data
             const row = worksheet.getRow(startRowForNames + index);
-            row.getCell(2).value = `${student.LName}, ${student.FName} ${student.MName}`;
+            row.getCell(2).value = `${student.name || 'N/A'}`; // Ensure names are assigned
         });
 
-        // Determine the month and year from the first attendance record for consistency
-        const monthYear = dayjs(attendance[0].date).startOf('month');
+        // Get month and year from the selected month and year
+        const monthIndex = ['January', 'February', 'March', 'April', 'May', 'June',
+                            'July', 'August', 'September', 'October', 'November', 'December']
+                            .indexOf(selectedMonth);
+        const year = parseInt(schoolYear.split('-')[1], 10); // Assuming schoolYear is in the format 'YYYY-YYYY'
+
+        if (monthIndex === -1 || isNaN(year)) {
+            throw new Error('Invalid month or year selected.');
+        }
+
+        const monthYear = dayjs().year(year).month(monthIndex).startOf('month');
+        console.log('Month and year for dates:', monthYear.format('MMMM YYYY')); // Debugging
 
         // Fill in the dates for the month, skipping weekends
         let columnIndex = 0;
         for (let day = 1; day <= monthYear.daysInMonth(); day++) {
             const date = monthYear.date(day);
-            if (date.day() !== 0 && date.day() !== 6) { // Exclude Saturday (6) and Sunday (0)
+            if (date.day() !== 0 && date.day() !== 6) { // Exclude weekends
                 const row = worksheet.getRow(startRowForDates);
-                row.getCell(startColumnForDates + columnIndex).value = date.format('D'); // Write the day (e.g., 1, 2, etc.)
+                row.getCell(startColumnForDates + columnIndex).value = date.format('D'); // Write the day
                 columnIndex++;
             }
         }
 
         // Initialize variables for total absent/tardy per student
-        students.forEach((student, rowIndex) => {
+        filteredStudents.forEach((student, rowIndex) => {
             let totalAbsent = 0;
             let totalTardy = 0;
 
-            // Reset column index for each student
             columnIndex = 0;
 
-            // Loop through the days of the month
             for (let day = 1; day <= monthYear.daysInMonth(); day++) {
                 const date = monthYear.date(day);
-                if (date.day() !== 0 && date.day() !== 6) { // Exclude weekends
+                if (date.day() !== 0 && date.day() !== 6) {
                     const attendanceRecord = attendance.find(
                         (entry) => entry.studentId === student.id && dayjs(entry.date).date() === day
                     );
@@ -186,16 +227,23 @@ const handleGenerateSF2 = async () => {
 
         // Write the workbook to a buffer
         const buffer = await workbook.xlsx.writeBuffer();
+        console.log('Excel workbook generated successfully.'); // Debugging: Ensure file generated
 
         // Create a Blob from the buffer and download the file
         const blob = new Blob([buffer], { type: 'application/octet-stream' });
         saveAs(blob, 'SF2_Template_updated.xlsx');
+        console.log('File download triggered successfully.'); // Debugging: Check download
+
     } catch (error) {
-        console.error('Error updating Excel file:', error);
+        console.error('Error generating or downloading the Excel file:', error);
+        alert('Error: ' + error.message); // Show user-friendly error
     }
 
-    closeSF2Modal();  // Close modal after generating
+    closeSF2Modal(); // Close modal after generating
 };
+
+
+
 
 const filteredStudents = students.filter(student =>
     (selectedSection === 'All' || student.section === selectedSection) 
