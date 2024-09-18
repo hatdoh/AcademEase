@@ -136,6 +136,16 @@ const handleGenerateSF2 = async () => {
 
         const worksheet = workbook.getWorksheet(1); // Assuming first sheet
 
+        // School information and inputs from the modal
+        worksheet.getCell('C6').value = '500030';
+        worksheet.getCell('C8').value = 'Moreno Integrated School';
+        worksheet.mergeCells('C8:O8');
+        
+        worksheet.getCell('K6').value = schoolYear;
+        worksheet.getCell('X6').value = selectedMonth; 
+        worksheet.getCell('X8').value = selectedGrade; 
+        worksheet.getCell('AC8').value = selectedSection; 
+
         const startRowForNames = 14;
         const startColumnForDates = 4; // Column D
         const startRowForDates = 11;
@@ -147,13 +157,11 @@ const handleGenerateSF2 = async () => {
         if (filteredStudents.length === 0) {
             console.warn('No students found for the selected section.');
             alert('No students found for the selected section.');
-            // Optionally, skip the Excel data generation or keep the file blank for this section
-            return; // Exit early if no students are in the selected section
+            return;
         }
 
         // Write learner names in column B starting from row 14
         filteredStudents.forEach((student, index) => {
-            console.log(`Writing student ${index}:`, student); // Debugging: Check student data
             const row = worksheet.getRow(startRowForNames + index);
             row.getCell(2).value = `${student.name || 'N/A'}`; // Ensure names are assigned
         });
@@ -231,7 +239,7 @@ const handleGenerateSF2 = async () => {
 
         // Create a Blob from the buffer and download the file
         const blob = new Blob([buffer], { type: 'application/octet-stream' });
-        saveAs(blob, 'SF2_Template_updated.xlsx');
+        saveAs(blob, `SF2_${schoolYear}_${selectedGrade}_${selectedSection}_${selectedMonth}.xlsx`);
         console.log('File download triggered successfully.'); // Debugging: Check download
 
     } catch (error) {
@@ -241,6 +249,7 @@ const handleGenerateSF2 = async () => {
 
     closeSF2Modal(); // Close modal after generating
 };
+
 
 
 
