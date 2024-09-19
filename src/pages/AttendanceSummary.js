@@ -210,16 +210,16 @@ const handleGenerateSF2 = async () => {
                     if (attendanceRecord) {
                         const remark = attendanceRecord.remarks.toLowerCase();
                         if (remark === 'absent') {
-                            cell.value = 'Absent';
+                            cell.value = 'X';
                             totalAbsent++;
-                        } else if (remark === 'late' || remark === 'tardy') {
-                            cell.value = 'Tardy';
+                        } else if (remark === 'late') {
+                            cell.value = 'late';
                             totalTardy++;
                         } else {
-                            cell.value = 'Present';
+                            cell.value = '';
                         }
                     } else {
-                        cell.value = ''; // No record found
+                        cell.value = '✔'; // No record found
                     }
                     columnIndex++;
                 }
