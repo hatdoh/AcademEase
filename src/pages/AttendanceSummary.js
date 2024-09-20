@@ -119,28 +119,20 @@ const handleGenerateSF2 = async () => {
 
         // Ensure the template file is in the 'public/resources/' folder
         const templateFile = `${process.env.PUBLIC_URL}/resources/SF2_Template.xlsx`;
-        console.log('Fetching template from:', templateFile); // Debugging: Check file path
-
         const response = await fetch(templateFile);
-
         if (!response.ok) {
             throw new Error('Failed to fetch the template file. Check the file path or network issue.');
         }
 
         const arrayBuffer = await response.arrayBuffer();
         const workbook = new ExcelJS.Workbook();
-
-        // Load the workbook from the buffer
         await workbook.xlsx.load(arrayBuffer);
-        console.log('Template file loaded successfully.'); // Debugging: Ensure file loaded
-
         const worksheet = workbook.getWorksheet(1); // Assuming first sheet
 
         // School information and inputs from the modal
         worksheet.getCell('C6').value = '500030';
         worksheet.getCell('C8').value = 'Moreno Integrated School';
         worksheet.mergeCells('C8:O8');
-        
         worksheet.getCell('K6').value = schoolYear;
         worksheet.getCell('X6').value = selectedMonth; 
         worksheet.getCell('X8').value = selectedGrade; 
@@ -150,21 +142,6 @@ const handleGenerateSF2 = async () => {
         const startColumnForDates = 4; // Column D
         const startRowForDates = 11;
         const startRowForAttendance = 14;
-
-        // Filter students by the selected section
-        const filteredStudents = students.filter(student => student.section === selectedSection);
-
-        if (filteredStudents.length === 0) {
-            console.warn('No students found for the selected section.');
-            alert('No students found for the selected section.');
-            return;
-        }
-
-        // Write learner names in column B starting from row 14
-        filteredStudents.forEach((student, index) => {
-            const row = worksheet.getRow(startRowForNames + index);
-            row.getCell(2).value = `${student.name || 'N/A'}`; // Ensure names are assigned
-        });
 
         // Get month and year from the selected month and year
         const monthIndex = ['January', 'February', 'March', 'April', 'May', 'June',
@@ -177,30 +154,76 @@ const handleGenerateSF2 = async () => {
         }
 
         const monthYear = dayjs().year(year).month(monthIndex).startOf('month');
-        console.log('Month and year for dates:', monthYear.format('MMMM YYYY')); // Debugging
 
-        // Fill in the dates for the month, skipping weekends
+        // Filter attendance records based on the selected month and section
+        const filteredAttendance = attendance.filter((entry) => {
+            const attendanceDate = dayjs(entry.date);
+            return attendanceDate.year() === year && attendanceDate.month() === monthIndex && entry.section === selectedSection;
+        });
+
+        // Filter students who are in the selected section and have attendance records for the selected month
+        const studentsWithAttendance = students.filter(student => 
+            student.section === selectedSection && filteredAttendance.some(entry => entry.studentId === student.id)
+        );
+
+        if (studentsWithAttendance.length === 0) {
+            console.warn('No students found with attendance for the selected month and section.');
+            alert('No students found with attendance for the selected month and section.');
+            return;
+        }
+
+        // Write learner names in column B starting from row 14
+        studentsWithAttendance.forEach((student, index) => {
+            const row = worksheet.getRow(startRowForNames + index);
+            row.getCell(2).value = `${student.name || 'N/A'}`; // Ensure names are assigned
+        });
+
+        // Fill in the dates for the month and place them in the correct columns according to the weekday
         let columnIndex = 0;
+        const firstDayOfMonth = monthYear.startOf('month').day(); // Get the weekday of the 1st day of the month
+
+        // Adjust column index based on the day of the week (1 for Monday, 5 for Friday, etc.)
+        // Monday is column 1, so adjust accordingly
+        if (firstDayOfMonth !== 0 && firstDayOfMonth !== 6) { // Exclude weekends
+            columnIndex = firstDayOfMonth - 1; // Adjust to match column index (Monday should be index 0)
+        }
+
+        // Write the dates in one row and weekdays in the row below
+        const rowForDates = worksheet.getRow(startRowForDates); // Row for dates
+        const rowForWeekdays = worksheet.getRow(startRowForDates + 1); // Row for weekdays
+
         for (let day = 1; day <= monthYear.daysInMonth(); day++) {
             const date = monthYear.date(day);
             if (date.day() !== 0 && date.day() !== 6) { // Exclude weekends
-                const row = worksheet.getRow(startRowForDates);
-                row.getCell(startColumnForDates + columnIndex).value = date.format('D'); // Write the day
+                // Write the day of the month in the first row
+                rowForDates.getCell(startColumnForDates + columnIndex).value = date.format('D');
+                
+                // Write the corresponding weekday abbreviation in the second row
+                const weekdayAbbreviations = ['M', 'T', 'W', 'TH', 'F'];
+                const weekday = weekdayAbbreviations[date.day() - 1]; // Adjust index for weekdays
+                
+                rowForWeekdays.getCell(startColumnForDates + columnIndex).value = weekday;
+
                 columnIndex++;
             }
         }
 
+
+
+
         // Initialize variables for total absent/tardy per student
-        filteredStudents.forEach((student, rowIndex) => {
+        studentsWithAttendance.forEach((student, rowIndex) => {
             let totalAbsent = 0;
             let totalTardy = 0;
 
-            columnIndex = 0;
+            // Start by placing attendance in the correct column, based on the first weekday of the month
+            let columnIndex = firstDayOfMonth !== 0 && firstDayOfMonth !== 6 ? firstDayOfMonth - 1 : 0; // Adjust the starting column index based on the weekday
 
             for (let day = 1; day <= monthYear.daysInMonth(); day++) {
                 const date = monthYear.date(day);
-                if (date.day() !== 0 && date.day() !== 6) {
-                    const attendanceRecord = attendance.find(
+                if (date.day() !== 0 && date.day() !== 6) { // Exclude weekends
+
+                    const attendanceRecord = filteredAttendance.find(
                         (entry) => entry.studentId === student.id && dayjs(entry.date).date() === day
                     );
 
@@ -221,6 +244,7 @@ const handleGenerateSF2 = async () => {
                     } else {
                         cell.value = '✔'; // No record found
                     }
+
                     columnIndex++;
                 }
             }
@@ -233,14 +257,11 @@ const handleGenerateSF2 = async () => {
             totalTardyCell.value = totalTardy;
         });
 
+
         // Write the workbook to a buffer
         const buffer = await workbook.xlsx.writeBuffer();
-        console.log('Excel workbook generated successfully.'); // Debugging: Ensure file generated
-
-        // Create a Blob from the buffer and download the file
         const blob = new Blob([buffer], { type: 'application/octet-stream' });
         saveAs(blob, `SF2_${schoolYear}_${selectedGrade}_${selectedSection}_${selectedMonth}.xlsx`);
-        console.log('File download triggered successfully.'); // Debugging: Check download
 
     } catch (error) {
         console.error('Error generating or downloading the Excel file:', error);
@@ -249,6 +270,9 @@ const handleGenerateSF2 = async () => {
 
     closeSF2Modal(); // Close modal after generating
 };
+
+
+
 
 
 
