@@ -143,15 +143,21 @@ const handleGenerateSF2 = async () => {
         const startRowForDates = 11;
         const startRowForAttendance = 14;
 
-        // Get month and year from the selected month and year
+        // Extract the start and end year from the school year
+        const [startYear, endYear] = schoolYear.split('-').map(year => parseInt(year.trim()));
+
+        // Get the index of the selected month
         const monthIndex = ['January', 'February', 'March', 'April', 'May', 'June',
                             'July', 'August', 'September', 'October', 'November', 'December']
                             .indexOf(selectedMonth);
-        const year = parseInt(schoolYear.split('-')[1], 10); // Assuming schoolYear is in the format 'YYYY-YYYY'
 
-        if (monthIndex === -1 || isNaN(year)) {
-            throw new Error('Invalid month or year selected.');
+        if (monthIndex === -1) {
+            throw new Error('Invalid month selected.');
         }
+
+        // Adjust the year based on the selected month
+        // If the month is from January to May, it belongs to the next calendar year
+        const year = monthIndex <= 4 ? endYear : startYear;
 
         const monthYear = dayjs().year(year).month(monthIndex).startOf('month');
 
@@ -183,7 +189,6 @@ const handleGenerateSF2 = async () => {
         const firstDayOfMonth = monthYear.startOf('month').day(); // Get the weekday of the 1st day of the month
 
         // Adjust column index based on the day of the week (1 for Monday, 5 for Friday, etc.)
-        // Monday is column 1, so adjust accordingly
         if (firstDayOfMonth !== 0 && firstDayOfMonth !== 6) { // Exclude weekends
             columnIndex = firstDayOfMonth - 1; // Adjust to match column index (Monday should be index 0)
         }
@@ -208,16 +213,12 @@ const handleGenerateSF2 = async () => {
             }
         }
 
-
-
-
-        // Initialize variables for total absent/tardy per student
+        // Process attendance records and calculate total absences and tardiness
         studentsWithAttendance.forEach((student, rowIndex) => {
             let totalAbsent = 0;
             let totalTardy = 0;
 
-            // Start by placing attendance in the correct column, based on the first weekday of the month
-            let columnIndex = firstDayOfMonth !== 0 && firstDayOfMonth !== 6 ? firstDayOfMonth - 1 : 0; // Adjust the starting column index based on the weekday
+            let columnIndex = firstDayOfMonth !== 0 && firstDayOfMonth !== 6 ? firstDayOfMonth - 1 : 0;
 
             for (let day = 1; day <= monthYear.daysInMonth(); day++) {
                 const date = monthYear.date(day);
@@ -257,7 +258,6 @@ const handleGenerateSF2 = async () => {
             totalTardyCell.value = totalTardy;
         });
 
-
         // Write the workbook to a buffer
         const buffer = await workbook.xlsx.writeBuffer();
         const blob = new Blob([buffer], { type: 'application/octet-stream' });
@@ -270,6 +270,7 @@ const handleGenerateSF2 = async () => {
 
     closeSF2Modal(); // Close modal after generating
 };
+
 
 
 
