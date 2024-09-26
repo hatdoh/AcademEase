@@ -17,6 +17,9 @@ import DepedLogo from '../res/img/deped-logo.jpg'
 import { Box, Button, Grid, IconButton, MenuItem, Paper, Select, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography, Checkbox, InputLabel, useTheme, useMediaQuery, Card, CardContent } from '@mui/material';
 import { getCurrentUser, isSuperAdminLoggedIn } from '../utils/Authentication';
 
+import { collection, getDoc, addDoc, getFirestore, updateDoc, doc, onSnapshot,  deleteDoc } from "firebase/firestore"; // Import Firestore functions
+import { db } from '../config/firebase'
+
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.js`;
 
 function CreateQuestions(props) {
@@ -41,32 +44,35 @@ function CreateQuestions(props) {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
 
-  const db = getDatabase(app);
+  // const db = getDatabase(app);
 
   // Load saved tests from Firebase on component mount
   useEffect(() => {
-    const testsRef = ref(db, 'data/tests');
+    const testsRef = collection(db, 'tests'); // Get a reference to the 'tests' collection
     const currentUser = getCurrentUser(); // Assume this gets the current logged-in user
     const isSuperAdmin = isSuperAdminLoggedIn(); // Assume this checks if the user is a super admin
 
-    onValue(testsRef, (snapshot) => {
+    // Listen for changes in the 'tests' collection
+    const unsubscribe = onSnapshot(testsRef, (snapshot) => {
       const tests = [];
-      snapshot.forEach((childSnapshot) => {
-        const test = { id: childSnapshot.key, ...childSnapshot.val() };
+      snapshot.forEach((doc) => {
+        const test = { id: doc.id, ...doc.data() }; // Get document ID and data
 
+        // Filter tests based on user type
         if (isSuperAdmin || test.createdBy === currentUser.uid) {
           tests.push(test);
         }
       });
       setSavedTests(tests.reverse()); // Reverse to show latest first
     });
-  }, []);
 
+    // Cleanup subscription on component unmount
+    return () => unsubscribe();
+  }, []);
 
   const openModal = () => {
     setIsModalOpen(true);
   };
-
 
   const closeModal = () => {
     setIsModalOpen(false);
@@ -117,189 +123,177 @@ function CreateQuestions(props) {
     return array;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    // Validate the input fields
     if (!testName || testName.trim() === '') {
-      Swal.fire({
-        icon: 'error',
-        title: 'Oops...',
-        text: 'Please enter the test name!',
-      });
-      return;
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Please enter the test name!',
+        });
+        return;
     }
 
     if (!selectedDate) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Oops...',
-        text: 'Please select a date!',
-      });
-      return;
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Please select a date!',
+        });
+        return;
     }
 
     if (!selectedOption) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Oops...',
-        text: 'Please select the number of items!',
-      });
-      return;
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Please select the number of items!',
+        });
+        return;
     }
 
     if (!directions || directions.trim() === '') {
-      Swal.fire({
-        icon: 'error',
-        title: 'Oops...',
-        text: 'Please enter the exam directions!',
-      });
-      return;
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Please enter the exam directions!',
+        });
+        return;
     }
 
     if (itemsInput.some(item => !item.question || item.question.trim() === '')) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Oops...',
-        text: 'Please enter all questions!',
-      });
-      return;
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Please enter all questions!',
+        });
+        return;
     }
 
     if (itemsInput.some(item => item.choices.some(choice => !choice.text || choice.text.trim() === ''))) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Oops...',
-        text: 'Please fill out all choices!',
-      });
-      return;
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Please fill out all choices!',
+        });
+        return;
     }
 
     if (itemsInput.some(item => !item.correctAnswer || item.correctAnswer.trim() === '')) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Oops...',
-        text: 'Please select the correct answer for all questions!',
-      });
-      return;
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Please select the correct answer for all questions!',
+        });
+        return;
     }
 
-    // Use the current itemsInput with randomized questions and original choices
+    // Prepare the test data
     const randomizedQuestionsA = shuffleArray(itemsInput.map(item => ({
-      ...item,
-      choices: item.choices // Choices are not randomized
+        ...item,
+        choices: item.choices // Choices are not randomized
     })));
     const randomizedQuestionsB = shuffleArray(itemsInput.map(item => ({
-      ...item,
-      choices: item.choices // Choices are not randomized
+        ...item,
+        choices: item.choices // Choices are not randomized
     })));
 
     const newTest = {
-      name: testName,
-      date: selectedDate,
-      items: selectedOption,
-      directions: directions,
-      createdBy: getCurrentUser().uid, // Add this line to save the creator's UID
-      questions: {
-        A: randomizedQuestionsA.map((item) => ({
-          question: item.question,
-          choices: item.choices.map(choice => ({
-            id: choice.id,
-            text: choice.text,
-            checked: choice.checked
-          })),
-          correctAnswer: item.correctAnswer
-        })),
-        B: randomizedQuestionsB.map((item) => ({
-          question: item.question,
-          choices: item.choices.map(choice => ({
-            id: choice.id,
-            text: choice.text,
-            checked: choice.checked
-          })),
-          correctAnswer: item.correctAnswer
-        }))
-      }
+        name: testName,
+        date: selectedDate,
+        items: selectedOption,
+        directions: directions,
+        createdBy: getCurrentUser().uid, // Add the creator's UID
+        questions: {
+            A: randomizedQuestionsA.map((item) => ({
+                question: item.question,
+                choices: item.choices.map(choice => ({
+                    id: choice.id,
+                    text: choice.text,
+                    checked: choice.checked
+                })),
+                correctAnswer: item.correctAnswer
+            })),
+            B: randomizedQuestionsB.map((item) => ({
+                question: item.question,
+                choices: item.choices.map(choice => ({
+                    id: choice.id,
+                    text: choice.text,
+                    checked: choice.checked
+                })),
+                correctAnswer: item.correctAnswer
+            }))
+        }
     };
 
-
     const successMessage = () => {
-      Swal.fire({
-        icon: 'success',
-        title: 'Success!',
-        text: 'Test updated successfully!',
-      });
-      closeModal();
+        Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: 'Test updated successfully!',
+        });
+        closeModal();
     };
 
     const resetForm = () => {
-      setTestName('');
-      setSelectedDate(null);
-      setSelectedOption(null);
-      setDirections('');
-      setItemsInput([]);
+        setTestName('');
+        setSelectedDate(null);
+        setSelectedOption(null);
+        setDirections('');
+        setItemsInput([]);
     };
 
-    if (editIndex !== null) {
-      const editRef = ref(db, `data/tests/${savedTests[editIndex].id}`);
-      set(editRef, newTest)
-        .then(() => {
-          successMessage();
-          resetForm();
-        })
-        .catch((error) => {
-          Swal.fire({
+    try {
+        if (editIndex !== null) {
+            // Update existing test
+            const testDocRef = doc(db, 'tests', savedTests[editIndex].id);
+            await updateDoc(testDocRef, newTest);
+        } else {
+            // Add new test
+            await addDoc(collection(db, 'tests'), newTest);
+        }
+        successMessage();
+        resetForm();
+    } catch (error) {
+        Swal.fire({
             icon: 'error',
             title: 'Error!',
             text: `Error: ${error.message}`,
-          });
-        });
-    } else {
-      push(ref(db, 'data/tests'), newTest)
-        .then(() => {
-          successMessage();
-          resetForm();
-        })
-        .catch((error) => {
-          Swal.fire({
-            icon: 'error',
-            title: 'Error!',
-            text: `Error: ${error.message}`,
-          });
         });
     }
-  };
+};
 
-  const handleDelete = (index, testId) => {
-    Swal.fire({
-      title: 'Are you sure?',
-      text: 'You won\'t be able to revert this!',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        const testRef = ref(db, `data/tests/${testId}`);
+const handleDelete = async (index, testId) => {
+  const result = await Swal.fire({
+    title: 'Are you sure?',
+    text: 'You won\'t be able to revert this!',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, delete it!'
+  });
 
-        remove(testRef)
-          .then(() => {
-            const updatedTests = savedTests.filter((test, idx) => idx !== index);
-            setSavedTests(updatedTests);
-            Swal.fire({
-              icon: 'success',
-              title: 'Deleted!',
-              text: 'The test has been deleted successfully.',
-            });
-          })
-          .catch((error) => {
-            Swal.fire({
-              icon: 'error',
-              title: 'Error!',
-              text: `Error: ${error.message}`,
-            });
-          });
-      }
-    });
-  };
+  if (result.isConfirmed) {
+    try {
+      const testDocRef = doc(db, 'tests', testId); // Get a reference to the document
+      await deleteDoc(testDocRef); // Delete the document
+      const updatedTests = savedTests.filter((_, idx) => idx !== index);
+      setSavedTests(updatedTests);
+      Swal.fire({
+        icon: 'success',
+        title: 'Deleted!',
+        text: 'The test has been deleted successfully.',
+      });
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: `Error: ${error.message}`,
+      });
+    }
+  }
+};
 
   const handleEdit = (index) => {
     const test = savedTests[index];
@@ -330,20 +324,6 @@ function CreateQuestions(props) {
     openModal();
   };
 
-  const handleAddChoice = (questionIndex) => {
-    const newItemsInput = [...itemsInput];
-    newItemsInput[questionIndex].choices.push({ id: newItemsInput[questionIndex].choices.length, text: '' });
-    setItemsInput(newItemsInput);
-
-    // Update answer sheet when adding a choice
-    setAnswerSheet(prevAnswerSheet =>
-      prevAnswerSheet.map((answer, index) => ({
-        ...answer,
-        options: index === questionIndex ? [...answer.options, String.fromCharCode(65 + answer.options.length)] : answer.options
-      }))
-    );
-  };
-
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
@@ -351,154 +331,159 @@ function CreateQuestions(props) {
   const handleTestTypeFilterChange = (e) => {
     setSelectedTestType(e.target.value);
   };
-
-  const generateAnswerSheetPDF = async (numQuestions, numChoices) => {
-    const doc = new jsPDF({ format: 'a4' });
-
-    // Define margins and page width
-    const marginTop = 10;
-    const marginLeft = 20;
-    const marginRight = 15;
-    const pageWidth = doc.internal.pageSize.width;
-
-    // Header text
-    doc.text('Answer Sheets', marginLeft + 70, marginTop);
-    doc.text('Name:________________________________ ', marginLeft, marginTop + 10);
-    doc.text('Grade/Section:________________ ', marginLeft, marginTop + 20);
-    doc.text('Date:________________', marginLeft, marginTop + 30);
-    doc.text('LRN: ', marginLeft, marginTop + 40);
-
-    // Add 12 squares next to "LRN" in one line
-    const squareSize = 8; // Size of each square
-    const squareSpacing = 0; // Space between squares
-    const startX = marginLeft + 15; // Position next to "LRN"
-    const startY = marginTop + 36; // Align with LRN text
-
-    for (let i = 0; i < 12; i++) {
-        const squareX = startX + (squareSize + squareSpacing) * i; // Calculate position for each square
-        doc.rect(squareX, startY, squareSize, squareSize); // Draw square
-    }
-
-    // Calculate dimensions for two columns
-    const columnMargin = 20;
-    const colWidth = (pageWidth - marginLeft - marginRight - columnMargin) / 2;
-    const colHeight = 225; // Adjust height
-    const colY = startY + 15;
-
-    // Define padding values
-    const boxPaddingTop = -0.5;
-    const boxPaddingBottom = 2;
-    const boxPaddingLeft = 5;
-    const boxPaddingRight = 40;
-
-    // Define row positions
-    const rowPositions = [colY];
-
-    // Draw the two column boxes
-    for (let col = 0; col < 2; col++) {
-        const rectX = marginLeft + col * (colWidth + columnMargin);
-        let dynamicHeight = col === 0 ? colHeight : (numQuestions === 50 ? 152 : 80); // Dynamic height for the second column
-        doc.rect(
-            rectX + boxPaddingLeft,
-            rowPositions[0] + boxPaddingTop,
-            colWidth + 10 - boxPaddingLeft - boxPaddingRight,
-            dynamicHeight - boxPaddingTop - boxPaddingBottom
-        );
-    }
-
-    // Define spacing for contents
-    const rowSpacing = 0.5;
-    const choiceSpacing = (colWidth - boxPaddingLeft - boxPaddingRight) / (numChoices - 1);
-    const choiceCircleRadius = 3.4;
-    const textSize = 12;
-    const questionPaddingTop = 1;
-
-    let xOffset, yOffset;
-
-    doc.setFontSize(11);
-
-    // Positioning for questions and answer choices
-    for (let i = 1; i <= numQuestions; i++) {
-        let colIndex = i <= 30 ? 0 : 1; // First 30 questions in the first column, the rest in the second column
-
-        // Calculate positions
-        xOffset = marginLeft + colIndex * (colWidth + columnMargin) + 1;
-        const questionIndex = colIndex === 0 ? i : i - 30;
-        yOffset = rowPositions[0] + rowSpacing + (questionIndex - 1) * (choiceCircleRadius * 2 + rowSpacing) + questionPaddingTop;
-
-        // Print question number outside the box
-        doc.text(`${i}.`, xOffset - 10, yOffset + 5);
-
-        // Print answer choices inside circles
-        const choices = ['A', 'B', 'C', 'D'].slice(0, numChoices);
-
-        choices.forEach((choice, index) => {
-            const choiceX = xOffset + boxPaddingLeft + (index * choiceSpacing) + choiceCircleRadius;
-
-            // Draw empty circle
-            doc.circle(choiceX, yOffset + choiceCircleRadius, choiceCircleRadius);
-
-            // Center the letter inside the circle
-            doc.setFontSize(textSize);
-            const textWidth = doc.getTextWidth(choice);
-            const textX = choiceX - (textWidth / 2);
-            const textY = yOffset + choiceCircleRadius + 2; // Adjust Y to fit better inside the circle
-            doc.text(choice, textX, textY);
-        });
-    }
-
-    // Save the PDF
-    doc.save('answer_sheet.pdf');
-};
-
-
-
+  
+  const generateAnswerSheetPDF = async (testId) => {
+      // Fetch test data from Firestore
+      const testDocRef = doc(db, 'tests', testId);
+      let testData;
+  
+      try {
+          const testDoc = await getDoc(testDocRef);
+          if (testDoc.exists()) {
+              testData = testDoc.data();
+              console.log('Fetched test data:', testData);
+          } else {
+              console.error('No such document!');
+              return;
+          }
+      } catch (error) {
+          console.error('Error fetching test data:', error);
+          return;
+      }
+  
+      const numQuestions = testData.questions.length; // Update to match your data structure
+      const numChoices = testData.choices; // Assume choices are provided in the document
+  
+      // Initialize jsPDF instance after fetching data
+      const doc = new jsPDF({ format: 'a4' });
+  
+      // Define margins and page width
+      const marginTop = 10;
+      const marginLeft = 20;
+      const marginRight = 15;
+      const pageWidth = doc.internal.pageSize.width;
+  
+      // Header text
+      doc.setFontSize(12); // Set the font size
+      doc.text('Answer Sheets', marginLeft + 70, marginTop);
+      doc.text('Name:_________________________', marginLeft, marginTop + 5);
+      doc.text('Grade/Section:________________ ', marginLeft, marginTop + 10);
+      doc.text('Date:________________', marginLeft, marginTop + 15);
+      doc.text('LRN: ', marginLeft, marginTop + 23);
+  
+      // Add 12 squares next to "LRN" in one line
+      const squareSize = 8;
+      const startX = marginLeft + 15;
+      const startY = marginTop + 18;
+  
+      for (let i = 0; i < 12; i++) {
+          const squareX = startX + (squareSize * i);
+          doc.rect(squareX, startY, squareSize, squareSize);
+      }
+  
+      // Calculate dimensions for two columns
+      const columnMargin = 20;
+      const colWidth = (pageWidth - marginLeft - marginRight - columnMargin) / 2;
+  
+      // Box height for 10 questions (adjust this for row height)
+      const boxHeight = 81; // <-- ADJUST BOX HEIGHT HERE
+      const startRowY = startY + 10;
+  
+      // Function to draw a box with 10 questions
+      const drawQuestionBox = (row, col, questionStart) => {
+          const xOffset = marginLeft + col * (colWidth + columnMargin);
+          const yOffset = startRowY + row * (boxHeight + 3); // <-- ADJUST ROW SPACING HERE
+  
+          // Draw box for 10 questions
+          doc.rect(xOffset, yOffset, colWidth, boxHeight);
+  
+          // Draw questions and answer choices inside the box
+          for (let i = 0; i < 10; i++) {
+              const questionNumber = questionStart + i;
+              if (questionNumber > numQuestions) return;
+  
+              const questionY = yOffset + 7 + i * 8; // Position each question
+  
+              // Place question number outside the box (on the left)
+              doc.text(`${questionNumber}.`, xOffset - 10, questionY); // <-- QUESTION NUMBER OUTSIDE BOX
+  
+              const choiceXStart = xOffset + 16;
+              const choiceSpacing = (colWidth - 20) / numChoices;
+              for (let j = 0; j < numChoices; j++) {
+                  const choiceX = choiceXStart + j * choiceSpacing;
+                  doc.circle(choiceX, questionY - 2.5, 3.5);
+                  doc.text(['A', 'B', 'C', 'D'][j], choiceX - 1.5, questionY - 1);
+              }
+          }
+      };
+  
+      // Dynamically add rows based on the number of questions
+      const numBoxes = Math.ceil(numQuestions / 10); // Calculate how many boxes are needed
+      const numRows = Math.ceil(numBoxes / 2); // Two boxes per row
+  
+      for (let row = 0; row < numRows; row++) {
+          for (let col = 0; col < 2; col++) {
+              const boxNumber = row * 2 + col;
+              const questionStart = boxNumber * 10 + 1;
+              if (questionStart <= numQuestions) {
+                  drawQuestionBox(row, col, questionStart);
+              }
+          }
+      }
+  
+      // Save the PDF
+      doc.save('answer_sheet.pdf');
+  };
+  
 
   const handlePrint = async (test) => {
-    if (!test || !test.questions) {
-      console.error('Selected test or questions are undefined');
-      return;
+    console.log('Received test:', test);
+
+    if (!test || !test.questions || !Array.isArray(test.questions.A) || !Array.isArray(test.questions.B)) {
+        console.error('Selected test or questions are undefined or not an array');
+        return;
     }
 
     const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: 'Do you want to generate the PDF files for this test?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, generate!'
+        title: 'Are you sure?',
+        text: 'Do you want to generate the PDF files for this test?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, generate!'
     });
 
     if (result.isConfirmed) {
-      const questionsA = test.questions.A;
-      const questionsB = test.questions.B;
+        const questionsA = test.questions.A;
+        const questionsB = test.questions.B;
 
-      try {
-        await generatePDF(questionsA, 'A', test.directions);
-        await generatePDF(questionsB, 'B', test.directions);
-        await generateAnswerSheetPDF(test.questions.A.length, test.questions.A[0].choices.length);
+        try {
+            await generatePDF(questionsA, 'A', test.directions);
+            await generatePDF(questionsB, 'B', test.directions);
+            await generateAnswerSheetPDF(questionsA.length, questionsA[0].choices.length);
 
-        Swal.fire({
-          icon: 'success',
-          title: 'Success!',
-          text: 'PDFs have been generated successfully!',
-        });
-      } catch (error) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error!',
-          text: `Failed to generate PDFs: ${error.message}`,
-        });
-      }
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: 'PDFs have been generated successfully!',
+            });
+        } catch (error) {
+            console.error('Error generating PDFs:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: `Failed to generate PDFs: ${error.message}`,
+            });
+        }
     } else {
-      Swal.fire({
-        icon: 'info',
-        title: 'Cancelled',
-        text: 'PDF generation has been cancelled.',
-      });
+        Swal.fire({
+            icon: 'info',
+            title: 'Cancelled',
+            text: 'PDF generation has been cancelled.',
+        });
     }
-  };
+};
 
   const handleRandomize = () => {
     // Randomize only the questions, keeping the choices unchanged
@@ -659,7 +644,7 @@ function CreateQuestions(props) {
 
   const generatePDF = async (questions, testName, directions) => {
     const doc = new jsPDF({ format: 'a4' });
-
+  
     // Define margins based on A4 size
     const marginTop = 10; // margin from top
     const marginBottom = 20; // margin from bottom
@@ -667,26 +652,26 @@ function CreateQuestions(props) {
     const marginRight = 15; // margin from right
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
-
+  
     doc.setFontSize(11);
-
+  
     // Centered text helper function
     const centerText = (text, y) => {
       const textWidth = doc.getTextWidth(text);
       const x = (pageWidth - textWidth) / 2;
       doc.text(text, x, y);
     };
-
+  
     // Load logos
     const morenoLogoWidth = (pageWidth / 5) / 2;
     const morenoLogoHeight = 15;
     const depedLogoWidth = (pageWidth / 4) / 2;
     const depedLogoHeight = 15;
-
+  
     // Add logos
     doc.addImage(morenoLogo, 'JPEG', marginLeft + 25, marginTop, morenoLogoWidth, morenoLogoHeight);
     doc.addImage(DepedLogo, 'JPEG', pageWidth - depedLogoWidth - marginRight - 18, marginTop, depedLogoWidth, depedLogoHeight);
-
+  
     // Print Name and School ID and SCORE box at the beginning of the document
     const textStartY = marginTop + morenoLogoHeight + 5;
     centerText('Republic of the Philippines', marginTop);
@@ -694,95 +679,91 @@ function CreateQuestions(props) {
     centerText('REGION V - BICOL', marginTop + 10);
     centerText('SCHOOLS DIVISION OF CAMARINES NORTE', marginTop + 15);
     centerText('MORENO INTEGRATED SCHOOL', marginTop + 20);
-
+  
     const lineY = marginTop + 25;
     const lineText = '_________________________________________________________________________';
     const lineTextWidth = doc.getTextWidth(lineText);
     const adjustedLineMarginLeft = marginLeft; // Adjust the margin left as needed
-
+  
     doc.text(lineText, adjustedLineMarginLeft, lineY);
-
+  
     centerText('PRE-FINAL EXAMINATION', marginTop + 30);
     centerText('Technology and Livelihood Education Cookery', marginTop + 35);
-
+  
     // Add Directions section
     const directionsY = marginTop + 45;
     const directionsLabel = "Directions:";
     doc.text(directionsLabel, marginLeft, directionsY);
-
+  
     // Calculate the width of the "Directions:" label
     const directionsLabelWidth = doc.getTextWidth(directionsLabel);
     const directionsTextX = marginLeft + directionsLabelWidth + 2; // Add some padding
-
+  
     // Get the lines of directions text
     const directionsTextLines = doc.splitTextToSize(directions || '', pageWidth - directionsTextX - marginRight);
-
+  
     // Print the directions text next to the "Directions:" label
     directionsTextLines.forEach((line, index) => {
       doc.text(line, directionsTextX, directionsY + (index * 5)); // Adjust spacing between lines as needed
     });
-
+  
     // Add SCORE box
     const boxSize = 20;
     const boxX = adjustedLineMarginLeft + lineTextWidth + 5; // Adjust position to the right of the line
     const boxY = lineY - 10; // Adjust to align with the line
     doc.rect(boxX, boxY, boxSize, boxSize); // Draw a rectangle for the box
     doc.text('SCORE', boxX + boxSize / 2 - doc.getTextWidth('SCORE') / 2, boxY + boxSize / 2 + 8); // Add SCORE text
-
+  
     // Set initial yOffset for questions
     let yOffset = directionsY + directionsTextLines.length * 5; // Adjust as needed for spacing
-
+  
     // Width for questions should match directions text width
     const questionTextMaxWidth = pageWidth - directionsTextX - marginRight; // Same width as directions text
-
+  
     questions.forEach((item, index) => {
       // Add new page if necessary
       if (yOffset > pageHeight - marginBottom - 20) {
         doc.addPage();
         yOffset = marginTop; // Reset yOffset for new page
       }
-
+  
       // Set the font size for the question text
       doc.setFontSize(11);
-
+  
       // Print the question text
       const questionLines = doc.splitTextToSize(`${index + 1}. ${item.question}`, questionTextMaxWidth);
       questionLines.forEach((line, lineIndex) => {
         doc.text(line, marginLeft, yOffset + (lineIndex * 5));
       });
-
+  
       yOffset += questionLines.length * 5; // Update yOffset after printing question
-
+  
       // Set the starting positions for the answer choices
       const choiceStartX = marginLeft; // Start position for choices
       let choiceStartY = yOffset; // Start position for choices
-
+  
       item.choices.forEach((choice, choiceIndex) => {
         const choiceText = choice.text;
         const choiceLines = doc.splitTextToSize(`${String.fromCharCode(65 + choiceIndex)}. ${choiceText}`, questionTextMaxWidth);
-
+  
         // Print the choice text
         choiceLines.forEach((line, lineIndex) => {
           doc.text(line, choiceStartX, choiceStartY + (lineIndex * 5));
         });
-
+  
         choiceStartY += choiceLines.length * 5; // Update position for next choice
       });
-
+  
       // Update yOffset for the next question
       yOffset = choiceStartY + 1; // Ensure enough space for the next question
     });
-
+  
     // Save the PDF
     doc.save('Test.pdf');
   };
 
   const handleDirectionsChange = (e) => {
     setDirections(e.target.value);
-  };
-
-  const handleCloseSetModal = () => {
-    setSetModalVisible(false);
   };
 
   return (

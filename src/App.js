@@ -24,7 +24,6 @@ import './index.css';
 import ViewGrades from './components/ViewGrades';
 import Teachers from './super-admin/Teachers';
 import TeacherDetails from './super-admin/TeacherDetails';
-
 function App() {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
