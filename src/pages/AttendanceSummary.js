@@ -231,19 +231,20 @@ const handleGenerateSF2 = async () => {
                     const row = worksheet.getRow(startRowForAttendance + rowIndex);
                     const cell = row.getCell(startColumnForDates + columnIndex);
 
+                    // Set cell value to '✔' only if attendance is explicitly present, otherwise leave blank
                     if (attendanceRecord) {
                         const remark = attendanceRecord.remarks.toLowerCase();
                         if (remark === 'absent') {
-                            cell.value = 'X';
+                            cell.value = 'X'; // Absent
                             totalAbsent++;
                         } else if (remark === 'late') {
-                            cell.value = 'late';
+                            cell.value = 'late'; // Late
                             totalTardy++;
-                        } else {
-                            cell.value = '';
+                        } else if (remark === 'present') {
+                            cell.value = '✔'; // Present
                         }
                     } else {
-                        cell.value = '✔'; // No record found
+                        cell.value = ''; // Empty for dates with no records
                     }
 
                     columnIndex++;
@@ -270,14 +271,6 @@ const handleGenerateSF2 = async () => {
 
     closeSF2Modal(); // Close modal after generating
 };
-
-
-
-
-
-
-
-
 
 const filteredStudents = students.filter(student =>
     (selectedSection === 'All' || student.section === selectedSection) 
