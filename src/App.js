@@ -19,7 +19,6 @@ import StudentProfile from './components/StudentProfile';
 import AddSection from './components/AddSection';
 import SchoolForm from './components/SchoolForm';
 import ViewAttendanceSummary from './components/ViewAttendanceSummary';
-import FaceRecognition from './pages/FaceRecognition';
 import './index.css'; 
 import ViewGrades from './components/ViewGrades';
 import Teachers from './super-admin/Teachers';
@@ -71,7 +70,6 @@ function App() {
           <Route path="/add-account" element={<PrivateRoute authenticated={authenticated} element={<AddAccount />} />} />
           <Route path="/teachers" element={<PrivateRoute authenticated={authenticated} element={<Teachers />} />} />
           <Route path="/teacher-details/:id" element={<PrivateRoute authenticated={authenticated} element={<TeacherDetails />} />} />
-          <Route path="/face-recognition" element={<PrivateRoute authenticated={authenticated} element={<FaceRecognition />} />} />
         </Routes>
       </div>
     </div>

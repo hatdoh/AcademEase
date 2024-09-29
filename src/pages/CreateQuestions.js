@@ -17,7 +17,7 @@ import DepedLogo from '../res/img/deped-logo.jpg'
 import { Box, Button, Grid, IconButton, MenuItem, Paper, Select, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography, Checkbox, InputLabel, useTheme, useMediaQuery, Card, CardContent } from '@mui/material';
 import { getCurrentUser, isSuperAdminLoggedIn } from '../utils/Authentication';
 
-import { collection, getDoc, addDoc, getFirestore, updateDoc, doc, onSnapshot,  deleteDoc } from "firebase/firestore"; // Import Firestore functions
+import { collection, getDoc, addDoc, getFirestore, updateDoc, doc, onSnapshot, deleteDoc } from "firebase/firestore"; // Import Firestore functions
 import { db } from '../config/firebase'
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.js`;
@@ -126,165 +126,134 @@ function CreateQuestions(props) {
   const handleSave = async () => {
     // Validate the input fields
     if (!testName || testName.trim() === '') {
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: 'Please enter the test name!',
-        });
-        return;
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please enter the test name!',
+      });
+      return;
     }
 
     if (!selectedDate) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: 'Please select a date!',
-        });
-        return;
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please select a date!',
+      });
+      return;
     }
 
     if (!selectedOption) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: 'Please select the number of items!',
-        });
-        return;
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please select the number of items!',
+      });
+      return;
     }
 
     if (!directions || directions.trim() === '') {
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: 'Please enter the exam directions!',
-        });
-        return;
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please enter the exam directions!',
+      });
+      return;
     }
 
     if (itemsInput.some(item => !item.question || item.question.trim() === '')) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: 'Please enter all questions!',
-        });
-        return;
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please enter all questions!',
+      });
+      return;
     }
 
     if (itemsInput.some(item => item.choices.some(choice => !choice.text || choice.text.trim() === ''))) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: 'Please fill out all choices!',
-        });
-        return;
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please fill out all choices!',
+      });
+      return;
     }
 
     if (itemsInput.some(item => !item.correctAnswer || item.correctAnswer.trim() === '')) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: 'Please select the correct answer for all questions!',
-        });
-        return;
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please select the correct answer for all questions!',
+      });
+      return;
     }
 
     // Prepare the test data
     const randomizedQuestionsA = shuffleArray(itemsInput.map(item => ({
-        ...item,
-        choices: item.choices // Choices are not randomized
+      ...item,
+      choices: item.choices // Choices are not randomized
     })));
     const randomizedQuestionsB = shuffleArray(itemsInput.map(item => ({
-        ...item,
-        choices: item.choices // Choices are not randomized
+      ...item,
+      choices: item.choices // Choices are not randomized
     })));
 
     const newTest = {
-        name: testName,
-        date: selectedDate,
-        items: selectedOption,
-        directions: directions,
-        createdBy: getCurrentUser().uid, // Add the creator's UID
-        questions: {
-            A: randomizedQuestionsA.map((item) => ({
-                question: item.question,
-                choices: item.choices.map(choice => ({
-                    id: choice.id,
-                    text: choice.text,
-                    checked: choice.checked
-                })),
-                correctAnswer: item.correctAnswer
-            })),
-            B: randomizedQuestionsB.map((item) => ({
-                question: item.question,
-                choices: item.choices.map(choice => ({
-                    id: choice.id,
-                    text: choice.text,
-                    checked: choice.checked
-                })),
-                correctAnswer: item.correctAnswer
-            }))
-        }
+      name: testName,
+      date: selectedDate,
+      items: selectedOption,
+      directions: directions,
+      createdBy: getCurrentUser().uid, // Add the creator's UID
+      questions: {
+        A: randomizedQuestionsA.map((item) => ({
+          question: item.question,
+          choices: item.choices.map(choice => ({
+            id: choice.id,
+            text: choice.text,
+            checked: choice.checked
+          })),
+          correctAnswer: item.correctAnswer
+        })),
+        B: randomizedQuestionsB.map((item) => ({
+          question: item.question,
+          choices: item.choices.map(choice => ({
+            id: choice.id,
+            text: choice.text,
+            checked: choice.checked
+          })),
+          correctAnswer: item.correctAnswer
+        }))
+      }
     };
 
     const successMessage = () => {
-        Swal.fire({
-            icon: 'success',
-            title: 'Success!',
-            text: 'Test updated successfully!',
-        });
-        closeModal();
+      Swal.fire({
+        icon: 'success',
+        title: 'Success!',
+        text: 'Test updated successfully!',
+      });
+      closeModal();
     };
 
     const resetForm = () => {
-        setTestName('');
-        setSelectedDate(null);
-        setSelectedOption(null);
-        setDirections('');
-        setItemsInput([]);
+      setTestName('');
+      setSelectedDate(null);
+      setSelectedOption(null);
+      setDirections('');
+      setItemsInput([]);
     };
 
     try {
-        if (editIndex !== null) {
-            // Update existing test
-            const testDocRef = doc(db, 'tests', savedTests[editIndex].id);
-            await updateDoc(testDocRef, newTest);
-        } else {
-            // Add new test
-            await addDoc(collection(db, 'tests'), newTest);
-        }
-        successMessage();
-        resetForm();
-    } catch (error) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error!',
-            text: `Error: ${error.message}`,
-        });
-    }
-};
-
-const handleDelete = async (index, testId) => {
-  const result = await Swal.fire({
-    title: 'Are you sure?',
-    text: 'You won\'t be able to revert this!',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#3085d6',
-    cancelButtonColor: '#d33',
-    confirmButtonText: 'Yes, delete it!'
-  });
-
-  if (result.isConfirmed) {
-    try {
-      const testDocRef = doc(db, 'tests', testId); // Get a reference to the document
-      await deleteDoc(testDocRef); // Delete the document
-      const updatedTests = savedTests.filter((_, idx) => idx !== index);
-      setSavedTests(updatedTests);
-      Swal.fire({
-        icon: 'success',
-        title: 'Deleted!',
-        text: 'The test has been deleted successfully.',
-      });
+      if (editIndex !== null) {
+        // Update existing test
+        const testDocRef = doc(db, 'tests', savedTests[editIndex].id);
+        await updateDoc(testDocRef, newTest);
+      } else {
+        // Add new test
+        await addDoc(collection(db, 'tests'), newTest);
+      }
+      successMessage();
+      resetForm();
     } catch (error) {
       Swal.fire({
         icon: 'error',
@@ -292,8 +261,39 @@ const handleDelete = async (index, testId) => {
         text: `Error: ${error.message}`,
       });
     }
-  }
-};
+  };
+
+  const handleDelete = async (index, testId) => {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'You won\'t be able to revert this!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const testDocRef = doc(db, 'tests', testId); // Get a reference to the document
+        await deleteDoc(testDocRef); // Delete the document
+        const updatedTests = savedTests.filter((_, idx) => idx !== index);
+        setSavedTests(updatedTests);
+        Swal.fire({
+          icon: 'success',
+          title: 'Deleted!',
+          text: 'The test has been deleted successfully.',
+        });
+      } catch (error) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: `Error: ${error.message}`,
+        });
+      }
+    }
+  };
 
   const handleEdit = (index) => {
     const test = savedTests[index];
@@ -331,158 +331,186 @@ const handleDelete = async (index, testId) => {
   const handleTestTypeFilterChange = (e) => {
     setSelectedTestType(e.target.value);
   };
+
+  const generateAnswerSheetPDF = async (testId, set = 'A') => {
+    // Fetch test data from Firestore
+    const testDocRef = doc(db, 'tests', testId);
+    let testData;
   
-  const generateAnswerSheetPDF = async (testId) => {
-      // Fetch test data from Firestore
-      const testDocRef = doc(db, 'tests', testId);
-      let testData;
-  
-      try {
-          const testDoc = await getDoc(testDocRef);
-          if (testDoc.exists()) {
-              testData = testDoc.data();
-              console.log('Fetched test data:', testData);
-          } else {
-              console.error('No such document!');
-              return;
-          }
-      } catch (error) {
-          console.error('Error fetching test data:', error);
-          return;
+    try {
+      const testDoc = await getDoc(testDocRef);
+      if (testDoc.exists()) {
+        testData = testDoc.data();
+        console.log('Fetched test data:', testData);
+      } else {
+        console.error('No such document!');
+        return;
       }
+    } catch (error) {
+      console.error('Error fetching test data:', error);
+      return;
+    }
   
-      const numQuestions = testData.questions.length; // Update to match your data structure
-      const numChoices = testData.choices; // Assume choices are provided in the document
+    // Ensure doc is declared in the correct scope before it's used
+    const pdfDoc = new jsPDF({ format: 'a4' }); // Initialize jsPDF instance
   
-      // Initialize jsPDF instance after fetching data
-      const doc = new jsPDF({ format: 'a4' });
+    // Extract questions from the selected set (either A or B)
+    const selectedQuestions = testData.questions[set]; // Use 'A' or 'B'
   
-      // Define margins and page width
-      const marginTop = 10;
-      const marginLeft = 20;
-      const marginRight = 15;
-      const pageWidth = doc.internal.pageSize.width;
+    // Define margins and page width
+    const marginTop = 10;
+    const marginLeft = 20;
+    const marginRight = 15;
+    const pageWidth = pdfDoc.internal.pageSize.width;
   
-      // Header text
-      doc.setFontSize(12); // Set the font size
-      doc.text('Answer Sheets', marginLeft + 70, marginTop);
-      doc.text('Name:_________________________', marginLeft, marginTop + 5);
-      doc.text('Grade/Section:________________ ', marginLeft, marginTop + 10);
-      doc.text('Date:________________', marginLeft, marginTop + 15);
-      doc.text('LRN: ', marginLeft, marginTop + 23);
+    // Header text
+    pdfDoc.setFontSize(12); // Set the font size
+    pdfDoc.text('Answer Sheets', marginLeft + 70, marginTop);
+    pdfDoc.text('Name:_________________________', marginLeft, marginTop + 5);
+    pdfDoc.text('Grade/Section:________________ ', marginLeft, marginTop + 10);
+    pdfDoc.text('Date:________________', marginLeft, marginTop + 15);
+    pdfDoc.text('LRN: ', marginLeft, marginTop + 23);
   
-      // Add 12 squares next to "LRN" in one line
-      const squareSize = 8;
-      const startX = marginLeft + 15;
-      const startY = marginTop + 18;
+    // Add 12 squares next to "LRN" in one line
+    const squareSize = 8;
+    const startX = marginLeft + 15;
+    const startY = marginTop + 18;
   
-      for (let i = 0; i < 12; i++) {
-          const squareX = startX + (squareSize * i);
-          doc.rect(squareX, startY, squareSize, squareSize);
+    for (let i = 0; i < 12; i++) {
+      const squareX = startX + (squareSize * i);
+      pdfDoc.rect(squareX, startY, squareSize, squareSize);
+    }
+  
+    // Calculate dimensions for two columns
+    const columnMargin = 20;
+    const colWidth = (pageWidth - marginLeft - marginRight - columnMargin) / 2;
+  
+    // Box height for 10 questions (adjust this for row height)
+    const boxHeight = 81; // <-- ADJUST BOX HEIGHT HERE
+    const startRowY = startY + 10;
+  
+    // Function to draw a box with 10 questions
+    const drawQuestionBox = (row, col, questionStart) => {
+      const xOffset = marginLeft + col * (colWidth + columnMargin);
+      const yOffset = startRowY + row * (boxHeight + 3); // <-- ADJUST ROW SPACING HERE
+  
+      // Draw box for 10 questions
+      pdfDoc.rect(xOffset, yOffset, colWidth, boxHeight);
+  
+      // Draw question numbers and placeholder choices (A, B, C, D)
+      for (let i = 0; i < 10; i++) {
+        const questionIndex = questionStart + i - 1;
+        if (questionIndex >= selectedQuestions.length) return; // Stop when reaching the total number of questions
+  
+        const questionY = yOffset + 7 + i * 8; // Position each question
+  
+        // Place question number
+        pdfDoc.text(`${questionStart + i}.`, xOffset - 10, questionY); // Question number
+  
+        // Draw the answer choice placeholders (A, B, C, D)
+        const choiceXStart = xOffset + 16;
+        const choiceSpacing = (colWidth - 20) / 4; // 4 choices: A, B, C, D
+        const choices = ['A', 'B', 'C', 'D'];
+  
+        choices.forEach((choice, choiceIndex) => {
+          const choiceX = choiceXStart + choiceIndex * choiceSpacing;
+          pdfDoc.circle(choiceX, questionY - 2.5, 3.5); // Draw circle for the choice
+          pdfDoc.text(choice, choiceX - 1.5, questionY - 1); // Display choice letter (A, B, C, D)
+        });
       }
+    };
   
-      // Calculate dimensions for two columns
-      const columnMargin = 20;
-      const colWidth = (pageWidth - marginLeft - marginRight - columnMargin) / 2;
+    // Dynamically add rows based on the number of questions in the selected set
+    const numQuestions = selectedQuestions.length; // Use length of the selected set
+    const numBoxes = Math.ceil(numQuestions / 10); // Calculate how many boxes are needed
+    const numRows = Math.ceil(numBoxes / 2); // Two boxes per row
   
-      // Box height for 10 questions (adjust this for row height)
-      const boxHeight = 81; // <-- ADJUST BOX HEIGHT HERE
-      const startRowY = startY + 10;
-  
-      // Function to draw a box with 10 questions
-      const drawQuestionBox = (row, col, questionStart) => {
-          const xOffset = marginLeft + col * (colWidth + columnMargin);
-          const yOffset = startRowY + row * (boxHeight + 3); // <-- ADJUST ROW SPACING HERE
-  
-          // Draw box for 10 questions
-          doc.rect(xOffset, yOffset, colWidth, boxHeight);
-  
-          // Draw questions and answer choices inside the box
-          for (let i = 0; i < 10; i++) {
-              const questionNumber = questionStart + i;
-              if (questionNumber > numQuestions) return;
-  
-              const questionY = yOffset + 7 + i * 8; // Position each question
-  
-              // Place question number outside the box (on the left)
-              doc.text(`${questionNumber}.`, xOffset - 10, questionY); // <-- QUESTION NUMBER OUTSIDE BOX
-  
-              const choiceXStart = xOffset + 16;
-              const choiceSpacing = (colWidth - 20) / numChoices;
-              for (let j = 0; j < numChoices; j++) {
-                  const choiceX = choiceXStart + j * choiceSpacing;
-                  doc.circle(choiceX, questionY - 2.5, 3.5);
-                  doc.text(['A', 'B', 'C', 'D'][j], choiceX - 1.5, questionY - 1);
-              }
-          }
-      };
-  
-      // Dynamically add rows based on the number of questions
-      const numBoxes = Math.ceil(numQuestions / 10); // Calculate how many boxes are needed
-      const numRows = Math.ceil(numBoxes / 2); // Two boxes per row
-  
-      for (let row = 0; row < numRows; row++) {
-          for (let col = 0; col < 2; col++) {
-              const boxNumber = row * 2 + col;
-              const questionStart = boxNumber * 10 + 1;
-              if (questionStart <= numQuestions) {
-                  drawQuestionBox(row, col, questionStart);
-              }
-          }
+    for (let row = 0; row < numRows; row++) {
+      for (let col = 0; col < 2; col++) {
+        const boxNumber = row * 2 + col;
+        const questionStart = boxNumber * 10 + 1;
+        if (questionStart <= numQuestions) {
+          drawQuestionBox(row, col, questionStart);
+        }
       }
+    }
   
-      // Save the PDF
-      doc.save('answer_sheet.pdf');
+    // Save the PDF
+    pdfDoc.save('answer_sheet.pdf');
   };
   
 
-  const handlePrint = async (test) => {
-    console.log('Received test:', test);
 
-    if (!test || !test.questions || !Array.isArray(test.questions.A) || !Array.isArray(test.questions.B)) {
-        console.error('Selected test or questions are undefined or not an array');
-        return;
+const handlePrint = async (test) => {
+  console.log('Received test:', test);
+
+  // Validate test structure and ensure questions exist
+  if (!test || !test.questions || !Array.isArray(test.questions.A) || !Array.isArray(test.questions.B)) {
+    console.error('Selected test or questions are undefined or not an array');
+    return;
+  }
+
+  // Confirmation modal to ensure user wants to generate PDFs
+  const result = await Swal.fire({
+    title: 'Are you sure?',
+    text: 'Do you want to generate the PDF files for this test?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, generate!'
+  });
+
+  if (result.isConfirmed) {
+    const questionsA = test.questions.A;
+    const questionsB = test.questions.B;
+
+    try {
+      // Ensure there's no empty set before generating
+      if (questionsA.length > 0) {
+        await generatePDF(questionsA, 'A', test.directions);
+      } else {
+        console.warn('Questions A is empty, skipping PDF generation for Set A.');
+      }
+
+      if (questionsB.length > 0) {
+        await generatePDF(questionsB, 'B', test.directions);
+      } else {
+        console.warn('Questions B is empty, skipping PDF generation for Set B.');
+      }
+
+      // Generate answer sheet PDF based on the total number of questions and choices in Set A
+      if (questionsA.length > 0) {
+        await generateAnswerSheetPDF(test.id); // Now using the test's Firestore auto-generated ID
+      } else if (questionsB.length > 0) {
+        await generateAnswerSheetPDF(test.id); // Use Set B for answer sheet if Set A is empty
+      } else {
+        throw new Error('No questions available to generate an answer sheet.');
+      }
+
+      // Success message on completion
+      Swal.fire({
+        icon: 'success',
+        title: 'Success!',
+        text: 'PDFs have been generated successfully!',
+      });
+    } catch (error) {
+      // Handle error in PDF generation
+      console.error('Error generating PDFs:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: `Failed to generate PDFs: ${error.message}`,
+      });
     }
-
-    const result = await Swal.fire({
-        title: 'Are you sure?',
-        text: 'Do you want to generate the PDF files for this test?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, generate!'
+  } else {
+    // Handle cancellation of the process
+    Swal.fire({
+      icon: 'info',
+      title: 'Cancelled',
+      text: 'PDF generation has been cancelled.',
     });
-
-    if (result.isConfirmed) {
-        const questionsA = test.questions.A;
-        const questionsB = test.questions.B;
-
-        try {
-            await generatePDF(questionsA, 'A', test.directions);
-            await generatePDF(questionsB, 'B', test.directions);
-            await generateAnswerSheetPDF(questionsA.length, questionsA[0].choices.length);
-
-            Swal.fire({
-                icon: 'success',
-                title: 'Success!',
-                text: 'PDFs have been generated successfully!',
-            });
-        } catch (error) {
-            console.error('Error generating PDFs:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Error!',
-                text: `Failed to generate PDFs: ${error.message}`,
-            });
-        }
-    } else {
-        Swal.fire({
-            icon: 'info',
-            title: 'Cancelled',
-            text: 'PDF generation has been cancelled.',
-        });
-    }
+  }
 };
 
   const handleRandomize = () => {
@@ -644,7 +672,7 @@ const handleDelete = async (index, testId) => {
 
   const generatePDF = async (questions, testName, directions) => {
     const doc = new jsPDF({ format: 'a4' });
-  
+
     // Define margins based on A4 size
     const marginTop = 10; // margin from top
     const marginBottom = 20; // margin from bottom
@@ -652,26 +680,26 @@ const handleDelete = async (index, testId) => {
     const marginRight = 15; // margin from right
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
-  
+
     doc.setFontSize(11);
-  
+
     // Centered text helper function
     const centerText = (text, y) => {
       const textWidth = doc.getTextWidth(text);
       const x = (pageWidth - textWidth) / 2;
       doc.text(text, x, y);
     };
-  
+
     // Load logos
     const morenoLogoWidth = (pageWidth / 5) / 2;
     const morenoLogoHeight = 15;
     const depedLogoWidth = (pageWidth / 4) / 2;
     const depedLogoHeight = 15;
-  
+
     // Add logos
     doc.addImage(morenoLogo, 'JPEG', marginLeft + 25, marginTop, morenoLogoWidth, morenoLogoHeight);
     doc.addImage(DepedLogo, 'JPEG', pageWidth - depedLogoWidth - marginRight - 18, marginTop, depedLogoWidth, depedLogoHeight);
-  
+
     // Print Name and School ID and SCORE box at the beginning of the document
     const textStartY = marginTop + morenoLogoHeight + 5;
     centerText('Republic of the Philippines', marginTop);
@@ -679,85 +707,85 @@ const handleDelete = async (index, testId) => {
     centerText('REGION V - BICOL', marginTop + 10);
     centerText('SCHOOLS DIVISION OF CAMARINES NORTE', marginTop + 15);
     centerText('MORENO INTEGRATED SCHOOL', marginTop + 20);
-  
+
     const lineY = marginTop + 25;
     const lineText = '_________________________________________________________________________';
     const lineTextWidth = doc.getTextWidth(lineText);
     const adjustedLineMarginLeft = marginLeft; // Adjust the margin left as needed
-  
+
     doc.text(lineText, adjustedLineMarginLeft, lineY);
-  
+
     centerText('PRE-FINAL EXAMINATION', marginTop + 30);
     centerText('Technology and Livelihood Education Cookery', marginTop + 35);
-  
+
     // Add Directions section
     const directionsY = marginTop + 45;
     const directionsLabel = "Directions:";
     doc.text(directionsLabel, marginLeft, directionsY);
-  
+
     // Calculate the width of the "Directions:" label
     const directionsLabelWidth = doc.getTextWidth(directionsLabel);
     const directionsTextX = marginLeft + directionsLabelWidth + 2; // Add some padding
-  
+
     // Get the lines of directions text
     const directionsTextLines = doc.splitTextToSize(directions || '', pageWidth - directionsTextX - marginRight);
-  
+
     // Print the directions text next to the "Directions:" label
     directionsTextLines.forEach((line, index) => {
       doc.text(line, directionsTextX, directionsY + (index * 5)); // Adjust spacing between lines as needed
     });
-  
+
     // Add SCORE box
     const boxSize = 20;
     const boxX = adjustedLineMarginLeft + lineTextWidth + 5; // Adjust position to the right of the line
     const boxY = lineY - 10; // Adjust to align with the line
     doc.rect(boxX, boxY, boxSize, boxSize); // Draw a rectangle for the box
     doc.text('SCORE', boxX + boxSize / 2 - doc.getTextWidth('SCORE') / 2, boxY + boxSize / 2 + 8); // Add SCORE text
-  
+
     // Set initial yOffset for questions
     let yOffset = directionsY + directionsTextLines.length * 5; // Adjust as needed for spacing
-  
+
     // Width for questions should match directions text width
     const questionTextMaxWidth = pageWidth - directionsTextX - marginRight; // Same width as directions text
-  
+
     questions.forEach((item, index) => {
       // Add new page if necessary
       if (yOffset > pageHeight - marginBottom - 20) {
         doc.addPage();
         yOffset = marginTop; // Reset yOffset for new page
       }
-  
+
       // Set the font size for the question text
       doc.setFontSize(11);
-  
+
       // Print the question text
       const questionLines = doc.splitTextToSize(`${index + 1}. ${item.question}`, questionTextMaxWidth);
       questionLines.forEach((line, lineIndex) => {
         doc.text(line, marginLeft, yOffset + (lineIndex * 5));
       });
-  
+
       yOffset += questionLines.length * 5; // Update yOffset after printing question
-  
+
       // Set the starting positions for the answer choices
       const choiceStartX = marginLeft; // Start position for choices
       let choiceStartY = yOffset; // Start position for choices
-  
+
       item.choices.forEach((choice, choiceIndex) => {
         const choiceText = choice.text;
         const choiceLines = doc.splitTextToSize(`${String.fromCharCode(65 + choiceIndex)}. ${choiceText}`, questionTextMaxWidth);
-  
+
         // Print the choice text
         choiceLines.forEach((line, lineIndex) => {
           doc.text(line, choiceStartX, choiceStartY + (lineIndex * 5));
         });
-  
+
         choiceStartY += choiceLines.length * 5; // Update position for next choice
       });
-  
+
       // Update yOffset for the next question
       yOffset = choiceStartY + 1; // Ensure enough space for the next question
     });
-  
+
     // Save the PDF
     doc.save('Test.pdf');
   };
