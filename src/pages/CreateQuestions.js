@@ -269,7 +269,6 @@ function CreateQuestions(props) {
       });
     }
   };
-  
 
   const handleDelete = async (index, testId) => {
     const result = await Swal.fire({
@@ -359,11 +358,11 @@ function CreateQuestions(props) {
       return;
     }
   
-    // Ensure doc is declared in the correct scope before it's used
-    const pdfDoc = new jsPDF({ format: 'a4' }); // Initialize jsPDF instance
+    // Initialize jsPDF instance
+    const pdfDoc = new jsPDF({ format: 'a4' });
   
     // Extract questions from the selected set (either A or B)
-    const selectedQuestions = testData.questions[set]; // Use 'A' or 'B'
+    const selectedQuestions = testData.questions[set];
   
     // Define margins and page width
     const marginTop = 10;
@@ -372,52 +371,82 @@ function CreateQuestions(props) {
     const pageWidth = pdfDoc.internal.pageSize.width;
   
     // Header text
-    pdfDoc.setFontSize(12); // Set the font size
-    pdfDoc.text('Answer Sheets', marginLeft + 70, marginTop);
-    pdfDoc.text('Name:_________________________', marginLeft, marginTop + 5);
-    pdfDoc.text('Grade/Section:________________ ', marginLeft, marginTop + 10);
-    pdfDoc.text('Date:________________', marginLeft, marginTop + 15);
-    pdfDoc.text('LRN: ', marginLeft, marginTop + 23);
+    pdfDoc.setFontSize(12);
+    pdfDoc.setFont('helvetica', 'bold'); // Make the header text bold
+    pdfDoc.text('NAME:____________________________________________', marginLeft, marginTop + 5);
+    pdfDoc.text('GRADE/SECTION:__________________________________', marginLeft, marginTop + 11);
+    pdfDoc.text('DATE:____________________________________________', marginLeft, marginTop + 16.5);
+    pdfDoc.text('LRN:', marginLeft, marginTop + 24);
   
-    // Add 12 squares next to "LRN" in one line
+    // Add 12 squares next to "LRN" in one line without lines inside
     const squareSize = 8;
     const startX = marginLeft + 15;
-    const startY = marginTop + 18;
+    const startY = marginTop + 20;
   
-    for (let i = 0; i < 12; i++) {
-      const squareX = startX + (squareSize * i);
-      pdfDoc.rect(squareX, startY, squareSize, squareSize);
-    }
+    pdfDoc.setLineWidth(1); // Make the box line thicker for LRN
+    pdfDoc.rect(startX, startY, squareSize * 12, squareSize); // One large box for LRN
+    pdfDoc.setLineWidth(0.2); // Reset line width for other elements
   
-    // Calculate dimensions for two columns
-    const columnMargin = 20;
-    const colWidth = (pageWidth - marginLeft - marginRight - columnMargin) / 2;
+    // Define position for the "SET" box and circles
+    const setBoxX = startX + 140; // Adjust the position next to LRN
+    const setBoxY = marginTop + 5;
+    const setBoxWidth = 30;
+    const setBoxHeight = 13;
   
-    // Box height for 10 questions (adjust this for row height)
-    const boxHeight = 81; // <-- ADJUST BOX HEIGHT HERE
-    const startRowY = startY + 10;
+    // Add "SET" text above the box
+    pdfDoc.setFontSize(12);
+    pdfDoc.text('SET', setBoxX, setBoxY - 2); // Bold the "SET" text
   
-    // Function to draw a box with 10 questions
-    const drawQuestionBox = (row, col, questionStart) => {
+    // Draw the box for "SET"
+    pdfDoc.setLineWidth(1); // Set the box line thicker like the question boxes
+    pdfDoc.rect(setBoxX, setBoxY, setBoxWidth - 5, setBoxHeight + 10);
+  
+    // Reset line width for circles
+    pdfDoc.setLineWidth(0.2);
+  
+    // Draw the circles with (A) and (B) inside the "SET" box
+    const circleRadius = 3.5;
+    const circleA_X = setBoxX + 8;
+    const circleB_X = setBoxX + 18;
+    const circleY = setBoxY + 11;
+  
+    pdfDoc.circle(circleA_X, circleY, circleRadius); // Circle A
+    pdfDoc.text('A', circleA_X - 1.5, circleY + 1);
+  
+    pdfDoc.circle(circleB_X, circleY, circleRadius); // Circle B
+    pdfDoc.text('B', circleB_X - 1.5, circleY + 1);
+  
+    // Define dimensions for three columns in the first row
+    const columnMargin = 12;
+    const colWidth = (pageWidth - marginLeft - marginRight - 2 * columnMargin) / 3; // 3 columns
+    const boxHeight = 96;
+    const startRowY = startY + 20;
+  
+    // Function to draw a question box for 10 questions
+    const drawQuestionBox = (row, col, questionStart, colCount) => {
       const xOffset = marginLeft + col * (colWidth + columnMargin);
-      const yOffset = startRowY + row * (boxHeight + 3); // <-- ADJUST ROW SPACING HERE
+      const yOffset = startRowY + row * (boxHeight + 3);
   
-      // Draw box for 10 questions
-      pdfDoc.rect(xOffset, yOffset, colWidth, boxHeight);
+      // Set thicker line width for the boxes
+      pdfDoc.setLineWidth(1);
+      pdfDoc.rect(xOffset, yOffset, colWidth, boxHeight); // Draw box for 10 questions
   
-      // Draw question numbers and placeholder choices (A, B, C, D)
+      // Reset line width to default (1) for circles and text
+      pdfDoc.setLineWidth(0.2);
+  
+      // Draw question numbers and answer choices (A, B, C, D)
       for (let i = 0; i < 10; i++) {
         const questionIndex = questionStart + i - 1;
         if (questionIndex >= selectedQuestions.length) return; // Stop when reaching the total number of questions
   
-        const questionY = yOffset + 7 + i * 8; // Position each question
+        const questionY = yOffset + 10 + i * 9;
   
         // Place question number
-        pdfDoc.text(`${questionStart + i}.`, xOffset - 10, questionY); // Question number
+        pdfDoc.text(`${questionStart + i}.`, xOffset - 10, questionY);
   
         // Draw the answer choice placeholders (A, B, C, D)
-        const choiceXStart = xOffset + 16;
-        const choiceSpacing = (colWidth - 20) / 4; // 4 choices: A, B, C, D
+        const choiceXStart = xOffset + 8;
+        const choiceSpacing = (colWidth - 4) / 4; // 4 choices: A, B, C, D
         const choices = ['A', 'B', 'C', 'D'];
   
         choices.forEach((choice, choiceIndex) => {
@@ -428,18 +457,25 @@ function CreateQuestions(props) {
       }
     };
   
-    // Dynamically add rows based on the number of questions in the selected set
-    const numQuestions = selectedQuestions.length; // Use length of the selected set
-    const numBoxes = Math.ceil(numQuestions / 10); // Calculate how many boxes are needed
-    const numRows = Math.ceil(numBoxes / 2); // Two boxes per row
+    // Total number of questions and boxes needed
+    const numQuestions = selectedQuestions.length;
+    const numBoxes = Math.ceil(numQuestions / 10);
   
-    for (let row = 0; row < numRows; row++) {
-      for (let col = 0; col < 2; col++) {
-        const boxNumber = row * 2 + col;
-        const questionStart = boxNumber * 10 + 1;
-        if (questionStart <= numQuestions) {
-          drawQuestionBox(row, col, questionStart);
-        }
+    // First row with 3 columns
+    for (let col = 0; col < 3; col++) {
+      const boxNumber = col;
+      const questionStart = boxNumber * 10 + 1;
+      if (questionStart <= numQuestions) {
+        drawQuestionBox(0, col, questionStart, 3);
+      }
+    }
+  
+    // Second row with remaining boxes (up to 2 columns)
+    for (let col = 0; col < 2; col++) {
+      const boxNumber = 3 + col;
+      const questionStart = boxNumber * 10 + 1;
+      if (questionStart <= numQuestions) {
+        drawQuestionBox(1, col, questionStart, 2);
       }
     }
   
@@ -447,8 +483,6 @@ function CreateQuestions(props) {
     pdfDoc.save('answer_sheet.pdf');
   };
   
-
-
 const handlePrint = async (test) => {
   console.log('Received test:', test);
 
