@@ -133,7 +133,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-
+  
     if (!selectedDate) {
       Swal.fire({
         icon: 'error',
@@ -142,7 +142,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-
+  
     if (!selectedOption) {
       Swal.fire({
         icon: 'error',
@@ -151,7 +151,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-
+  
     if (!directions || directions.trim() === '') {
       Swal.fire({
         icon: 'error',
@@ -160,7 +160,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-
+  
     if (itemsInput.some(item => !item.question || item.question.trim() === '')) {
       Swal.fire({
         icon: 'error',
@@ -169,7 +169,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-
+  
     if (itemsInput.some(item => item.choices.some(choice => !choice.text || choice.text.trim() === ''))) {
       Swal.fire({
         icon: 'error',
@@ -178,7 +178,7 @@ function CreateQuestions(props) {
       });
       return;
     }
-
+  
     if (itemsInput.some(item => !item.correctAnswer || item.correctAnswer.trim() === '')) {
       Swal.fire({
         icon: 'error',
@@ -187,17 +187,24 @@ function CreateQuestions(props) {
       });
       return;
     }
-
+  
     // Prepare the test data
     const randomizedQuestionsA = shuffleArray(itemsInput.map(item => ({
       ...item,
-      choices: item.choices // Choices are not randomized
+      choices: item.choices.map((choice, index) => ({
+        ...choice,
+        id: index // Update the choice ID to be 0, 1, 2, 3
+      }))
     })));
+  
     const randomizedQuestionsB = shuffleArray(itemsInput.map(item => ({
       ...item,
-      choices: item.choices // Choices are not randomized
+      choices: item.choices.map((choice, index) => ({
+        ...choice,
+        id: index // Update the choice ID to be 0, 1, 2, 3
+      }))
     })));
-
+  
     const newTest = {
       name: testName,
       date: selectedDate,
@@ -225,7 +232,7 @@ function CreateQuestions(props) {
         }))
       }
     };
-
+  
     const successMessage = () => {
       Swal.fire({
         icon: 'success',
@@ -234,7 +241,7 @@ function CreateQuestions(props) {
       });
       closeModal();
     };
-
+  
     const resetForm = () => {
       setTestName('');
       setSelectedDate(null);
@@ -242,7 +249,7 @@ function CreateQuestions(props) {
       setDirections('');
       setItemsInput([]);
     };
-
+  
     try {
       if (editIndex !== null) {
         // Update existing test
@@ -262,6 +269,7 @@ function CreateQuestions(props) {
       });
     }
   };
+  
 
   const handleDelete = async (index, testId) => {
     const result = await Swal.fire({
