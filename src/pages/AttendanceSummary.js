@@ -342,57 +342,6 @@ return (
                 </Select>
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3} sx={{ ml: 5 }}>
-                <Grid item xs={12} sm={6} md={3} sx={{ mt: 1 }}>
-                    <DatePicker
-                        selected={startDate}
-                        onChange={(date) => setStartDate(date)}
-                        selectsStart
-                        startDate={startDate}
-                        endDate={endDate}
-                        placeholderText="From"
-                        sx={{
-                            backgroundColor: 'white',
-                            borderRadius: 2,
-                            '& .MuiOutlinedInput-notchedOutline': {
-                                borderColor: '#818181',
-                            },
-                        }}
-                        InputProps={{
-                            sx: {
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: '#818181',
-                                },
-                            },
-                        }}
-                    />
-                </Grid>
-                <Grid item xs={12} sm={6} md={3} sx={{ mt: 1 }}>
-                    <DatePicker
-                        selected={endDate}
-                        onChange={(date) => setEndDate(date)}
-                        selectsEnd
-                        startDate={startDate}
-                        endDate={endDate}
-                        minDate={startDate}
-                        placeholderText="To"
-                        sx={{
-                            backgroundColor: 'white',
-                            borderRadius: 2,
-                            '& .MuiOutlinedInput-notchedOutline': {
-                                borderColor: '#818181',
-                            },
-                        }}
-                        InputProps={{
-                            sx: {
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: '#818181',
-                                },
-                            },
-                        }}
-                    />
-                </Grid>
-            </Grid>
             <Grid item xs={12} sm={6} md={3} sx={{ mt: isMobile ? 0 : 2 }}>
                 <Button
                     variant="contained"

@@ -56,11 +56,61 @@ function StudentProfile() {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setStudent((prevStudent) => ({
-            ...prevStudent,
-            [name]: value,
-        }));
+
+        // Handle contact number validation
+        if (name === 'contactNumber') {
+            const formattedValue = value.replace(/[^0-9]/g, ''); // Remove non-numeric characters
+
+            if (!formattedValue.startsWith('09')) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Contact Number',
+                    text: 'Contact number should start with "09".',
+                });
+                return;
+            }
+
+            if (formattedValue.length > 11) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Contact Number',
+                    text: 'Contact number should be exactly 11 digits long.',
+                });
+                return;
+            }
+
+            setStudent((prevState) => ({
+                ...prevState,
+                [name]: formattedValue
+            }));
+        }
+        // Handle LRN validation
+        else if (name === 'lrn') {
+            const formattedValue = value.replace(/[^0-9]/g, ''); // Remove non-numeric characters
+
+            if (formattedValue.length > 12) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid LRN',
+                    text: 'LRN should be exactly 12 digits long.',
+                });
+                return;
+            }
+
+            setStudent((prevState) => ({
+                ...prevState,
+                [name]: formattedValue
+            }));
+        }
+        // Handle other fields
+        else {
+            setStudent((prevState) => ({
+                ...prevState,
+                [name]: value
+            }));
+        }
     };
+
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
@@ -98,7 +148,7 @@ function StudentProfile() {
             try {
                 // Validation for Contact Number
                 if (!/^09\d{9}$/.test(student.contactNumber)) {
-                    throw new Error('Invalid contact number format. It should start with "09".');
+                    throw new Error('Invalid contact number format. It should start with "09" and be 11 digits.');
                 }
 
                 // Validation for Age
@@ -135,6 +185,7 @@ function StudentProfile() {
                         FName: updatedStudent.FName,
                         LName: updatedStudent.LName,
                         MName: updatedStudent.MName,
+                        lrn: updatedStudent.lrn,
                         grade: updatedStudent.grade,
                         section: updatedStudent.section,
                         image: updatedStudent.image,
@@ -304,6 +355,26 @@ function StudentProfile() {
                                     label="Middle Name"
                                     name="MName"
                                     value={student.MName || ''}
+                                    onChange={handleInputChange}
+                                    fullWidth
+                                    sx={{
+                                        backgroundColor: 'white',
+                                        borderRadius: 2
+                                    }}
+                                    InputProps={{
+                                        sx: {
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: '#818181'
+                                            }
+                                        }
+                                    }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    label="LRN"
+                                    name="lrn"
+                                    value={student.lrn || ''}
                                     onChange={handleInputChange}
                                     fullWidth
                                     sx={{
