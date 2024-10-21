@@ -17,9 +17,10 @@ function ItemAnalysis() {
     const [tests, setTests] = useState([]);
     const [selectedTest, setSelectedTest] = useState('');
     const [questions, setQuestions] = useState([]);
-    const [competencies, setCompetencies] = useState({}); // New state to store competencies input
+    const [competencies, setCompetencies] = useState({}); // State to store competencies input
     const [bulkCompetencyText, setBulkCompetencyText] = useState(''); // State for bulk input text
     const [range, setRange] = useState(''); // State for range input
+    const [correctResponses, setCorrectResponses] = useState({}); // State for correct responses
 
     // Fetch sections based on current user
     useEffect(() => {
@@ -79,6 +80,65 @@ function ItemAnalysis() {
         }
     }, [selectedTest, tests]);
 
+    // Fetch correct responses based on section and test
+    const fetchCorrectResponses = async () => {
+        if (!selectedSection || !selectedTest) return;
+
+        try {
+            const scoresCollection = collection(db, 'scores');
+            const scoresQuery = query(
+                scoresCollection,
+                where('section', '==', selectedSection),
+                where('testid', '==', selectedTest)
+            );
+            const scoresSnapshot = await getDocs(scoresQuery);
+            const scoresList = scoresSnapshot.docs.map(doc => doc.data());
+
+            const responseCount = {};
+
+            // Helper to normalize text for comparison
+            const normalizeText = (text) =>
+                text.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+
+            // Count correct responses
+            scoresList.forEach(score => {
+                const correctQuestions = score.correct_questions || [];
+
+                correctQuestions.forEach(correctQuestion => {
+                    const strippedQuestion = normalizeText(correctQuestion);
+                    const matchingQuestion = questions.find(
+                        questionObj => normalizeText(questionObj.question) === strippedQuestion
+                    );
+
+                    if (matchingQuestion) {
+                        const questionIndex = questions.indexOf(matchingQuestion);
+                        responseCount[questionIndex] = (responseCount[questionIndex] || 0) + 1;
+                    }
+                });
+            });
+
+            setCorrectResponses(responseCount);
+        } catch (error) {
+            console.error("Error fetching correct responses:", error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Ooops...',
+                text: 'Error fetching the correct responses. Please try again.',
+            });
+        }
+    };
+
+    // Trigger fetching correct responses when dependencies change
+    useEffect(() => {
+        if (questions.length > 0) {
+            fetchCorrectResponses();
+        }
+    }, [selectedSection, selectedTest, questions]);
+
+
+
+
+
     // Handle input change for competencies
     const handleCompetencyChange = (index, value) => {
         setCompetencies(prevState => ({
@@ -89,37 +149,29 @@ function ItemAnalysis() {
 
     // Handle bulk input replication for competencies
     const handleBulkCompetencyInput = () => {
-        // Trim spaces and split by comma
         const input = range.split(',').map(item => item.trim());
         const updatedCompetencies = { ...competencies };
         let isValid = true;
 
         input.forEach(item => {
             if (item.includes('-')) {
-                // Handle range (e.g., "1-10")
                 const [start, end] = item.split('-').map(Number);
 
-                // Validate the input range
                 if (isNaN(start) || isNaN(end) || start < 1 || end < start || end > questions.length) {
                     isValid = false;
-                    return; // Exit loop on error
+                    return;
                 }
 
-                // Update competencies for the specified range
                 for (let i = start - 1; i < end; i++) {
                     updatedCompetencies[i] = bulkCompetencyText;
                 }
             } else {
-                // Handle specific number (e.g., "1", "6")
                 const number = Number(item);
-
-                // Validate the specific number
                 if (isNaN(number) || number < 1 || number > questions.length) {
                     isValid = false;
-                    return; // Exit loop on error
+                    return;
                 }
 
-                // Update competency for the specific number
                 updatedCompetencies[number - 1] = bulkCompetencyText;
             }
         });
@@ -136,14 +188,11 @@ function ItemAnalysis() {
         setCompetencies(updatedCompetencies);
     };
 
-
-
     return (
         <Box sx={{ padding: 2 }}>
             <Grid item xs={12}>
                 <Typography variant="h4" sx={{ fontWeight: 'bold', mt: isMobile ? 5 : 0, mb: 2 }}>Item Analysis</Typography>
             </Grid>
-            {/* Dropdown and text fields before the table */}
             <Box sx={{ marginBottom: 2 }}>
                 <Grid container spacing={2}>
                     {/* Row 1: Section and Quarter */}
@@ -154,18 +203,12 @@ function ItemAnalysis() {
                             onChange={(e) => setSelectedSection(e.target.value)}
                             displayEmpty
                             variant="outlined"
-                            sx={{
-                                backgroundColor: 'white',
-                                borderRadius: 1,
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: '#818181',
-                                },
-                            }}
+                            sx={{ backgroundColor: 'white', borderRadius: 1 }}
                         >
                             <MenuItem value="" disabled>Select Section</MenuItem>
                             {sections.map(section => (
                                 <MenuItem key={section.id} value={section.id}>
-                                    {section.section} {/* Adjust based on your section field */}
+                                    {section.section}
                                 </MenuItem>
                             ))}
                         </Select>
@@ -177,17 +220,7 @@ function ItemAnalysis() {
                             value={quarter}
                             onChange={(e) => setQuarter(e.target.value)}
                             variant='outlined'
-                            sx={{
-                                backgroundColor: 'white',
-                                borderRadius: 2
-                            }}
-                            InputProps={{
-                                sx: {
-                                    '& .MuiOutlinedInput-notchedOutline': {
-                                        borderColor: '#818181'
-                                    }
-                                }
-                            }}
+                            sx={{ backgroundColor: 'white', borderRadius: 2 }}
                         />
                     </Grid>
 
@@ -199,17 +232,7 @@ function ItemAnalysis() {
                             value={subjectArea}
                             onChange={(e) => setSubjectArea(e.target.value)}
                             variant='outlined'
-                            sx={{
-                                backgroundColor: 'white',
-                                borderRadius: 2
-                            }}
-                            InputProps={{
-                                sx: {
-                                    '& .MuiOutlinedInput-notchedOutline': {
-                                        borderColor: '#818181'
-                                    }
-                                }
-                            }}
+                            sx={{ backgroundColor: 'white', borderRadius: 2 }}
                         />
                     </Grid>
                     <Grid item xs={12} sm={6}>
@@ -219,17 +242,7 @@ function ItemAnalysis() {
                             value={noOfExaminees}
                             onChange={(e) => setNoOfExaminees(e.target.value)}
                             variant='outlined'
-                            sx={{
-                                backgroundColor: 'white',
-                                borderRadius: 2
-                            }}
-                            InputProps={{
-                                sx: {
-                                    '& .MuiOutlinedInput-notchedOutline': {
-                                        borderColor: '#818181'
-                                    }
-                                }
-                            }}
+                            sx={{ backgroundColor: 'white', borderRadius: 2 }}
                         />
                     </Grid>
 
@@ -241,82 +254,80 @@ function ItemAnalysis() {
                             onChange={(e) => setSelectedTest(e.target.value)}
                             displayEmpty
                             variant="outlined"
-                            sx={{
-                                backgroundColor: 'white',
-                                borderRadius: 1,
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: '#818181',
-                                },
-                            }}
+                            sx={{ backgroundColor: 'white', borderRadius: 1 }}
                         >
                             <MenuItem value="" disabled>Select Test</MenuItem>
                             {tests.map(test => (
                                 <MenuItem key={test.id} value={test.id}>
-                                    {test.name} {/* Adjust based on your test name field */}
+                                    {test.name}
                                 </MenuItem>
                             ))}
                         </Select>
                     </Grid>
-                    {/* Other Inputs */}
-                    {/* Add inputs for bulk competency input and range */}
-                    <Grid item xs={12} sm={6}>
+
+                    {/* Competency Inputs */}
+                    <Grid item xs={12}>
                         <TextField
                             fullWidth
-                            label="Add Competency"
+                            label="Bulk Competency Input"
                             value={bulkCompetencyText}
                             onChange={(e) => setBulkCompetencyText(e.target.value)}
                             variant='outlined'
-                            sx={{ backgroundColor: 'white', borderRadius: 2 }}
+                            sx={{ backgroundColor: 'white', borderRadius: 2, mb: 1 }}
                         />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
                         <TextField
                             fullWidth
-                            label="Number/s (e.g., 1-15, 8, 11-13)"
+                            label="Range (e.g., 1-5, 7, 9)"
                             value={range}
                             onChange={(e) => setRange(e.target.value)}
                             variant='outlined'
                             sx={{ backgroundColor: 'white', borderRadius: 2 }}
                         />
-                    </Grid>
-                    <Grid item xs={12}>
-                        <Button variant="contained" onClick={handleBulkCompetencyInput}>Add Competency</Button>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleBulkCompetencyInput}
+                            sx={{ mt: 1 }}
+                        >
+                            Apply Bulk Competency Input
+                        </Button>
                     </Grid>
                 </Grid>
             </Box>
 
-            {/* Table */}
+            {/* Display Table of Questions */}
             <TableContainer component={Paper}>
                 <Table>
                     <TableHead>
                         <TableRow>
-                            <TableCell sx={{ fontWeight: 'bold' }} align='center'>No.</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }} align='center'>Questions</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }} align='center'>Competencies</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }} align='center'>No. of Correct Response</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }} align='center'>% of Correct Response</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }} align='center'>Remarks</TableCell>
+                            <TableCell>No.</TableCell>
+                            <TableCell>Questions</TableCell>
+                            <TableCell>Competencies</TableCell>
+                            <TableCell>No. Correct Responses</TableCell>
+                            <TableCell>% of Correct Responses</TableCell>
+                            <TableCell>Remarks</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {questions.map((questionObj, index) => (
-                            <TableRow key={index}>
-                                <TableCell align='center'>{index + 1}</TableCell>
-                                <TableCell align='center'>{questionObj.question}</TableCell> {/* Display the question text */}
-                                <TableCell align='center'>
-                                    {competencies[index] || 'N/A'} {/* Display competency value or 'N/A' if not set */}
-                                </TableCell>
+                        {questions.map((questionObj, index) => {
+                            const correctCount = correctResponses[index] || 0; // Get the count of correct responses for the current question
+                            const percentageCorrect = noOfExaminees ? (correctCount / noOfExaminees) * 100 : 0; // Calculate the percentage of correct responses
 
-                                <TableCell align='center'>Correct Responses</TableCell> {/* Adjust as needed */}
-                                <TableCell align='center'>% Correct</TableCell> {/* Adjust as needed */}
-                                <TableCell align='center'>Remarks</TableCell> {/* Adjust as needed */}
-                            </TableRow>
-                        ))}
+                            return (
+                                <TableRow key={index}>
+                                    <TableCell>{index + 1}</TableCell> {/* Display question number */}
+                                    <TableCell>{questionObj.question}</TableCell> {/* Display the question text */}
+                                    <TableCell>{competencies[index] || 'N/A'}</TableCell> {/* Display competencies if available */}
+                                    <TableCell>{correctCount}</TableCell> {/* Display the count of correct responses */}
+                                    <TableCell>{percentageCorrect.toFixed(2)}%</TableCell> {/* Display the percentage of correct responses */}
+                                </TableRow>
+                            );
+                        })}
                     </TableBody>
 
                 </Table>
             </TableContainer>
-        </Box>
+        </Box >
     );
 }
 
