@@ -94,6 +94,12 @@ function ItemAnalysis() {
     fetchQuestionsAndResponses();
   }, [selectedTest, selectedSection]);
 
+  // Determine difficulty level based on % of correct responses
+  const getDifficultyLevel = (percentageCorrect) => {
+    if (percentageCorrect <= 30) return "High";
+    if (percentageCorrect > 30 && percentageCorrect < 80) return "Medium";
+    return "Low";
+  };
 
   // Handle input change for competencies
   const handleCompetencyChange = (index, value) => {
@@ -229,7 +235,7 @@ function ItemAnalysis() {
           <Button
             variant="contained"
             onClick={handleBulkCompetencyInput}
-            sx={{mt: 1}}
+            sx={{ mt: 1 }}
           >
             Apply Competency
           </Button>
@@ -242,35 +248,32 @@ function ItemAnalysis() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell align='center'>No.</TableCell>
-              <TableCell>Questions</TableCell>
-              <TableCell>Competencies</TableCell>
-              <TableCell align='center'>No. Correct Responses</TableCell>
-              <TableCell align='center'>% of Correct Responses</TableCell>
-              <TableCell align='center'>Remarks</TableCell>
+              <TableCell align='center' sx={{fontWeight: 'bold'}}>No.</TableCell>
+              <TableCell sx={{fontWeight: 'bold'}}>Questions</TableCell>
+              <TableCell sx={{fontWeight: 'bold'}}>Competencies</TableCell>
+              <TableCell align='center' sx={{fontWeight: 'bold'}}>No. Correct Responses</TableCell>
+              <TableCell align='center' sx={{fontWeight: 'bold'}}>% of Correct Responses</TableCell>
+              <TableCell align='center' sx={{fontWeight: 'bold'}}>Difficulty Level</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {questions.map(({ question_number, question_text }) => {
-              const correctCount = correctResponses[question_number] || 0;
-              const percentageCorrect = noOfExaminees
-                ? ((correctCount / noOfExaminees) * 100).toFixed(2)
-                : 0;
+            {questions.map((question, index) => {
+              const correctCount = correctResponses[question.question_number] || 0;
+              const percentCorrect = noOfExaminees ? Math.round((correctCount / noOfExaminees) * 100) : 0;
+              const difficultyLevel = getDifficultyLevel(percentCorrect);
 
               return (
-                <TableRow key={question_number}>
-                  <TableCell>{question_number}</TableCell>
-                  <TableCell>{question_text}</TableCell>
-                  <TableCell align='center'>{competencies[question_number - 1] || 'N/A'}</TableCell> {/* Updated */}
+                <TableRow key={question.question_number}>
+                  <TableCell align='center'>{question.question_number}</TableCell>
+                  <TableCell>{question.question_text}</TableCell>
+                  <TableCell align='center'>{competencies[index] || 'N/A'}</TableCell>
                   <TableCell align='center'>{correctCount}</TableCell>
-                  <TableCell align='center'>{percentageCorrect}%</TableCell>
-                  <TableCell align='center'>WALA PAAA</TableCell>
+                  <TableCell align='center'>{percentCorrect}%</TableCell>
+                  <TableCell align='center'>{difficultyLevel}</TableCell>
                 </TableRow>
-
               );
             })}
           </TableBody>
-
         </Table>
       </TableContainer>
     </Box>
