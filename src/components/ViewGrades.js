@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from "react";
-import { Grid, Paper, TextField, Typography, Box } from "@mui/material";
+import { Grid, Paper, TextField, Typography, Box, Button } from "@mui/material";
 import { db } from "../config/firebase";
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, addDoc, collection } from 'firebase/firestore';
 import { useParams } from "react-router-dom";
 
 function ViewGrades() {
-
     const [student, setStudent] = useState({
         grade: '',
-        section: ''
+        section: '',
+        FName: '',
+        MName: '',
+        LName: '',
+        lrn: '',
     });
-    
+
     const [loading, setLoading] = useState(true);
     const { id } = useParams();
+    const [hasGrades, setHasGrades] = useState(false);
 
     const [grades, setGrades] = useState({
         writtenWorks: Array(9).fill(''),
@@ -27,7 +31,7 @@ function ViewGrades() {
     });
 
     useEffect(() => {
-        const fetchStudent = async () => {
+        const fetchStudentData = async () => {
             try {
                 const docRef = doc(db, 'students', id);
                 const docSnap = await getDoc(docRef);
@@ -35,20 +39,34 @@ function ViewGrades() {
                     const studentData = docSnap.data();
                     setStudent({
                         grade: studentData.grade,
-                        section: studentData.section
+                        section: studentData.section,
+                        FName: studentData.FName,
+                        MName: studentData.MName,
+                        LName: studentData.LName,
+                        lrn: studentData.lrn,
                     });
+
+                    // Fetch saved grades if they exist
+                    const gradesDocRef = doc(db, "grades", id);
+                    const gradesDocSnap = await getDoc(gradesDocRef);
+                    if (gradesDocSnap.exists()) {
+                        setGrades(gradesDocSnap.data().grades);
+                        setHighestScores(gradesDocSnap.data().highestScores);
+                        setHasGrades(true);  // Update if grades exist
+                    }
                 } else {
-                    console.error('No such document!');
+                    console.error("No such document!");
                 }
                 setLoading(false);
             } catch (error) {
-                console.error('Error fetching student:', error);
+                console.error("Error fetching student:", error);
                 setLoading(false);
             }
         };
 
-        fetchStudent();
+        fetchStudentData();
     }, [id]);
+
 
     const handleGradeChange = (event, index, category) => {
         const newGrades = { ...grades };
@@ -68,6 +86,29 @@ function ViewGrades() {
             newHighestScores[category][index] = event.target.value;
         }
         setHighestScores(newHighestScores);
+    };
+
+    const handleSave = async () => {
+        try {
+            const gradesData = {
+                studentId: id,
+                FName: student.FName,
+                MName: student.MName,
+                LName: student.LName,
+                section: student.section,
+                lrn: student.lrn,
+                grades: grades,
+                highestScores: highestScores,
+                finalGrade: calculateFinalGrade()
+            };
+
+            await setDoc(doc(db, "grades", id), gradesData);
+            setHasGrades(true);  // Update state to reflect saved status
+            alert("Grades saved successfully!");
+        } catch (error) {
+            console.error("Error saving grades:", error);
+            alert("Failed to save grades.");
+        }
     };
 
     const calculateCategoryTotal = (category) => {
@@ -162,16 +203,13 @@ function ViewGrades() {
         return transmuteGrade(initialGrade);
     };
 
+
     return (
         <Box sx={{ width: '95%', margin: '0 auto', mt: 4 }}>
-            <Typography variant="h5" component="h2" sx={{ textAlign: 'center', mb: 2 }}>First Quarter Grades</Typography>
             <Paper sx={{ padding: 2, borderRadius: 2 }}>
                 <Grid container spacing={1} sx={{ border: '1px solid #ddd', borderRadius: 1 }}>
                     <Grid item xs={12} sx={{ backgroundColor: '#f5f5f5', textAlign: 'center', fontWeight: 'bold', borderBottom: '1px solid #ddd', padding: 1 }}>
                         GRADE & SECTION: {student.grade} - {student.section}
-                    </Grid>
-                    <Grid item xs={12} sx={{ backgroundColor: '#f5f5f5', textAlign: 'center', fontWeight: 'bold', borderBottom: '1px solid #ddd', padding: 1 }}>
-                        SUBJECT: TLE - COOKERY
                     </Grid>
                     <Grid item xs={12} sx={{ backgroundColor: '#f5f5f5', textAlign: 'center', fontWeight: 'bold', borderBottom: '1px solid #ddd', padding: 1 }}>
                         WRITTEN WORKS (20%)
@@ -305,7 +343,7 @@ function ViewGrades() {
                         PERIODICAL TEST (20%)
                     </Grid>
                     <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
-                        <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
+                        <Grid item xs={3} sx={{ textAlign: 'center', padding: 1, mt: 1 }}>
                             <strong>Highest Score Possible</strong>
                         </Grid>
                         <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
@@ -319,7 +357,7 @@ function ViewGrades() {
                                 sx={{ width: '100%' }}
                             />
                         </Grid>
-                        <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
+                        <Grid item xs={3} sx={{ textAlign: 'center', padding: 1, mt: 1 }}>
                             <strong>Score</strong>
                         </Grid>
                         <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
@@ -363,6 +401,13 @@ function ViewGrades() {
                         <Grid item xs={6} sx={{ textAlign: 'center', padding: 1, fontSize: '1.5rem' }}>
                             <strong>{calculateFinalGrade().toFixed(2)}</strong>
                         </Grid>
+                    </Grid>
+
+                    {/* Save Button */}
+                    <Grid item xs={12} sx={{ textAlign: 'center', mt: 1, mb: 2 }}>
+                        <Button variant="contained" color="primary" onClick={handleSave}>
+                            {hasGrades ? "Update Grades" : "Save Grades"}
+                        </Button>
                     </Grid>
                 </Grid>
             </Paper>
