@@ -59,7 +59,7 @@ function AttendanceSummary() {
             console.log('Fetched attendance data:', attendanceData);
 
             const studentData = attendanceData.reduce((acc, record) => {
-                const { id, FName, LName, MName, section, remarks, image, grade } = record;
+                const { id, FName, LName, MName, section, image, grade, attendanceEntries } = record;
                 const key = `${LName} ${FName} ${MName}-${section}`;
 
                 if (!acc[key]) {
@@ -75,9 +75,12 @@ function AttendanceSummary() {
                     };
                 }
 
-                if (remarks === 'late') acc[key].totalLate += 1;
-                if (remarks === 'absent') acc[key].totalAbsent += 1;
-                if (remarks === 'present') acc[key].totalPresent += 1;
+                // Loop through attendanceEntries to update totals
+                attendanceEntries.forEach(entry => {
+                    if (entry.remarks === 'late') acc[key].totalLate += 1;
+                    if (entry.remarks === 'absent') acc[key].totalAbsent += 1;
+                    if (entry.remarks === 'present') acc[key].totalPresent += 1;
+                });
 
                 return acc;
             }, {});
@@ -99,7 +102,6 @@ function AttendanceSummary() {
         fetchSectionData();
     }, []);
 
-
     const handleSectionChange = (event) => {
         setSelectedSection(event.target.value);
     };
@@ -113,8 +115,10 @@ function AttendanceSummary() {
 
     const handleGenerateSF2 = async () => {
         try {
-            console.log('Attendance data at generate time:', attendance); // Debugging: Check attendance data
-            console.log('Student data:', students); // Debugging: Check student data
+            // Log for debugging purposes
+            console.log('Selected section:', selectedSection);
+            console.log('Selected month:', selectedMonth);
+            console.log('Attendance data:', attendance);
 
             if (attendance.length === 0) {
                 console.error('Attendance data is empty.');
@@ -150,35 +154,31 @@ function AttendanceSummary() {
 
             // Extract the start and end year from the school year
             const [startYear, endYear] = schoolYear.split('-').map(year => parseInt(year.trim()));
-
-            // Get the index of the selected month
-            const monthIndex = ['January', 'February', 'March', 'April', 'May', 'June',
-                'July', 'August', 'September', 'October', 'November', 'December']
-                .indexOf(selectedMonth);
+            const monthIndex = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].indexOf(selectedMonth);
 
             if (monthIndex === -1) {
-                throw new Error('Invalid month selected.');
+                alert('Invalid month selected.');
+                return;
             }
 
-            // Adjust the year based on the selected month
-            // If the month is from January to May, it belongs to the next calendar year
             const year = monthIndex <= 4 ? endYear : startYear;
-
             const monthYear = dayjs().year(year).month(monthIndex).startOf('month');
 
-            // Filter attendance records based on the selected month and section
+            // Filter attendance records by month and section
             const filteredAttendance = attendance.filter((entry) => {
                 const attendanceDate = dayjs(entry.date);
-                return attendanceDate.year() === year && attendanceDate.month() === monthIndex && entry.section === selectedSection;
+                return attendanceDate.year() === year &&
+                    attendanceDate.month() === monthIndex &&
+                    (selectedSection === 'All' || entry.section === selectedSection);
             });
 
-            // Filter students who are in the selected section and have attendance records for the selected month
             const studentsWithAttendance = students.filter(student =>
-                student.section === selectedSection && filteredAttendance.some(entry => entry.studentId === student.id)
+                (selectedSection === 'All' || student.section === selectedSection) &&
+                filteredAttendance.some(entry => entry.studentId === student.id)
             );
 
+            // Additional check for students with attendance
             if (studentsWithAttendance.length === 0) {
-                console.warn('No students found with attendance for the selected month and section.');
                 alert('No students found with attendance for the selected month and section.');
                 return;
             }
@@ -236,8 +236,7 @@ function AttendanceSummary() {
                         const row = worksheet.getRow(startRowForAttendance + rowIndex);
                         const cell = row.getCell(startColumnForDates + columnIndex);
 
-                        // Set cell value to '✔' only if attendance is explicitly present, otherwise leave blank
-                        if (attendanceRecord) {
+                        if (attendanceRecord && attendanceRecord.remarks) {
                             const remark = attendanceRecord.remarks.toLowerCase();
                             if (remark === 'absent') {
                                 cell.value = 'X'; // Absent
@@ -249,8 +248,9 @@ function AttendanceSummary() {
                                 cell.value = '✔'; // Present
                             }
                         } else {
-                            cell.value = ''; // Empty for dates with no records
+                            cell.value = ''; // Empty for dates with no records or invalid data
                         }
+
 
                         columnIndex++;
                     }
