@@ -230,7 +230,7 @@ function Section() {
                             color="primary"
                             startIcon={<MdAdd />}
                             sx={{
-                                mt: 1,
+                                flexShrink: 0,
                                 '&:hover': {
                                     backgroundColor: 'primary.main',  // Change the background color on hover
                                     color: 'white',                   // Change the text color on hover
