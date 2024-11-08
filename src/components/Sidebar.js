@@ -75,8 +75,8 @@ function Sidebar() {
   };
 
   const defaultMenus = [
-    //{ title: "Dashboard", icon: <MdDashboard size={16} />, link: "/" },
-    { title: "Sections", icon: <SiGoogleclassroom size={16} />, link: "/" },
+    { title: "Dashboard", icon: <MdDashboard size={16} />, link: "/" },
+    { title: "Sections", icon: <SiGoogleclassroom size={16} />, link: "/sections" },
     { title: "Attendance Summary", icon: <BsPersonSquare size={16} />, link: "/attendance-summary" },
     { title: "Item Analysis", icon: <PiExam size={16} />, link: "/item-analysis" },
     { title: "Create Test Questions", icon: <FaClipboardQuestion size={16} />, link: "/create-questions" },

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../config/firebase';
 import { Link, useNavigate } from 'react-router-dom';
-import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { Box, Grid, Typography, TextField, CircularProgress, Paper, Avatar, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, useMediaQuery, useTheme, IconButton } from '@mui/material';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import Swal from 'sweetalert2';
@@ -32,6 +32,21 @@ function Teachers() {
         };
 
         fetchTeachers();
+    }, []);
+
+    // Real-time listener for teachers-info collection
+    useEffect(() => {
+        const unsubscribe = onSnapshot(collection(db, 'teachers-info'), (snapshot) => {
+            const teachersList = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+            setTeachers(teachersList);
+            setLoading(false);
+        });
+
+        // Clean up the listener on component unmount
+        return () => unsubscribe();
     }, []);
 
     const handleDelete = async (teacherId) => {

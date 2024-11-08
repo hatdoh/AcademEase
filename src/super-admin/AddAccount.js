@@ -98,7 +98,7 @@ function AddAccount() {
             icon: 'success',
             confirmButtonColor: '#3085d6'
           }).then(() => {
-            navigate('/');
+            navigate('/teachers');
           });
         } catch (error) {
           console.error('Failed to create account:', error.message);

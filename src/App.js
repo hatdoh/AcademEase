@@ -23,6 +23,8 @@ import './index.css';
 import ViewGrades from './components/ViewGrades';
 import Teachers from './super-admin/Teachers';
 import TeacherDetails from './super-admin/TeacherDetails';
+
+
 function App() {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
@@ -54,8 +56,11 @@ function App() {
         <Routes>
           <Route path="/login" element={<LoginForm />} />
           <Route path="/signup" element={<SignupForm />} />
-          <Route path="/" element={<PrivateRoute authenticated={authenticated} element={<Sections />} />} />
-          {/*<Route path="/sections" element={<PrivateRoute authenticated={authenticated} element={<Sections />} />} />*/}
+          <Route path="/sections" element={<PrivateRoute authenticated={authenticated} element={<Sections />} />} />
+          
+          <Route path="/" element={<PrivateRoute authenticated={authenticated} element={<Dashboard />} />} />
+
+
           <Route path="/add-section" element={<PrivateRoute authenticated={authenticated} element={<AddSection />} />} />
           <Route path="/school-form" element={<PrivateRoute authenticated={authenticated} element={<SchoolForm />} />} />
           <Route path="/profile/:id" element={<StudentProfile />} />

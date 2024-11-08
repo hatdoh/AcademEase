@@ -5,8 +5,10 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { getCurrentUser, isSuperAdminLoggedIn } from '../utils/Authentication'; // Import added
-import { Grid, Typography, TextField, Select, MenuItem, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TableSortLabel, Paper, Box, Avatar, useTheme, useMediaQuery } from '@mui/material';
-
+import {
+    Grid, Typography, TextField, Button, Table, TableBody, TableCell, TableContainer,
+    TableHead, TableRow, TableSortLabel, Paper, Box, Avatar, useTheme, useMediaQuery
+} from '@mui/material';
 function Section() {
     const [selectedSection, setSelectedSection] = useState('All');
     const [sectionList, setSectionList] = useState(['All']);
@@ -36,7 +38,7 @@ function Section() {
                 setIsSuperAdmin(false);
             }
         });
-    
+
         return () => unsubscribe();
     }, []);
 
@@ -55,7 +57,7 @@ function Section() {
                         const sectionsQuery = query(collection(db, 'sections'), where('teacherUID', '==', user.uid));
                         const sectionsSnapshot = await getDocs(sectionsQuery);
                         sections = sectionsSnapshot.docs.map(doc => doc.data().section);
-                        setSectionList(['All', ...sections]);
+                        setSectionList([...sections]);
                     }
 
                     // Fetch students
@@ -87,10 +89,9 @@ function Section() {
         }
     }, [user, isSuperAdmin]);
 
-    const handleSectionChange = (event) => {
-        setSelectedSection(event.target.value);
+    const handleSectionClick = (section) => {
+        setSelectedSection(section);
     };
-
     const handleSort = (columnName) => {
         if (sortColumn === columnName) {
             setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -140,7 +141,7 @@ function Section() {
     const getFullName = (student) => {
         return `${student.LName}, ${student.FName} ${student.MName}`;
     };
-    
+
 
     return (
         <Box sx={{ padding: 2 }}>
@@ -152,7 +153,7 @@ function Section() {
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
                     <TextField
-                        label="Acad Year"
+                        label="Search Acad Year"
                         variant="outlined"
                         fullWidth
                         value={searchAcadYear}
@@ -172,7 +173,7 @@ function Section() {
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
                     <TextField
-                        label="Grade"
+                        label="Search Grade"
                         variant="outlined"
                         fullWidth
                         value={searchGrade}
@@ -192,7 +193,7 @@ function Section() {
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
                     <TextField
-                        label="Section"
+                        label="Search Section"
                         variant="outlined"
                         fullWidth
                         value={searchSection}
@@ -210,39 +211,36 @@ function Section() {
                         }}
                     />
                 </Grid>
-                <Grid item xs={12} sm={6} md={4}>
-                    <Select
-                        value={selectedSection}
-                        onChange={handleSectionChange}
-                        fullWidth
-                        variant="outlined"
-                        sx={{
-                            mt: isMobile ? 0 : 2,
-                            backgroundColor: 'white',
-                            borderRadius: 1,
-                            '& .MuiOutlinedInput-notchedOutline': {
-                                borderColor: '#818181',
-                            },
-                        }}
-                    >
+                <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                         {sectionList.map((section) => (
-                            <MenuItem key={section} value={section}>
+                            <Button
+                                key={section}
+                                variant={selectedSection === section ? 'contained' : 'contained'}
+                                onClick={() => handleSectionClick(section)}
+                                sx={{ flexShrink: 0 }}
+                            >
                                 {section === 'All' ? 'All Sections' : `Section ${section}`}
-                            </MenuItem>
+                            </Button>
                         ))}
-                    </Select>
-                </Grid>
-                <Grid item xs={12} sm={6} md={4}>
-                    <Button
-                        component={Link}
-                        to="/add-section"
-                        variant="contained"
-                        color="primary"
-                        startIcon={<MdAdd />}
-                        sx={{ mt: isMobile ? 1 : 3 }}
-                    >
-                        Add Section
-                    </Button>
+                        <Button
+                            component={Link}
+                            to="/add-section"
+                            variant="outlined"
+                            color="primary"
+                            startIcon={<MdAdd />}
+                            sx={{
+                                mt: 1,
+                                '&:hover': {
+                                    backgroundColor: 'primary.main',  // Change the background color on hover
+                                    color: 'white',                   // Change the text color on hover
+                                }
+                            }}
+                        >
+                            Add Section
+                        </Button>
+
+                    </Box>
                 </Grid>
             </Grid>
 
