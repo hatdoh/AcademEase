@@ -80,6 +80,7 @@ function Sidebar() {
     { title: "Attendance Summary", icon: <BsPersonSquare size={16} />, link: "/attendance-summary" },
     { title: "Item Analysis", icon: <PiExam size={16} />, link: "/item-analysis" },
     { title: "Create Test Questions", icon: <FaClipboardQuestion size={16} />, link: "/create-questions" },
+    { title: "Register Students", icon: <PiExam size={16} />, link: "/register-students" },
     { title: "Admin", icon: <GrUserAdmin size={16} />, link: "/admin-details" },
   ];
 

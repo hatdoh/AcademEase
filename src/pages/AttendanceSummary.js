@@ -167,9 +167,11 @@ function AttendanceSummary() {
             // Filter attendance records by month and section
             const filteredAttendance = attendance.filter((entry) => {
                 const attendanceDate = dayjs(entry.date);
-                return attendanceDate.year() === year &&
+                return (
+                    attendanceDate.year() === year &&
                     attendanceDate.month() === monthIndex &&
-                    (selectedSection === 'All' || entry.section === selectedSection);
+                    (selectedSection === 'All' || entry.section === selectedSection)
+                );
             });
 
             const studentsWithAttendance = students.filter(student =>
@@ -230,8 +232,9 @@ function AttendanceSummary() {
                     if (date.day() !== 0 && date.day() !== 6) { // Exclude weekends
 
                         const attendanceRecord = filteredAttendance.find(
-                            (entry) => entry.studentId === student.id && dayjs(entry.date).date() === day
+                            (entry) => entry.studentId === student.id && dayjs(entry.date).isSame(date, 'day')
                         );
+
 
                         const row = worksheet.getRow(startRowForAttendance + rowIndex);
                         const cell = row.getCell(startColumnForDates + columnIndex);
@@ -247,8 +250,6 @@ function AttendanceSummary() {
                             } else if (remark === 'present') {
                                 cell.value = '✔'; // Present
                             }
-                        } else {
-                            cell.value = ''; // Empty for dates with no records or invalid data
                         }
 
 

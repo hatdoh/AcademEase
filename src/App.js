@@ -23,6 +23,7 @@ import './index.css';
 import ViewGrades from './components/ViewGrades';
 import Teachers from './super-admin/Teachers';
 import TeacherDetails from './super-admin/TeacherDetails';
+import RegisterStudents from './pages/RegisterStudents';
 
 
 function App() {
@@ -68,6 +69,7 @@ function App() {
           <Route path="/view-attendance-summary/:id" element={<ViewAttendanceSummary />} />
           <Route path="/attendance-summary" element={<PrivateRoute authenticated={authenticated} element={<AttendanceSummary />} />} />
           <Route path="/create-questions" element={<PrivateRoute authenticated={authenticated} element={<CreateQuestions />} />} />
+          <Route path="/register-students" element={<PrivateRoute authenticated={authenticated} element={<RegisterStudents />} />} />
           <Route path="/item-analysis" element={<PrivateRoute authenticated={authenticated} element={<ItemAnalysis />} />} />
           <Route path="/sf2" element={<PrivateRoute authenticated={authenticated} element={<SchoolFormTwo />} />} />
           <Route path="/account" element={<PrivateRoute authenticated={authenticated} element={<Admin />} />} />

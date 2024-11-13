@@ -7,7 +7,7 @@ import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead
 function ViewAttendanceSummary() {
     const { id } = useParams();
     const [attendance, setAttendance] = useState([]);
-    
+
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -17,7 +17,10 @@ function ViewAttendanceSummary() {
                 const attendanceCollection = collection(db, 'attendance');
                 const q = query(attendanceCollection, where('studentId', '==', id));
                 const snapshot = await getDocs(q);
-                const attendanceList = snapshot.docs.map(doc => doc.data());
+
+                // Flatten the attendance entries across documents
+                const attendanceList = snapshot.docs.flatMap(doc => doc.data().attendanceEntries || []);
+
                 setAttendance(attendanceList);
             } catch (error) {
                 console.error('Error fetching attendance:', error);
@@ -28,8 +31,9 @@ function ViewAttendanceSummary() {
     }, [id]);
 
     const countStatus = (status) => {
-        return attendance.filter(record => record.remarks.toLowerCase() === status).length;
+        return attendance.filter(record => record.remarks?.toLowerCase() === status).length;
     };
+
 
     const presentCount = countStatus('present');
     const lateCount = countStatus('late');
@@ -37,17 +41,17 @@ function ViewAttendanceSummary() {
 
     return (
         <Box sx={{ ml: { xs: 0, md: 0 }, p: isMobile ? 2 : 4 }}>
-            <Typography variant={isMobile ? 'h5' : 'h4'} component="h2" fontWeight="bold" mb={2} sx={{mt: isMobile ? 6 : 0}}>
+            <Typography variant={isMobile ? 'h5' : 'h4'} component="h2" fontWeight="bold" mb={2} sx={{ mt: isMobile ? 6 : 0 }}>
                 Attendance Summary
             </Typography>
             <TableContainer component={Paper} sx={{ boxShadow: 3 }}>
                 <Table>
                     <TableHead>
                         <TableRow>
-                            <TableCell align="left" sx={{ fontWeight: 'bold'}}>
+                            <TableCell align="left" sx={{ fontWeight: 'bold' }}>
                                 Date
                             </TableCell>
-                            <TableCell align="left" sx={{ fontWeight: 'bold'}}>
+                            <TableCell align="left" sx={{ fontWeight: 'bold' }}>
                                 Remarks
                             </TableCell>
                         </TableRow>
@@ -63,10 +67,10 @@ function ViewAttendanceSummary() {
                     <TableRow>
                         <TableCell colSpan={2} sx={{ borderBottom: 'none' }}>
                             <Box sx={{ display: 'flex', mt: 2 }}>
-                                <Typography variant="body1" sx={{mr: 2}}>
+                                <Typography variant="body1" sx={{ mr: 2 }}>
                                     <strong>Present:</strong> {presentCount}
                                 </Typography>
-                                <Typography variant="body1" sx={{mr: 2}}>
+                                <Typography variant="body1" sx={{ mr: 2 }}>
                                     <strong>Late:</strong> {lateCount}
                                 </Typography>
                                 <Typography variant="body1">
