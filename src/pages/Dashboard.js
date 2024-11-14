@@ -15,7 +15,7 @@ function convertTo12HourFormat(timeString) {
 
 function Dashboard() {
     const [dateTime, setDateTime] = useState(new Date());
-    const [attendanceData, setAttendanceData] = useState({ present: [], late: [], absent: [] });
+    const [attendanceData, setAttendanceData] = useState({ Present: [], Late: [], Absent: [] });
     const [currentSection, setCurrentSection] = useState(null); // State to hold dynamic section data
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -81,7 +81,7 @@ function Dashboard() {
 
         const q = query(collection(db, 'attendance'), where('section', '==', currentSection.section));
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
-            const data = { present: [], late: [], absent: [] };
+            const data = { Present: [], Late: [], Absent: [] };
 
             querySnapshot.forEach((doc) => {
                 const record = doc.data();
@@ -102,14 +102,14 @@ function Dashboard() {
                         };
 
                         switch (entry.remarks) {
-                            case 'present':
-                                data.present.push(studentData);
+                            case 'Present':
+                                data.Present.push(studentData);
                                 break;
-                            case 'late':
-                                data.late.push(studentData);
+                            case 'Late':
+                                data.Late.push(studentData);
                                 break;
-                            case 'absent':
-                                data.absent.push(studentData);
+                            case 'Absent':
+                                data.Absent.push(studentData);
                                 break;
                             default:
                                 break;
@@ -136,9 +136,9 @@ function Dashboard() {
         hour12: true
     });
 
-    const presentCount = attendanceData.present.length;
-    const lateCount = attendanceData.late.length;
-    const absentCount = attendanceData.absent.length;
+    const presentCount = attendanceData.Present.length;
+    const lateCount = attendanceData.Late.length;
+    const absentCount = attendanceData.Absent.length;
 
     return (
         <Box sx={{ flexGrow: 4, mt: 7, ml: { sm: '220px', md: '32px' }, pr: { xs: 2, sm: 3, md: 4 }, pl: { xs: 2, sm: 3, md: 4 }, overflowX: 'hidden' }}>
@@ -161,7 +161,7 @@ function Dashboard() {
                 <Box sx={{ overflowX: 'auto', maxHeight: '60vh' }}>
                     {isMobile ? (
                         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                            {['present', 'late', 'absent'].map((status) => (
+                            {['Present', 'Late', 'Absent'].map((status) => (
                                 <Box key={status} sx={{ mb: 2 }}>
                                     <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                                         {`${status.charAt(0).toUpperCase() + status.slice(1)} (${attendanceData[status].length})`}
@@ -190,7 +190,7 @@ function Dashboard() {
                             <TableBody>
                                 <TableRow>
                                     <TableCell sx={{ overflowY: 'auto', maxHeight: '60vh', verticalAlign: 'top' }}>
-                                        {attendanceData.present.map(student => (
+                                        {attendanceData.Present.map(student => (
                                             <Box key={student.id} display="flex" alignItems="center" p={1} sx={{ cursor: 'pointer', '&:hover': { backgroundColor: '#f5f5f5' }, borderRadius: 1 }}>
                                                 <Avatar src={student.image} alt={student.name} sx={{ width: 60, height: 60, mr: 2 }} />
                                                 <Link to={`/profile/${student.id}`} style={{ textDecoration: 'none', color: '#1e88e5' }}>
@@ -200,7 +200,7 @@ function Dashboard() {
                                         ))}
                                     </TableCell>
                                     <TableCell sx={{ overflowY: 'auto', maxHeight: '60vh', verticalAlign: 'top' }}>
-                                        {attendanceData.late.map(student => (
+                                        {attendanceData.Late.map(student => (
                                             <Box key={student.id} display="flex" alignItems="center" p={1} sx={{ cursor: 'pointer', '&:hover': { backgroundColor: '#f5f5f5' }, borderRadius: 1 }}>
                                                 <Avatar src={student.image} alt={student.name} sx={{ width: 60, height: 60, mr: 2 }} />
                                                 <Link to={`/profile/${student.id}`} style={{ textDecoration: 'none', color: '#1e88e5' }}>
@@ -210,7 +210,7 @@ function Dashboard() {
                                         ))}
                                     </TableCell>
                                     <TableCell sx={{ overflowY: 'auto', maxHeight: '60vh', verticalAlign: 'top' }}>
-                                        {attendanceData.absent.map(student => (
+                                        {attendanceData.Absent.map(student => (
                                             <Box key={student.id} display="flex" alignItems="center" p={1} sx={{ cursor: 'pointer', '&:hover': { backgroundColor: '#f5f5f5' }, borderRadius: 1 }}>
                                                 <Avatar src={student.image} alt={student.name} sx={{ width: 60, height: 60, mr: 2 }} />
                                                 <Link to={`/profile/${student.id}`} style={{ textDecoration: 'none', color: '#1e88e5' }}>

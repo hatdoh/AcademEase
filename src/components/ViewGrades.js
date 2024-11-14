@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Grid, Paper, TextField, Typography, Box, Button } from "@mui/material";
+import { Grid, Paper, TextField, Typography, Box, Button, Tabs, Tab } from "@mui/material";
 import { db } from "../config/firebase";
-import { doc, getDoc, setDoc, addDoc, collection } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { useParams } from "react-router-dom";
 
 function ViewGrades() {
@@ -17,56 +17,68 @@ function ViewGrades() {
     const [loading, setLoading] = useState(true);
     const { id } = useParams();
     const [hasGrades, setHasGrades] = useState(false);
+    const [activeQuarter, setActiveQuarter] = useState(0); // Track which tab (quarter) is selected
 
+    const quarters = ['First Quarter', 'Second Quarter', 'Third Quarter', 'Fourth Quarter'];
+
+    // Separate state for each quarter's grades
     const [grades, setGrades] = useState({
-        writtenWorks: Array(9).fill(''),
-        performanceTasks: Array(9).fill(''),
-        periodicalTest: '',
+        0: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' }, // First Quarter
+        1: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' }, // Second Quarter
+        2: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' }, // Third Quarter
+        3: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' }, // Fourth Quarter
     });
 
+    // Separate state for each quarter's highest scores
     const [highestScores, setHighestScores] = useState({
-        writtenWorks: Array(9).fill(''),
-        performanceTasks: Array(9).fill(''),
-        periodicalTest: '',
+        0: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' },
+        1: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' },
+        2: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' },
+        3: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' },
     });
 
     useEffect(() => {
         const fetchStudentData = async () => {
             try {
-                const docRef = doc(db, 'students', id);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    const studentData = docSnap.data();
-                    setStudent({
-                        grade: studentData.grade,
-                        section: studentData.section,
-                        FName: studentData.FName,
-                        MName: studentData.MName,
-                        LName: studentData.LName,
-                        lrn: studentData.lrn,
-                    });
-
-                    // Fetch saved grades if they exist
-                    const gradesDocRef = doc(db, "grades", id);
-                    const gradesDocSnap = await getDoc(gradesDocRef);
-                    if (gradesDocSnap.exists()) {
-                        setGrades(gradesDocSnap.data().grades);
-                        setHighestScores(gradesDocSnap.data().highestScores);
-                        setHasGrades(true);  // Update if grades exist
-                    }
+                const studentDoc = await getDoc(doc(db, 'students', id));
+                if (studentDoc.exists()) {
+                    setStudent(studentDoc.data());
                 } else {
-                    console.error("No such document!");
+                    console.error("No student document found");
                 }
-                setLoading(false);
             } catch (error) {
-                console.error("Error fetching student:", error);
-                setLoading(false);
+                console.error("Error fetching student data:", error);
+            }
+        };
+
+        const fetchPeriodicalTestScore = async () => {
+            try {
+                const scoresQuery = query(collection(db, "scores"), where("student_info.student_id", "==", id));
+                const querySnapshot = await getDocs(scoresQuery);
+                if (!querySnapshot.empty) {
+                    const scoreData = querySnapshot.docs[0].data();
+                    const totalItems = scoreData.scores.total_correct + scoreData.scores.total_incorrect;
+                    setGrades(prevGrades => ({
+                        ...prevGrades,
+                        periodicalTest: scoreData.scores.total_correct
+                    }));
+                    setHighestScores(prevHighestScores => ({
+                        ...prevHighestScores,
+                        periodicalTest: totalItems
+                    }));
+                }
+            } catch (error) {
+                console.error("Error fetching periodical test score:", error);
             }
         };
 
         fetchStudentData();
+        fetchPeriodicalTestScore();
     }, [id]);
 
+    const handleTabChange = (event, newValue) => {
+        setActiveQuarter(newValue);
+    };
 
     const handleGradeChange = (event, index, category) => {
         const newGrades = { ...grades };
@@ -103,7 +115,6 @@ function ViewGrades() {
             };
 
             await setDoc(doc(db, "grades", id), gradesData);
-            setHasGrades(true);  // Update state to reflect saved status
             alert("Grades saved successfully!");
         } catch (error) {
             console.error("Error saving grades:", error);
@@ -204,214 +215,223 @@ function ViewGrades() {
     };
 
 
+
     return (
         <Box sx={{ width: '95%', margin: '0 auto', mt: 4 }}>
             <Paper sx={{ padding: 2, borderRadius: 2 }}>
-                <Grid container spacing={1} sx={{ border: '1px solid #ddd', borderRadius: 1 }}>
-                    <Grid item xs={12} sx={{ backgroundColor: '#f5f5f5', textAlign: 'center', fontWeight: 'bold', borderBottom: '1px solid #ddd', padding: 1 }}>
-                        GRADE & SECTION: {student.grade} - {student.section}
-                    </Grid>
-                    <Grid item xs={12} sx={{ backgroundColor: '#f5f5f5', textAlign: 'center', fontWeight: 'bold', borderBottom: '1px solid #ddd', padding: 1 }}>
-                        WRITTEN WORKS (20%)
-                    </Grid>
-                    <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
-                        {Array.from({ length: 9 }, (_, i) => (
-                            <Grid item xs={1} key={i} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
-                                WW {i + 1}
+                <Tabs value={activeQuarter} onChange={handleTabChange} centered>
+                    {quarters.map((quarter, index) => (
+                        <Tab key={index} label={quarter} />
+                    ))}
+                </Tabs>
+
+                {quarters.map((quarter, index) => (
+                    <Box
+                        key={index}
+                        hidden={activeQuarter !== index}
+                        sx={{ mt: 2 }}
+                    >
+                        {/* Reuse your existing layout here */}
+                        <Grid container spacing={1} sx={{ border: '1px solid #ddd', borderRadius: 1 }}>
+                            <Grid item xs={12} sx={{ backgroundColor: '#f5f5f5', textAlign: 'center', fontWeight: 'bold', borderBottom: '1px solid #ddd', padding: 1 }}>
+                                {quarter}
                             </Grid>
-                        ))}
-                        <Grid item xs={1} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
-                            <strong>Total</strong>
-                        </Grid>
-                        <Grid item xs={1} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
-                            <strong>PS</strong>
-                        </Grid>
-                        <Grid item xs={1} sx={{ textAlign: 'center', padding: 1 }}>
-                            <strong>WS</strong>
-                        </Grid>
-                    </Grid>
-
-                    <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
-                        {highestScores.writtenWorks.map((score, i) => (
-                            <Grid item xs={1} key={i} sx={{ borderRight: '1px solid #ddd', padding: 1 }}>
-                                <TextField
-                                    value={score}
-                                    onChange={(event) => handleHighestScoreChange(event, i, 'writtenWorks')}
-                                    variant="outlined"
-                                    size="small"
-                                    type="number"
-                                    inputProps={{ min: 0, max: 100 }}
-                                    sx={{ width: '100%' }}
-                                />
+                            <Grid item xs={12} sx={{ backgroundColor: '#f5f5f5', textAlign: 'center', fontWeight: 'bold', borderBottom: '1px solid #ddd', padding: 1 }}>
+                                GRADE & SECTION: {student.grade} - {student.section}
                             </Grid>
-                        ))}
-                        <Grid item xs={1} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
-                            <strong>{calculateCategoryTotalHighest('writtenWorks')}</strong>
-                        </Grid>
-                    </Grid>
 
-                    <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
-                        {grades.writtenWorks.map((grade, i) => (
-                            <Grid item xs={1} key={i} sx={{ borderRight: '1px solid #ddd', padding: 1 }}>
-                                <TextField
-                                    value={grade}
-                                    onChange={(event) => handleGradeChange(event, i, 'writtenWorks')}
-                                    variant="outlined"
-                                    size="small"
-                                    type="number"
-                                    inputProps={{ min: 0, max: 100 }}
-                                    sx={{ width: '100%' }}
-                                />
+                            <Grid item xs={12} sx={{ backgroundColor: '#f5f5f5', textAlign: 'center', fontWeight: 'bold', borderBottom: '1px solid #ddd', padding: 1 }}>
+                                WRITTEN WORKS (20%)
                             </Grid>
-                        ))}
-                        <Grid item xs={1} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
-                            <strong>{calculateCategoryTotal('writtenWorks')}</strong>
-                        </Grid>
-                        <Grid item xs={1} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
-                            <strong>{calculatePercentageScore('writtenWorks').toFixed(2)}%</strong>
-                        </Grid>
-                        <Grid item xs={1} sx={{ textAlign: 'center', padding: 1 }}>
-                            <strong>{calculateWeightedScore('writtenWorks', 20).toFixed(2)}%</strong>
-                        </Grid>
-                    </Grid>
-
-                    <Grid item xs={12} sx={{ backgroundColor: '#f5f5f5', textAlign: 'center', fontWeight: 'bold', borderBottom: '1px solid #ddd', padding: 1 }}>
-                        PERFORMANCE TASKS (60%)
-                    </Grid>
-                    <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
-                        {Array.from({ length: 9 }, (_, i) => (
-                            <Grid item xs={1} key={i} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
-                                PT {i + 1}
+                            <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
+                                {Array.from({ length: 9 }, (_, i) => (
+                                    <Grid item xs={1} key={i} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
+                                        WW {i + 1}
+                                    </Grid>
+                                ))}
+                                <Grid item xs={1} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
+                                    <strong>Total</strong>
+                                </Grid>
+                                <Grid item xs={1} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
+                                    <strong>PS</strong>
+                                </Grid>
+                                <Grid item xs={1} sx={{ textAlign: 'center', padding: 1 }}>
+                                    <strong>WS</strong>
+                                </Grid>
                             </Grid>
-                        ))}
-                        <Grid item xs={1} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
-                            <strong>Total</strong>
-                        </Grid>
-                        <Grid item xs={1} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
-                            <strong>PS</strong>
-                        </Grid>
-                        <Grid item xs={1} sx={{ textAlign: 'center', padding: 1 }}>
-                            <strong>WS</strong>
-                        </Grid>
-                    </Grid>
-
-                    <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
-                        {highestScores.performanceTasks.map((score, i) => (
-                            <Grid item xs={1} key={i} sx={{ borderRight: '1px solid #ddd', padding: 1 }}>
-                                <TextField
-                                    value={score}
-                                    onChange={(event) => handleHighestScoreChange(event, i, 'performanceTasks')}
-                                    variant="outlined"
-                                    size="small"
-                                    type="number"
-                                    inputProps={{ min: 0, max: 100 }}
-                                    sx={{ width: '100%' }}
-                                />
+                            <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
+                                {(highestScores[activeQuarter]?.writtenWorks || []).map((score, i) => (
+                                    <Grid item xs={1} key={i} sx={{ borderRight: '1px solid #ddd', padding: 1 }}>
+                                        <TextField
+                                            value={score}
+                                            onChange={(event) => handleHighestScoreChange(event, i, 'writtenWorks')}
+                                            variant="outlined"
+                                            size="small"
+                                            type="number"
+                                            inputProps={{ min: 0, max: 100 }}
+                                            sx={{ width: '100%' }}
+                                        />
+                                    </Grid>
+                                ))}
+                                <Grid item xs={1} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
+                                    <strong>{calculateCategoryTotalHighest('writtenWorks')}</strong>
+                                </Grid>
                             </Grid>
-                        ))}
-                        <Grid item xs={1} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
-                            <strong>{calculateCategoryTotalHighest('performanceTasks')}</strong>
-                        </Grid>
-                    </Grid>
 
-                    <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
-                        {grades.performanceTasks.map((grade, i) => (
-                            <Grid item xs={1} key={i} sx={{ borderRight: '1px solid #ddd', padding: 1 }}>
-                                <TextField
-                                    value={grade}
-                                    onChange={(event) => handleGradeChange(event, i, 'performanceTasks')}
-                                    variant="outlined"
-                                    size="small"
-                                    type="number"
-                                    inputProps={{ min: 0, max: 100 }}
-                                    sx={{ width: '100%' }}
-                                />
+                            <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
+                                {(grades[activeQuarter]?.writtenWorks || []).map((grade, i) => (
+                                    <Grid item xs={1} key={i} sx={{ borderRight: '1px solid #ddd', padding: 1 }}>
+                                        <TextField
+                                            value={grade}
+                                            onChange={(event) => handleGradeChange(event, i, 'writtenWorks')}
+                                            variant="outlined"
+                                            size="small"
+                                            type="number"
+                                            inputProps={{ min: 0, max: 100 }}
+                                            sx={{ width: '100%' }}
+                                        />
+                                    </Grid>
+                                ))}
+                                <Grid item xs={1} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
+                                    <strong>{calculateCategoryTotal('writtenWorks')}</strong>
+                                </Grid>
                             </Grid>
-                        ))}
-                        <Grid item xs={1} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
-                            <strong>{calculateCategoryTotal('performanceTasks')}</strong>
-                        </Grid>
-                        <Grid item xs={1} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
-                            <strong>{calculatePercentageScore('performanceTasks').toFixed(2)}%</strong>
-                        </Grid>
-                        <Grid item xs={1} sx={{ textAlign: 'center', padding: 1 }}>
-                            <strong>{calculateWeightedScore('performanceTasks', 60).toFixed(2)}%</strong>
-                        </Grid>
-                    </Grid>
 
-                    <Grid item xs={12} sx={{ backgroundColor: '#f5f5f5', textAlign: 'center', fontWeight: 'bold', borderBottom: '1px solid #ddd', padding: 1 }}>
-                        PERIODICAL TEST (20%)
-                    </Grid>
-                    <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
-                        <Grid item xs={3} sx={{ textAlign: 'center', padding: 1, mt: 1 }}>
-                            <strong>Highest Score Possible</strong>
-                        </Grid>
-                        <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
-                            <TextField
-                                value={highestScores.periodicalTest}
-                                onChange={(event) => handleHighestScoreChange(event, 0, 'periodicalTest')}
-                                variant="outlined"
-                                size="small"
-                                type="number"
-                                inputProps={{ min: 0, max: 100 }}
-                                sx={{ width: '100%' }}
-                            />
-                        </Grid>
-                        <Grid item xs={3} sx={{ textAlign: 'center', padding: 1, mt: 1 }}>
-                            <strong>Score</strong>
-                        </Grid>
-                        <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
-                            <TextField
-                                value={grades.periodicalTest}
-                                onChange={(event) => handleGradeChange(event, 0, 'periodicalTest')}
-                                variant="outlined"
-                                size="small"
-                                type="number"
-                                inputProps={{ min: 0, max: 100 }}
-                                sx={{ width: '100%' }}
-                            />
-                        </Grid>
-                    </Grid>
-                    <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
-                        <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
-                            <strong>PS</strong>
-                        </Grid>
-                        <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
-                            <strong>{calculatePercentageScore('periodicalTest').toFixed(2)}%</strong>
-                        </Grid>
-                        <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
-                            <strong>WS</strong>
-                        </Grid>
-                        <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
-                            <strong>{calculateWeightedScore('periodicalTest', 20).toFixed(2)}%</strong>
-                        </Grid>
-                    </Grid>
-                    <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
-                        <Grid item xs={6} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1, fontSize: '1.25rem' }}>
-                            <strong>Inital Grade</strong>
-                        </Grid>
-                        <Grid item xs={6} sx={{ textAlign: 'center', padding: 1, fontSize: '1.25rem' }}>
-                            <strong>{calculateInitialGrade().toFixed(2)}</strong>
-                        </Grid>
-                    </Grid>
-                    <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
-                        <Grid item xs={6} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1, fontSize: '1.5rem' }}>
-                            <strong>Final Grade</strong>
-                        </Grid>
-                        <Grid item xs={6} sx={{ textAlign: 'center', padding: 1, fontSize: '1.5rem' }}>
-                            <strong>{calculateFinalGrade().toFixed(2)}</strong>
-                        </Grid>
-                    </Grid>
 
-                    {/* Save Button */}
-                    <Grid item xs={12} sx={{ textAlign: 'center', mt: 1, mb: 2 }}>
-                        <Button variant="contained" color="primary" onClick={handleSave}>
-                            {hasGrades ? "Update Grades" : "Save Grades"}
-                        </Button>
-                    </Grid>
-                </Grid>
+                            <Grid item xs={12} sx={{ backgroundColor: '#f5f5f5', textAlign: 'center', fontWeight: 'bold', borderBottom: '1px solid #ddd', padding: 1 }}>
+                                PERFORMANCE TASKS (60%)
+                            </Grid>
+                            <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
+                                {Array.from({ length: 9 }, (_, i) => (
+                                    <Grid item xs={1} key={i} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
+                                        PT {i + 1}
+                                    </Grid>
+                                ))}
+                                <Grid item xs={1} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
+                                    <strong>Total</strong>
+                                </Grid>
+                                <Grid item xs={1} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
+                                    <strong>PS</strong>
+                                </Grid>
+                                <Grid item xs={1} sx={{ textAlign: 'center', padding: 1 }}>
+                                    <strong>WS</strong>
+                                </Grid>
+                            </Grid>
+
+                            <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
+                                {(highestScores[activeQuarter]?.performanceTasks || []).map((score, i) => (
+                                    <Grid item xs={1} key={i} sx={{ borderRight: '1px solid #ddd', padding: 1 }}>
+                                        <TextField
+                                            value={score}
+                                            onChange={(event) => handleHighestScoreChange(event, i, 'performanceTasks')}
+                                            variant="outlined"
+                                            size="small"
+                                            type="number"
+                                            inputProps={{ min: 0, max: 100 }}
+                                            sx={{ width: '100%' }}
+                                        />
+                                    </Grid>
+                                ))}
+                                <Grid item xs={1} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
+                                    <strong>{calculateCategoryTotalHighest('performanceTasks')}</strong>
+                                </Grid>
+                            </Grid>
+
+                            <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
+                                {(grades[activeQuarter]?.performanceTasks || []).map((grade, i) => (
+                                    <Grid item xs={1} key={i} sx={{ borderRight: '1px solid #ddd', padding: 1 }}>
+                                        <TextField
+                                            value={grade}
+                                            onChange={(event) => handleGradeChange(event, i, 'perfromanceTasks')}
+                                            variant="outlined"
+                                            size="small"
+                                            type="number"
+                                            inputProps={{ min: 0, max: 100 }}
+                                            sx={{ width: '100%' }}
+                                        />
+                                    </Grid>
+                                ))}
+                                <Grid item xs={1} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
+                                    <strong>{calculateCategoryTotal('performanceTasks')}</strong>
+                                </Grid>
+                            </Grid>
+
+
+                            <Grid item xs={12} sx={{ backgroundColor: '#f5f5f5', textAlign: 'center', fontWeight: 'bold', borderBottom: '1px solid #ddd', padding: 1 }}>
+                                PERIODICAL TEST (20%)
+                            </Grid>
+                            <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
+                                <Grid item xs={3} sx={{ textAlign: 'center', padding: 1, mt: 1 }}>
+                                    <strong>Highest Score Possible</strong>
+                                </Grid>
+                                <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
+                                    <TextField
+                                        value={highestScores.periodicalTest}
+                                        onChange={(event) => handleHighestScoreChange(event, 0, 'periodicalTest')}
+                                        variant="outlined"
+                                        size="small"
+                                        type="number"
+                                        inputProps={{ min: 0, max: 100 }}
+                                        sx={{ width: '100%' }}
+                                    />
+                                </Grid>
+                                <Grid item xs={3} sx={{ textAlign: 'center', padding: 1, mt: 1 }}>
+                                    <strong>Score</strong>
+                                </Grid>
+                                <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
+                                    <TextField
+                                        value={grades.periodicalTest}
+                                        onChange={(event) => handleGradeChange(event, 0, 'periodicalTest')}
+                                        variant="outlined"
+                                        size="small"
+                                        type="number"
+                                        inputProps={{ min: 0, max: 100 }}
+                                        sx={{ width: '100%' }}
+                                    />
+                                </Grid>
+                            </Grid>
+                            <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
+                                <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
+                                    <strong>PS</strong>
+                                </Grid>
+                                <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
+                                    <strong>{calculatePercentageScore('periodicalTest').toFixed(2)}%</strong>
+                                </Grid>
+                                <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
+                                    <strong>WS</strong>
+                                </Grid>
+                                <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
+                                    <strong>{calculateWeightedScore('periodicalTest', 20).toFixed(2)}%</strong>
+                                </Grid>
+                            </Grid>
+                            <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
+                                <Grid item xs={6} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1, fontSize: '1.25rem' }}>
+                                    <strong>Inital Grade</strong>
+                                </Grid>
+                                <Grid item xs={6} sx={{ textAlign: 'center', padding: 1, fontSize: '1.25rem' }}>
+                                    <strong>{calculateInitialGrade().toFixed(2)}</strong>
+                                </Grid>
+                            </Grid>
+                            <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
+                                <Grid item xs={6} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1, fontSize: '1.5rem' }}>
+                                    <strong>Final Grade</strong>
+                                </Grid>
+                                <Grid item xs={6} sx={{ textAlign: 'center', padding: 1, fontSize: '1.5rem' }}>
+                                    <strong>{calculateFinalGrade().toFixed(2)}</strong>
+                                </Grid>
+                            </Grid>
+
+                            {/* Save Button */}
+                            <Grid item xs={12} sx={{ textAlign: 'center', mt: 1, mb: 2 }}>
+                                <Button variant="contained" color="primary" onClick={handleSave}>
+                                    {hasGrades ? "Update Grades" : "Save Grades"}
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </Box>
+                ))}
             </Paper>
-        </Box >
+        </Box>
     );
 }
 

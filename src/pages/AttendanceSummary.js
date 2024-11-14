@@ -77,9 +77,9 @@ function AttendanceSummary() {
 
                 // Loop through attendanceEntries to update totals
                 attendanceEntries.forEach(entry => {
-                    if (entry.remarks === 'late') acc[key].totalLate += 1;
-                    if (entry.remarks === 'absent') acc[key].totalAbsent += 1;
-                    if (entry.remarks === 'present') acc[key].totalPresent += 1;
+                    if (entry.remarks === 'Late') acc[key].totalLate += 1;
+                    if (entry.remarks === 'Absent') acc[key].totalAbsent += 1;
+                    if (entry.remarks === 'Present') acc[key].totalPresent += 1;
                 });
 
                 return acc;
@@ -241,13 +241,13 @@ function AttendanceSummary() {
 
                         if (attendanceRecord && attendanceRecord.remarks) {
                             const remark = attendanceRecord.remarks.toLowerCase();
-                            if (remark === 'absent') {
+                            if (remark === 'Absent') {
                                 cell.value = 'X'; // Absent
                                 totalAbsent++;
                             } else if (remark === 'late') {
                                 cell.value = 'late'; // Late
                                 totalTardy++;
-                            } else if (remark === 'present') {
+                            } else if (remark === 'Present') {
                                 cell.value = '✔'; // Present
                             }
                         }

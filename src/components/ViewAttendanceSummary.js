@@ -31,13 +31,13 @@ function ViewAttendanceSummary() {
     }, [id]);
 
     const countStatus = (status) => {
-        return attendance.filter(record => record.remarks?.toLowerCase() === status).length;
+        return attendance.filter(record => record.remarks === status).length;
     };
 
 
-    const presentCount = countStatus('present');
-    const lateCount = countStatus('late');
-    const absentCount = countStatus('absent');
+    const presentCount = countStatus('Present');
+    const lateCount = countStatus('Late');
+    const absentCount = countStatus('Absent');
 
     return (
         <Box sx={{ ml: { xs: 0, md: 0 }, p: isMobile ? 2 : 4 }}>
@@ -48,10 +48,10 @@ function ViewAttendanceSummary() {
                 <Table>
                     <TableHead>
                         <TableRow>
-                            <TableCell align="left" sx={{ fontWeight: 'bold' }}>
+                            <TableCell align="left" sx={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
                                 Date
                             </TableCell>
-                            <TableCell align="left" sx={{ fontWeight: 'bold' }}>
+                            <TableCell variant='body1' align="left" sx={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
                                 Remarks
                             </TableCell>
                         </TableRow>
