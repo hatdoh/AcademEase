@@ -4,6 +4,7 @@ import { db } from "../config/firebase";
 import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { useParams } from "react-router-dom";
 
+
 function ViewGrades() {
     const [student, setStudent] = useState({
         grade: '',
@@ -23,13 +24,12 @@ function ViewGrades() {
 
     // Separate state for each quarter's grades
     const [grades, setGrades] = useState({
-        0: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' }, // First Quarter
-        1: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' }, // Second Quarter
-        2: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' }, // Third Quarter
-        3: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' }, // Fourth Quarter
+        0: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' },
+        1: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' },
+        2: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' },
+        3: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' },
     });
 
-    // Separate state for each quarter's highest scores
     const [highestScores, setHighestScores] = useState({
         0: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' },
         1: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' },
@@ -76,29 +76,100 @@ function ViewGrades() {
         fetchPeriodicalTestScore();
     }, [id]);
 
+    useEffect(() => {
+        // Trigger recalculations whenever grades or highestScores update
+        calculateInitialGrade();
+        calculateFinalGrade();
+    }, [grades, highestScores]);
+
     const handleTabChange = (event, newValue) => {
         setActiveQuarter(newValue);
     };
 
     const handleGradeChange = (event, index, category) => {
-        const newGrades = { ...grades };
-        if (category === 'periodicalTest') {
-            newGrades[category] = event.target.value;
-        } else {
-            newGrades[category][index] = event.target.value;
-        }
-        setGrades(newGrades);
+        setGrades((prevGrades) => {
+            const newGrades = { ...prevGrades };
+            if (!newGrades[activeQuarter]) {
+                newGrades[activeQuarter] = { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' };
+            }
+            if (category === 'periodicalTest') {
+                newGrades[activeQuarter].periodicalTest = event.target.value;
+            } else {
+                newGrades[activeQuarter][category][index] = event.target.value;
+            }
+            return newGrades;
+        });
     };
 
     const handleHighestScoreChange = (event, index, category) => {
-        const newHighestScores = { ...highestScores };
-        if (category === 'periodicalTest') {
-            newHighestScores[category] = event.target.value;
-        } else {
-            newHighestScores[category][index] = event.target.value;
-        }
-        setHighestScores(newHighestScores);
+        setHighestScores((prevHighestScores) => {
+            const newHighestScores = { ...prevHighestScores };
+            if (!newHighestScores[activeQuarter]) {
+                newHighestScores[activeQuarter] = { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' };
+            }
+            if (category === 'periodicalTest') {
+                newHighestScores[activeQuarter].periodicalTest = event.target.value;
+            } else {
+                newHighestScores[activeQuarter][category][index] = event.target.value;
+            }
+            return newHighestScores;
+        });
     };
+
+    const calculateCategoryTotal = (category) => {
+        const categoryGrades = grades[activeQuarter][category];
+        console.log('Category Grades:', categoryGrades);
+        if (!Array.isArray(categoryGrades)) return 0;
+        return categoryGrades.reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0);
+    };
+
+
+    const calculateCategoryTotalHighest = (category) => {
+        const categoryHighest = highestScores[activeQuarter][category];
+        console.log('Category Highest:', categoryHighest); // Log for debugging
+        if (!Array.isArray(categoryHighest)) return 0; // Return 0 if not an array
+        return categoryHighest.reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0);
+    };
+
+
+    const calculatePercentageScore = (category) => {
+        const total = calculateCategoryTotal(category);
+        const highestPossible = calculateCategoryTotalHighest(category);
+        return highestPossible > 0 ? (total / highestPossible) * 100 : 0;
+    };
+
+    const calculateWeightedScore = (category, weight) => {
+        return (calculatePercentageScore(category) * weight) / 100;
+    };
+
+    const calculatePeriodicalTestPercentage = () => {
+        const score = parseFloat(grades[activeQuarter]?.periodicalTest) || 0;
+        const highest = parseFloat(highestScores[activeQuarter]?.periodicalTest) || 1; // Avoid division by 0
+        return (score / highest) * 100;
+    };
+
+    const calculatePeriodicalTestWeighted = (weight) => {
+        return (calculatePeriodicalTestPercentage() * weight) / 100;
+    };
+
+    useEffect(() => {
+        const fetchGrades = async () => {
+            try {
+                const gradesDoc = await getDoc(doc(db, "grades", id));
+                if (gradesDoc.exists()) {
+                    const data = gradesDoc.data();
+                    setGrades(data.grades);
+                    setHighestScores(data.highestScores);
+                    setHasGrades(true); // Mark that grades already exist
+                }
+            } catch (error) {
+                console.error("Error fetching grades:", error);
+            }
+        };
+
+        fetchGrades();
+    }, [id]);
+
 
     const handleSave = async () => {
         try {
@@ -111,10 +182,11 @@ function ViewGrades() {
                 lrn: student.lrn,
                 grades: grades,
                 highestScores: highestScores,
-                finalGrade: calculateFinalGrade()
+                finalGrade: calculateFinalGrade(),
             };
 
             await setDoc(doc(db, "grades", id), gradesData);
+            setHasGrades(true); // Mark as saved after successful operation
             alert("Grades saved successfully!");
         } catch (error) {
             console.error("Error saving grades:", error);
@@ -122,31 +194,6 @@ function ViewGrades() {
         }
     };
 
-    const calculateCategoryTotal = (category) => {
-        const categoryGrades = grades[category];
-        if (Array.isArray(categoryGrades)) {
-            return categoryGrades.reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0);
-        }
-        return parseFloat(categoryGrades) || 0;
-    };
-
-    const calculateCategoryTotalHighest = (category) => {
-        const categoryHighest = highestScores[category];
-        if (Array.isArray(categoryHighest)) {
-            return categoryHighest.reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0);
-        }
-        return parseFloat(categoryHighest) || 0;
-    };
-
-    const calculatePercentageScore = (category) => {
-        const total = calculateCategoryTotal(category);
-        const highestPossible = calculateCategoryTotalHighest(category);
-        return highestPossible > 0 ? (total / highestPossible) * 100 : 0;
-    };
-
-    const calculateWeightedScore = (category, weight) => {
-        return (calculatePercentageScore(category) * weight) / 100;
-    };
 
     const calculateInitialGrade = () => {
         const writtenWorksTotal = calculateCategoryTotal('writtenWorks');
@@ -240,6 +287,7 @@ function ViewGrades() {
                                 GRADE & SECTION: {student.grade} - {student.section}
                             </Grid>
 
+                            {/* WRITTEN WORKS */}
                             <Grid item xs={12} sx={{ backgroundColor: '#f5f5f5', textAlign: 'center', fontWeight: 'bold', borderBottom: '1px solid #ddd', padding: 1 }}>
                                 WRITTEN WORKS (20%)
                             </Grid>
@@ -295,9 +343,17 @@ function ViewGrades() {
                                 <Grid item xs={1} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
                                     <strong>{calculateCategoryTotal('writtenWorks')}</strong>
                                 </Grid>
+                                <Grid item xs={1} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
+                                    {/* Display PS for Written Works */}
+                                    <strong>{calculatePercentageScore('writtenWorks').toFixed(2)}%</strong>
+                                </Grid>
+                                <Grid item xs={1} sx={{ textAlign: 'center', padding: 1 }}>
+                                    {/* Display WS for Written Works */}
+                                    <strong>{calculateWeightedScore('writtenWorks', 20).toFixed(2)}</strong>
+                                </Grid>
                             </Grid>
 
-
+                            {/* PERFORMANCE TASK */}
                             <Grid item xs={12} sx={{ backgroundColor: '#f5f5f5', textAlign: 'center', fontWeight: 'bold', borderBottom: '1px solid #ddd', padding: 1 }}>
                                 PERFORMANCE TASKS (60%)
                             </Grid>
@@ -335,6 +391,14 @@ function ViewGrades() {
                                 <Grid item xs={1} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
                                     <strong>{calculateCategoryTotalHighest('performanceTasks')}</strong>
                                 </Grid>
+                                <Grid item xs={1} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1 }}>
+                                    {/* Display PS for Written Works */}
+                                    <strong>{calculatePercentageScore('performanceTasks').toFixed(2)}%</strong>
+                                </Grid>
+                                <Grid item xs={1} sx={{ textAlign: 'center', padding: 1 }}>
+                                    {/* Display WS for Written Works */}
+                                    <strong>{calculateWeightedScore('performanceTasks', 60).toFixed(2)}</strong>
+                                </Grid>
                             </Grid>
 
                             <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
@@ -342,7 +406,7 @@ function ViewGrades() {
                                     <Grid item xs={1} key={i} sx={{ borderRight: '1px solid #ddd', padding: 1 }}>
                                         <TextField
                                             value={grade}
-                                            onChange={(event) => handleGradeChange(event, i, 'perfromanceTasks')}
+                                            onChange={(event) => handleGradeChange(event, i, 'performanceTasks')}
                                             variant="outlined"
                                             size="small"
                                             type="number"
@@ -356,7 +420,7 @@ function ViewGrades() {
                                 </Grid>
                             </Grid>
 
-
+                            {/* PERIODICAL TEST */}
                             <Grid item xs={12} sx={{ backgroundColor: '#f5f5f5', textAlign: 'center', fontWeight: 'bold', borderBottom: '1px solid #ddd', padding: 1 }}>
                                 PERIODICAL TEST (20%)
                             </Grid>
@@ -395,13 +459,13 @@ function ViewGrades() {
                                     <strong>PS</strong>
                                 </Grid>
                                 <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
-                                    <strong>{calculatePercentageScore('periodicalTest').toFixed(2)}%</strong>
+                                    <strong>{calculatePeriodicalTestPercentage().toFixed(2)}%</strong>
                                 </Grid>
                                 <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
                                     <strong>WS</strong>
                                 </Grid>
                                 <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
-                                    <strong>{calculateWeightedScore('periodicalTest', 20).toFixed(2)}%</strong>
+                                    <strong>{calculatePeriodicalTestWeighted(20).toFixed(2)}%</strong>
                                 </Grid>
                             </Grid>
                             <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
