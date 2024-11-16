@@ -23,58 +23,85 @@ function ViewGrades() {
     const quarters = ['First Quarter', 'Second Quarter', 'Third Quarter', 'Fourth Quarter'];
 
     // Separate state for each quarter's grades
-    const [grades, setGrades] = useState({
-        0: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' },
-        1: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' },
-        2: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' },
-        3: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' },
-    });
+    const initialQuarterState = {
+        writtenWorks: Array(9).fill(''),
+        performanceTasks: Array(9).fill(''),
+        periodicalTest: '' // Default empty
+    };
 
     const [highestScores, setHighestScores] = useState({
-        0: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' },
-        1: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' },
-        2: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' },
-        3: { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' },
+        0: { ...initialQuarterState },
+        1: { ...initialQuarterState },
+        2: { ...initialQuarterState },
+        3: { ...initialQuarterState },
     });
 
+    const [grades, setGrades] = useState({
+        0: { ...initialQuarterState },
+        1: { ...initialQuarterState },
+        2: { ...initialQuarterState },
+        3: { ...initialQuarterState },
+    });
+
+
+    const fetchStudentData = async () => {
+        try {
+            const studentDoc = await getDoc(doc(db, 'students', id));
+            if (studentDoc.exists()) {
+                setStudent(studentDoc.data());
+            } else {
+                console.error("No student document found");
+            }
+        } catch (error) {
+            console.error("Error fetching student data:", error);
+        }
+    };
+
+    const fetchPeriodicalTestScore = async () => {
+        try {
+            const scoresQuery = query(collection(db, "scores"), where("student_info.student_id", "==", id));
+            const querySnapshot = await getDocs(scoresQuery);
+
+            setGrades((prevGrades) => {
+                const newGrades = { ...prevGrades };
+                setHighestScores((prevHighestScores) => {
+                    const newHighestScores = { ...prevHighestScores };
+
+                    querySnapshot.forEach((doc) => {
+                        const scoreData = doc.data();
+                        const quarter = scoreData.quarter;
+                        const quarterIndex = quarters.indexOf(quarter);
+
+                        if (quarterIndex !== -1) {
+                            newGrades[quarterIndex].periodicalTest = scoreData.scores.total_correct.toString();
+                            newHighestScores[quarterIndex].periodicalTest = (
+                                scoreData.scores.total_correct + scoreData.scores.total_incorrect
+                            ).toString();
+                        }
+                    });
+
+                    return newHighestScores;
+                });
+                return newGrades;
+            });
+        } catch (error) {
+            console.error("Error fetching periodical test scores:", error);
+        }
+    };
+
+
+
+
+
     useEffect(() => {
-        const fetchStudentData = async () => {
-            try {
-                const studentDoc = await getDoc(doc(db, 'students', id));
-                if (studentDoc.exists()) {
-                    setStudent(studentDoc.data());
-                } else {
-                    console.error("No student document found");
-                }
-            } catch (error) {
-                console.error("Error fetching student data:", error);
-            }
+        const fetchData = async () => {
+            await fetchStudentData();
+            await fetchPeriodicalTestScore();
         };
 
-        const fetchPeriodicalTestScore = async () => {
-            try {
-                const scoresQuery = query(collection(db, "scores"), where("student_info.student_id", "==", id));
-                const querySnapshot = await getDocs(scoresQuery);
-                if (!querySnapshot.empty) {
-                    const scoreData = querySnapshot.docs[0].data();
-                    const totalItems = scoreData.scores.total_correct + scoreData.scores.total_incorrect;
-                    setGrades(prevGrades => ({
-                        ...prevGrades,
-                        periodicalTest: scoreData.scores.total_correct
-                    }));
-                    setHighestScores(prevHighestScores => ({
-                        ...prevHighestScores,
-                        periodicalTest: totalItems
-                    }));
-                }
-            } catch (error) {
-                console.error("Error fetching periodical test score:", error);
-            }
-        };
-
-        fetchStudentData();
-        fetchPeriodicalTestScore();
+        fetchData();
     }, [id]);
+
 
     useEffect(() => {
         // Trigger recalculations whenever grades or highestScores update
@@ -85,6 +112,22 @@ function ViewGrades() {
     const handleTabChange = (event, newValue) => {
         setActiveQuarter(newValue);
     };
+
+    const handleHighestScoreChange = (event, index, category) => {
+        setHighestScores((prevHighestScores) => {
+            const newHighestScores = JSON.parse(JSON.stringify(prevHighestScores)); // Deep clone
+            if (!newHighestScores[activeQuarter]) {
+                newHighestScores[activeQuarter] = { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' };
+            }
+            if (category === 'periodicalTest') {
+                newHighestScores[activeQuarter].periodicalTest = event.target.value;
+            } else {
+                newHighestScores[activeQuarter][category][index] = event.target.value;
+            }
+            return newHighestScores;
+        });
+    };
+
 
     const handleGradeChange = (event, index, category) => {
         setGrades((prevGrades) => {
@@ -101,20 +144,7 @@ function ViewGrades() {
         });
     };
 
-    const handleHighestScoreChange = (event, index, category) => {
-        setHighestScores((prevHighestScores) => {
-            const newHighestScores = { ...prevHighestScores };
-            if (!newHighestScores[activeQuarter]) {
-                newHighestScores[activeQuarter] = { writtenWorks: Array(9).fill(''), performanceTasks: Array(9).fill(''), periodicalTest: '' };
-            }
-            if (category === 'periodicalTest') {
-                newHighestScores[activeQuarter].periodicalTest = event.target.value;
-            } else {
-                newHighestScores[activeQuarter][category][index] = event.target.value;
-            }
-            return newHighestScores;
-        });
-    };
+
 
     const calculateCategoryTotal = (category) => {
         const categoryGrades = grades[activeQuarter][category];
@@ -196,20 +226,33 @@ function ViewGrades() {
 
 
     const calculateInitialGrade = () => {
-        const writtenWorksTotal = calculateCategoryTotal('writtenWorks');
-        const performanceTasksTotal = calculateCategoryTotal('performanceTasks');
-        const periodicalTestScore = parseFloat(grades.periodicalTest) || 0;
+        const writtenWorksTotal = calculateCategoryTotal('writtenWorks'); // Total score for written works
+        const performanceTasksTotal = calculateCategoryTotal('performanceTasks'); // Total score for performance tasks
+        const periodicalTestScore = parseFloat(grades[activeQuarter]?.periodicalTest) || 0; // Periodical test score
 
-        const writtenWorksHighest = calculateCategoryTotalHighest('writtenWorks');
-        const performanceTasksHighest = calculateCategoryTotalHighest('performanceTasks');
-        const periodicalTestHighest = parseFloat(highestScores.periodicalTest) || 1;
+        const writtenWorksHighest = calculateCategoryTotalHighest('writtenWorks'); // Highest possible score for written works
+        const performanceTasksHighest = calculateCategoryTotalHighest('performanceTasks'); // Highest possible score for performance tasks
+        const periodicalTestHighest = parseFloat(highestScores[activeQuarter]?.periodicalTest) || 1; // Avoid division by 0
 
-        const writtenWorksAverage = (writtenWorksTotal / (writtenWorksHighest || 1)) * 0.2;
-        const performanceTasksAverage = (performanceTasksTotal / (performanceTasksHighest || 1)) * 0.6;
-        const periodicalTestAverage = (periodicalTestScore / (periodicalTestHighest || 1)) * 0.2;
+        // Calculate averages (normalized by their highest possible scores)
+        const writtenWorksAverage = writtenWorksHighest > 0
+            ? (writtenWorksTotal / writtenWorksHighest) * 100 * 0.2
+            : 0;
 
-        return (writtenWorksAverage + performanceTasksAverage + periodicalTestAverage) * 100;
+        const performanceTasksAverage = performanceTasksHighest > 0
+            ? (performanceTasksTotal / performanceTasksHighest) * 100 * 0.6
+            : 0;
+
+        const periodicalTestAverage = periodicalTestHighest > 0
+            ? (periodicalTestScore / periodicalTestHighest) * 100 * 0.2
+            : 0;
+
+        // Initial grade is the sum of the weighted averages
+        const initialGrade = writtenWorksAverage + performanceTasksAverage + periodicalTestAverage;
+
+        return initialGrade; // Returns initial grade as a percentage
     };
+
 
     const transmuteGrade = (initialGrade) => {
         if (initialGrade == 100) return 100;
@@ -430,12 +473,10 @@ function ViewGrades() {
                                 </Grid>
                                 <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
                                     <TextField
-                                        value={highestScores.periodicalTest}
-                                        onChange={(event) => handleHighestScoreChange(event, 0, 'periodicalTest')}
+                                        value={highestScores[activeQuarter]?.periodicalTest || ''}
                                         variant="outlined"
                                         size="small"
-                                        type="number"
-                                        inputProps={{ min: 0, max: 100 }}
+                                        disabled
                                         sx={{ width: '100%' }}
                                     />
                                 </Grid>
@@ -444,12 +485,10 @@ function ViewGrades() {
                                 </Grid>
                                 <Grid item xs={3} sx={{ textAlign: 'center', padding: 1 }}>
                                     <TextField
-                                        value={grades.periodicalTest}
-                                        onChange={(event) => handleGradeChange(event, 0, 'periodicalTest')}
+                                        value={grades[activeQuarter]?.periodicalTest || ''}
                                         variant="outlined"
                                         size="small"
-                                        type="number"
-                                        inputProps={{ min: 0, max: 100 }}
+                                        disabled
                                         sx={{ width: '100%' }}
                                     />
                                 </Grid>
@@ -468,6 +507,7 @@ function ViewGrades() {
                                     <strong>{calculatePeriodicalTestWeighted(20).toFixed(2)}%</strong>
                                 </Grid>
                             </Grid>
+                            {/* INITIAL GRADE */}
                             <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
                                 <Grid item xs={6} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1, fontSize: '1.25rem' }}>
                                     <strong>Inital Grade</strong>
@@ -476,6 +516,7 @@ function ViewGrades() {
                                     <strong>{calculateInitialGrade().toFixed(2)}</strong>
                                 </Grid>
                             </Grid>
+                            {/* FINAL GRADE */}
                             <Grid container spacing={1} sx={{ borderBottom: '1px solid #ddd' }}>
                                 <Grid item xs={6} sx={{ textAlign: 'center', borderRight: '1px solid #ddd', padding: 1, fontSize: '1.5rem' }}>
                                     <strong>Final Grade</strong>
