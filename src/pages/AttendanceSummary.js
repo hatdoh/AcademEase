@@ -173,7 +173,15 @@ function AttendanceSummary() {
                 })
             );
 
-            // Write attendance and summary (if needed) for male and female students
+            // Check if attendance records are available
+            const hasAttendance = studentData.some(
+                (student) => student.attendanceEntries.length > 0
+            );
+
+            if (!hasAttendance) {
+                alert(`No attendance records found for section "${selectedSection}" in "${selectedMonth}".`);
+                return; // Exit the function if no attendance data
+            }
 
             const startRowForNames = 14; // This could be changed if you want a different starting point for names
             const startColumnForDates = 4;
@@ -255,6 +263,44 @@ function AttendanceSummary() {
                 // Write summary for each female student
                 row.getCell(29).value = student.summary.totalAbsent; // Column AC
                 row.getCell(30).value = student.summary.totalTardy; // Column AD
+            });
+
+            // Calculate daily totals for male and female students
+            const maleDailyAttendance = Array(Object.keys(columnMapping).length).fill(0);
+            const femaleDailyAttendance = Array(Object.keys(columnMapping).length).fill(0);
+
+            maleStudents.forEach((student) => {
+                student.attendanceEntries.forEach((entry) => {
+                    const dateStr = dayjs(entry.date).format("YYYY-MM-DD");
+                    const cellColumn = columnMapping[dateStr];
+                    if (cellColumn && entry.remarks !== "Absent") {
+                        const index = cellColumn - startColumnForDates;
+                        maleDailyAttendance[index]++;
+                    }
+                });
+            });
+
+            femaleStudents.forEach((student) => {
+                student.attendanceEntries.forEach((entry) => {
+                    const dateStr = dayjs(entry.date).format("YYYY-MM-DD");
+                    const cellColumn = columnMapping[dateStr];
+                    if (cellColumn && entry.remarks !== "Absent") {
+                        const index = cellColumn - startColumnForDates;
+                        femaleDailyAttendance[index]++;
+                    }
+                });
+            });
+
+            // Write daily totals for males (Row 35)
+            const maleTotalRow = worksheet.getRow(35);
+            maleDailyAttendance.forEach((total, index) => {
+                maleTotalRow.getCell(startColumnForDates + index).value = total;
+            });
+
+            // Write daily totals for females (Row 61)
+            const femaleTotalRow = worksheet.getRow(61);
+            femaleDailyAttendance.forEach((total, index) => {
+                femaleTotalRow.getCell(startColumnForDates + index).value = total;
             });
 
 
@@ -450,7 +496,11 @@ function AttendanceSummary() {
                         sx={{ mb: 2 }}
                     >
                         {sections.map(section => (
-                            <MenuItem key={section} value={section}>
+                            <MenuItem
+                                key={section}
+                                value={section}
+                                disabled={section === 'All'} // Disable the "All" option
+                            >
                                 {section}
                             </MenuItem>
                         ))}

@@ -3,6 +3,11 @@ import * as XLSX from 'xlsx';
 import { db } from '../config/firebase';
 import { collection, writeBatch, doc } from 'firebase/firestore';
 import { getCurrentUser } from '../utils/Authentication';
+import {
+    Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+    Card, CardContent, Typography, Button, Box, Input
+} from '@mui/material';
+import Swal from 'sweetalert2';
 
 function RegisterStudents() {
     const [studentsData, setStudentsData] = useState([]);
@@ -101,84 +106,111 @@ function RegisterStudents() {
     };
 
     const handleImport = async () => {
-        try {
-            const studentsCollection = collection(db, 'students');
-            const batch = writeBatch(db);
+        // SweetAlert2 confirmation prompt
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: 'You are about to import these students. Do you want to continue?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, import them!',
+            cancelButtonText: 'Cancel',
+        });
 
-            studentsData.forEach((student) => {
-                const studentDoc = {
-                    lrn: student.lrn,
-                    LName: student.LName,
-                    FName: student.FName,
-                    MName: student.MName,
-                    gender: student.gender,
-                    dateOfBirth: student.dateOfBirth,
-                    age: student.age,
-                    address: student.address,
-                    contactNumber: student.contactNumber,
-                    section: student.section,
-                    acadYear: student.acadYear,
-                    teacherUID: teacherUID,
-                    image: "",
-                    email: "",
-                };
+        if (result.isConfirmed) {
+            try {
+                const studentsCollection = collection(db, 'students');
+                const batch = writeBatch(db);
 
-                const newDocRef = doc(studentsCollection);
-                batch.set(newDocRef, studentDoc);
-            });
+                studentsData.forEach((student) => {
+                    const studentDoc = {
+                        lrn: student.lrn,
+                        LName: student.LName,
+                        FName: student.FName,
+                        MName: student.MName,
+                        gender: student.gender,
+                        dateOfBirth: student.dateOfBirth,
+                        age: student.age,
+                        address: student.address,
+                        contactNumber: student.contactNumber,
+                        section: student.section,
+                        acadYear: student.acadYear,
+                        teacherUID: teacherUID,
+                        image: "",
+                        email: "",
+                    };
 
-            await batch.commit();
-            alert('Students successfully imported!');
-        } catch (error) {
-            console.error('Error importing students:', error);
-            alert('An error occurred during import. Check the console for more details.');
+                    const newDocRef = doc(studentsCollection);
+                    batch.set(newDocRef, studentDoc);
+                });
+
+                await batch.commit();
+                Swal.fire('Success', 'Students successfully imported!', 'success');
+            } catch (error) {
+                console.error('Error importing students:', error);
+                Swal.fire('Error', 'An error occurred during import. Check the console for more details.', 'error');
+            }
         }
     };
 
     return (
-        <div>
-            <input type="file" onChange={handleFileUpload} />
+        <Box sx={{ padding: 3 }}>
+            <Card variant="outlined" sx={{ mb: 3, p: 3 }}>
+                <Typography variant="h5" gutterBottom sx={{fontWeight: 'bold'}}>
+                    Register Students
+                </Typography>
+                <Input
+                    type="file"
+                    onChange={handleFileUpload}
+                    sx={{ display: 'block', mb: 2 }}
+                />
+                {fileUploaded && (
+                    <Button variant="contained" onClick={handleImport} color="primary">
+                        Import Students
+                    </Button>
+                )}
+            </Card>
+
             {fileUploaded && (
-                <>
-                    <h3>Preview of Uploaded Data</h3>
-                    <table border="1">
-                        <thead>
-                            <tr>
-                                <th>LRN</th>
-                                <th>Last Name</th>
-                                <th>First Name</th>
-                                <th>Middle Name</th>
-                                <th>Gender</th>
-                                <th>Date of Birth</th>
-                                <th>Age</th>
-                                <th>Address</th>
-                                <th>Contact Number</th>
-                                <th>Section</th>
-                                <th>School Year</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {studentsData.map((student, index) => (
-                                <tr key={index}>
-                                    <td>{student.lrn}</td>
-                                    <td>{student.LName}</td>
-                                    <td>{student.FName}</td>
-                                    <td>{student.MName}</td>
-                                    <td>{student.gender}</td>
-                                    <td>{student.dateOfBirth}</td>
-                                    <td>{student.age}</td>
-                                    <td>{student.address}</td>
-                                    <td>{student.contactNumber}</td>
-                                    <td>{student.section}</td>
-                                    <td>{student.acadYear}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    <button onClick={handleImport}>Import Students</button>
-                </>
+                <Card>
+                    <CardContent>
+                        <Typography variant="h6" gutterBottom sx={{fontWeight: 'bold'}}>
+                            Preview
+                        </Typography>
+                        <TableContainer>
+                            <Table>
+                                <TableHead>
+                                    <TableRow>
+                                        {['LRN', 'Last Name', 'First Name', 'Middle Name', 'Gender', 'Date of Birth', 'Age', 'Address', 'Contact Number', 'Section', 'School Year']
+                                            .map((header) => (
+                                                <TableCell key={header} align="center" sx={{fontWeight: 'bold'}}>
+                                                    {header}
+                                                </TableCell>
+                                            ))}
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {studentsData.map((student, index) => (
+                                        <TableRow key={index}>
+                                            <TableCell>{student.lrn}</TableCell>
+                                            <TableCell>{student.LName}</TableCell>
+                                            <TableCell>{student.FName}</TableCell>
+                                            <TableCell>{student.MName}</TableCell>
+                                            <TableCell>{student.gender}</TableCell>
+                                            <TableCell>{student.dateOfBirth}</TableCell>
+                                            <TableCell>{student.age}</TableCell>
+                                            <TableCell>{student.address}</TableCell>
+                                            <TableCell>{student.contactNumber}</TableCell>
+                                            <TableCell>{student.section}</TableCell>
+                                            <TableCell>{student.acadYear}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    </CardContent>
+                </Card>
             )}
-        </div>
+        </Box>
     );
 }
 
