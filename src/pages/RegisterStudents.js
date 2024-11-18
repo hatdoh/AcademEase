@@ -33,8 +33,9 @@ function RegisterStudents() {
             // Get the section and academic year from cells
             const section = worksheet['X6'] ? worksheet['X6'].v : "";
             const acadYear = worksheet['P6'] ? worksheet['P6'].v : "";
+            const grade = worksheet['U6'] ? String(worksheet['U6'].v) : "";
 
-            // Initialize an array to store all student records
+            // Initialize an array to store all student recordsz
             const parsedStudents = [];
 
             // Loop through rows 10 to 30 to get students' data
@@ -76,20 +77,21 @@ function RegisterStudents() {
 
                 // Update the student object
                 const student = {
-                    lrn: worksheet[`B${row}`] ? worksheet[`B${row}`].v : "",
+                    lrn: worksheet[`B${row}`] ? String(worksheet[`B${row}`].v) : "",
                     LName: worksheet[`C${row}`] ? worksheet[`C${row}`].v.split(',')[0].trim() : "",
                     FName: worksheet[`C${row}`] ? worksheet[`C${row}`].v.split(',')[1].trim() : "",
                     MName: worksheet[`C${row}`] && worksheet[`C${row}`].v.split(',').length > 2 ? worksheet[`C${row}`].v.split(',')[2].trim() : "",
                     gender: worksheet[`G${row}`] ? worksheet[`G${row}`].v : "",
                     dateOfBirth: formattedDateOfBirth,
-                    age: worksheet[`I${row}`] ? worksheet[`I${row}`].v : "",
+                    age: worksheet[`I${row}`] ? String(worksheet[`I${row}`].v) : "",
                     address: address,
+                    grade: grade,
                     contactNumber: contactNumber,
                     section: section,
                     acadYear: acadYear,
                     teacherUID: teacherUID,
                     image: "",
-                    email: ""
+                    emailAddress: ""
                 };
 
 
@@ -131,12 +133,13 @@ function RegisterStudents() {
                         dateOfBirth: student.dateOfBirth,
                         age: student.age,
                         address: student.address,
+                        grade: student.grade,
                         contactNumber: student.contactNumber,
                         section: student.section,
                         acadYear: student.acadYear,
                         teacherUID: teacherUID,
                         image: "",
-                        email: "",
+                        emailAddress: "",
                     };
 
                     const newDocRef = doc(studentsCollection);
@@ -180,7 +183,7 @@ function RegisterStudents() {
                             <Table>
                                 <TableHead>
                                     <TableRow>
-                                        {['LRN', 'Last Name', 'First Name', 'Middle Name', 'Gender', 'Date of Birth', 'Age', 'Address', 'Contact Number', 'Section', 'School Year']
+                                        {['LRN', 'Last Name', 'First Name', 'Middle Name', 'Gender', 'Date of Birth',  'Age', 'Contact Number', 'Grade', 'Section', 'School Year']
                                             .map((header) => (
                                                 <TableCell key={header} align="center" sx={{fontWeight: 'bold'}}>
                                                     {header}
@@ -191,17 +194,17 @@ function RegisterStudents() {
                                 <TableBody>
                                     {studentsData.map((student, index) => (
                                         <TableRow key={index}>
-                                            <TableCell>{student.lrn}</TableCell>
-                                            <TableCell>{student.LName}</TableCell>
-                                            <TableCell>{student.FName}</TableCell>
-                                            <TableCell>{student.MName}</TableCell>
-                                            <TableCell>{student.gender}</TableCell>
-                                            <TableCell>{student.dateOfBirth}</TableCell>
-                                            <TableCell>{student.age}</TableCell>
-                                            <TableCell>{student.address}</TableCell>
-                                            <TableCell>{student.contactNumber}</TableCell>
-                                            <TableCell>{student.section}</TableCell>
-                                            <TableCell>{student.acadYear}</TableCell>
+                                            <TableCell align='center'>{student.lrn}</TableCell>
+                                            <TableCell align='center'>{student.LName}</TableCell>
+                                            <TableCell align='center'>{student.FName}</TableCell>
+                                            <TableCell align='center'>{student.MName}</TableCell>
+                                            <TableCell align='center'>{student.gender}</TableCell>
+                                            <TableCell align='center'>{student.dateOfBirth}</TableCell>
+                                            <TableCell align='center'>{student.age}</TableCell>
+                                            <TableCell align='center'>{student.contactNumber}</TableCell>
+                                            <TableCell align='center'>{student.grade}</TableCell>
+                                            <TableCell align='center'>{student.section}</TableCell>
+                                            <TableCell align='center'>{student.acadYear}</TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
