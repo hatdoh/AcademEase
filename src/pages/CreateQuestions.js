@@ -628,8 +628,19 @@ function CreateQuestions(props) {
       pdfDoc.text(`SECTION: ${student.section}`, marginLeft, marginTop + 11);
       pdfDoc.text('DATE:____________________________________________', marginLeft, marginTop + 16.5);
       pdfDoc.text('SUBJECT:____________________________________________', marginLeft, marginTop + 21.5);
-      pdfDoc.text(`LRN:                          ${student.lrn}`, marginLeft, marginTop + 30.5);
+      pdfDoc.text(`LRN:`, marginLeft, marginTop + 30.5);
       
+      // Define the starting position and spacing for LRN digits
+      const digitStartX = marginLeft + 32.5; // Starting point after "LRN:"
+      const digitY = marginTop + 30.5;
+      const digitSpacing = 5; // Adjust spacing between digits
+
+      // Split the LRN into individual digits and place them with spacing
+      const lrnDigits = student.lrn.split('');
+      lrnDigits.forEach((digit, index) => {
+        pdfDoc.text(digit, digitStartX + index * digitSpacing, digitY);
+      });
+
       // Add 12 squares next to "LRN" in one line without lines inside
       const squareSize = 8;
       const startX = marginLeft + 15;
