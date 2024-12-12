@@ -108,13 +108,13 @@ function CreateQuestions(props) {
   
   // Update filtered subjects based on selected section
   useEffect(() => {
-    if (selectedSection) {
-      const sectionData = sections.find(section => section.id === selectedSection);
-      setFilteredSubjects(sectionData ? [sectionData.subject] : []);
-      setSelectedSubject(''); // Reset subject when section changes
-    }
+      if (selectedSection) {
+        const sectionData = sections.find(section => section.id === selectedSection);
+        setFilteredSubjects(sectionData ? [sectionData.subject] : []);
+        setSelectedSubject('');
+      }
   }, [selectedSection, sections]);
-  
+    
   // Fetch sections and subjects based on the current user
   useEffect(() => {
     const fetchSectionsAndStudents = async () => {
@@ -217,156 +217,130 @@ function CreateQuestions(props) {
     setSelectedSubject("");
   };
 
-  const openModal = () => {
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setEditIndex(null); // Reset edit index when modal is closed
-    resetForm(); // Reset form fields
-  };
-
-  const handleEdit = (index) => {
-    const test = savedTests[index];
-    console.log("Editing test:", test); // Debug log
-  
-    // Populate form fields with existing test data
-    setTestName(test.name || '');
-    setSelectedDate(test.date || '');
-    setSelectedOption(test.items || '');
-    setDirections(test.directions || '');
-    setSelectedQuarter(test.quarter || '');
-  
-    // Populate section and subject immediately
-    setSelectedSection(test.section || '');
-    setSelectedSubject(test.subject || ''); // Correctly set subject state
-    console.log('Subject set to:', test.subject || ''); // Debug log to verify the value
-  
-    // Validate section and subject against user's created sections/subjects
-    const createdSections = sections.map((section) => section.section); // Array of user's sections
-    const createdSubjects = sections.map((section) => section.subject); // Array of user's subjects
-  
-    if (!createdSections.includes(test.section)) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Invalid Section',
-        text: `The section "${test.section}" does not match the sections you created.`,
-      });
-      return;
-    }
-  
-    if (!createdSubjects.includes(test.subject)) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Invalid Subject',
-        text: `The subject "${test.subject}" does not match in the section you created.`,
-      });
-      return;
-    }
-  
-    // Retain existing questions and avoid duplication
-    const questionsA = Array.isArray(test.questions?.A) ? test.questions.A : [];
-    const questionsB = Array.isArray(test.questions?.B) ? test.questions.B : [];
-    const combinedQuestions = [...questionsA];
-  
-    setItemsInput(
-      combinedQuestions.map((q) => ({
-        question: q.question || '',
-        choices: q.choices?.map((choice) => ({
-          id: choice.id || '',
-          text: choice.text || '',
-          checked: choice.checked || false,
-        })) || [],
-        correctAnswer: q.correctAnswer || '',
-      }))
-    );
-  
-    setAnswerSheet(test.answerSheet || []);
-    setEditIndex(index);
-    openModal();
-  };
-
-  const handleSave = async () => {
-    // Validate section and subject against user's created sections/subjects
-    const createdSections = sections.map((section) => section.section); // Array of user's sections
-    // const createdSubjects = sections.map((section) => section.subject); // Array of user's subjects
-    const createdSubjects = sections
-    .filter((section) => section.section === selectedSection)
-    .map((section) => section.subject);
-
-    console.log('Available sections:', sections);
-    console.log('Selected section:', selectedSection);
-    console.log('Created subjects for section:', createdSubjects);
-
-    // Validate section and subject
-    if (!createdSections.includes(selectedSection)) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Invalid Section',
-        text: `The section "${selectedSection}" does not match the sections you created.`,
-      });
-      return;
-    }
-  
-    if (!createdSubjects.includes(selectedSubject)) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Invalid Subject',
-        text: `The subject "${selectedSubject}" does not match in the section "${selectedSection}" you created.`,
-      });
-      return;
-    }
-  
-    // Validate required fields
-    const validationErrors = [];
-    if (!testName.trim()) validationErrors.push('Please enter the test name!');
-    if (!selectedDate) validationErrors.push('Please select a date!');
-    if (!selectedOption) validationErrors.push('Please select the number of items!');
-    if (!directions.trim()) validationErrors.push('Please enter the exam directions!');
-    if (!selectedQuarter) validationErrors.push('Please select the test quarter!');
-    if (!selectedSection) validationErrors.push('Please enter the section!');
-    if (!selectedSubject) validationErrors.push('Please enter the subject!');
-    if (itemsInput.some((item) => !item.question.trim()))
-      validationErrors.push('Please enter all questions!');
-    if (itemsInput.some((item) =>
-      item.choices.some((choice) => !choice.text.trim())
-    ))
-      validationErrors.push('Please fill out all choices!');
-    if (itemsInput.some((item) => !item.correctAnswer.trim()))
-      validationErrors.push('Please select the correct answer for all questions!');
-  
-    if (validationErrors.length > 0) {
+    const handleSave = async () => {
+    // Ensure the section data is retrieved based on the selected ID
+    const selectedSectionData = sections.find(section => section.id === selectedSection);
+    
+    // Validate the input fields
+    if (!testName || testName.trim() === '') {
       Swal.fire({
         icon: 'error',
         title: 'Oops...',
-        text: validationErrors.join(' '),
+        text: 'Please enter the test name!',
       });
       return;
     }
   
-    // Prepare test data
-    const randomizedQuestions = itemsInput.map((item) => ({
+    if (!selectedDate) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please select a date!',
+      });
+      return;
+    }
+  
+    if (!selectedOption) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please select the number of items!',
+      });
+      return;
+    }
+  
+    if (!directions || directions.trim() === '') {
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please enter the exam directions!',
+      });
+      return;
+    }
+  
+    if (itemsInput.some(item => !item.question || item.question.trim() === '')) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please enter all questions!',
+      });
+      return;
+    }
+  
+    if (itemsInput.some(item => item.choices.some(choice => !choice.text || choice.text.trim() === ''))) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please fill out all choices!',
+      });
+      return;
+    }
+  
+    if (itemsInput.some(item => !item.correctAnswer || item.correctAnswer.trim() === '')) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please select the correct answer for all questions!',
+      });
+      return;
+    }
+  
+    // Check if a quarter is selected
+    if (!selectedQuarter) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Please select the test quarter!',
+      });
+      return;
+    }
+  
+    // Prepare the test data
+    const randomizedQuestionsA = shuffleArray(itemsInput.map(item => ({
       ...item,
       choices: item.choices.map((choice, index) => ({
         ...choice,
-        id: index, // Update choice ID to 0, 1, 2, 3
-      })),
-    }));
+        id: index // Update the choice ID to be 0, 1, 2, 3
+      }))
+    })));
+  
+    const randomizedQuestionsB = shuffleArray(itemsInput.map(item => ({
+      ...item,
+      choices: item.choices.map((choice, index) => ({
+        ...choice,
+        id: index // Update the choice ID to be 0, 1, 2, 3
+      }))
+    })));
   
     const newTest = {
       name: testName,
       date: selectedDate,
       items: selectedOption,
-      directions,
-      createdBy: getCurrentUser().uid, // Creator's UID
-      section: selectedSection, // Section name from input
-      subject: selectedSubject, // Subject name from input
-      quarter: selectedQuarter, // Quarter
+      directions: directions,
+      createdBy: getCurrentUser().uid, // Add the creator's UID
+      section: selectedSectionData?.section || '', // Add the selected section
+      subject: selectedSubject || '', // Add the selected subject
+      quarter: selectedQuarter, // Add the selected quarter
       questions: {
-        A: shuffleArray([...randomizedQuestions]),  // Shuffle a copy of the questions for Set A
-        B: shuffleArray([...randomizedQuestions]),  // Shuffle a copy of the questions for Set B
-      },
+        A: randomizedQuestionsA.map((item) => ({
+          question: item.question,
+          choices: item.choices.map(choice => ({
+            id: choice.id,
+            text: choice.text,
+            checked: choice.checked
+          })),
+          correctAnswer: item.correctAnswer
+        })),
+        B: randomizedQuestionsB.map((item) => ({
+          question: item.question,
+          choices: item.choices.map(choice => ({
+            id: choice.id,
+            text: choice.text,
+            checked: choice.checked
+          })),
+          correctAnswer: item.correctAnswer
+        }))
+      }
     };
   
     try {
@@ -385,251 +359,26 @@ function CreateQuestions(props) {
         text: 'Test saved successfully!',
       });
   
-      // Reset form and close modal
-      resetForm();
-      setIsModalOpen(false);
+      // Reset the form
+      setTestName('');
+      setSelectedDate('');
+      setSelectedOption('');
+      setDirections('');
+      setItemsInput([]);
+      setSelectedSection('');
+      setSelectedSubject('');
+      setSelectedTestType('');
+      setEditIndex(null);
+  
+      setIsModalOpen(false); // Close the modal
     } catch (error) {
       console.error('Error saving test:', error);
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: 'There was an error saving the test. Please try again.',
+        text: 'An error occurred while saving the test. Please try again.',
       });
     }
-  };
-  
-  const resetForm = () => {
-    setTestName('');
-    setSelectedDate('');
-    setSelectedOption('');
-    setItemsInput([]);
-    setAnswerSheet([]);
-    setDirections('');
-    setSelectedSection('');
-    setSelectedSubject('');
-    setSelectedQuarter('');
-    setEditIndex(null); // Clear edit index
-  };
-
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const fileType = file.name.split('.').pop().toLowerCase();
-      let content = '';
-
-      try {
-        if (fileType === 'pdf') {
-          content = await readPdfFile(file);
-        } else if (fileType === 'docx') {
-          content = await readDocxFile(file);
-        } else if (fileType === 'xlsx' || fileType === 'xls') {
-          content = await readExcelFile(file);
-        } else {
-          throw new Error('Unsupported file type');
-        }
-      } catch (error) {
-        console.error('Error reading file:', error);
-        return;
-      }
-
-      const lines = content.split('\n')
-        .map(line => line.trim())
-        .filter(line => line !== '');
-
-      const items = [];
-      let currentQuestion = null;
-      let directionsText = '';
-
-      lines.forEach(line => {
-        if (/^directions:/i.test(line)) {
-          directionsText = line.replace(/^directions:/i, '').trim();
-        } else if (/^\d+\.\s/.test(line) || /^\d+\s/.test(line)) {
-          if (currentQuestion) {
-            currentQuestion.choices = currentQuestion.choices.filter(choice => choice.text.trim() !== '');
-            items.push(currentQuestion);
-          }
-          const questionWithoutNumber = line.replace(/^\d+\.\s*/, '').replace(/^\d+\s*/, '').trim();
-          currentQuestion = {
-            question: questionWithoutNumber,
-            choices: Array.from({ length: 4 }, (_, index) => ({ id: index, text: '', checked: false })),
-            correctAnswer: null
-          };
-        } else if (/^[A-D][.)]\s/.test(line)) {
-          if (currentQuestion) {
-            const choiceIndex = line.charCodeAt(0) - 65;
-            const choiceText = line.replace(/^[A-D][.)]\s*/, '').trim();
-            currentQuestion.choices[choiceIndex] = {
-              id: choiceIndex,
-              text: choiceText,
-              checked: false
-            };
-          }
-        } else if (/^(Answer:|answer:|Correct Answer:|correct answer:|Right Answer:|right answer:)\s*/i.test(line)) {
-          if (currentQuestion) {
-            const correctAnswer = line.replace(/^(Answer:|answer:|Correct Answer:|correct answer:|Right Answer:|right answer:)\s*/i, '').trim().replace(/[^A-D]/g, '');
-            currentQuestion.correctAnswer = correctAnswer;
-            const correctIndex = correctAnswer.charCodeAt(0) - 65;
-            currentQuestion.choices[correctIndex].checked = true;
-          }
-        }
-      });
-
-      if (currentQuestion) {
-        currentQuestion.choices = currentQuestion.choices.slice(0, 4);
-        items.push(currentQuestion);
-      }
-
-      const itemCount = items.length;
-
-      if (itemCount > 50) {
-        await Swal.fire({
-          title: 'Items Exceeded',
-          text: 'The number of items exceeds the maximum limit of 50. Only the first 50 items will be included.',
-          icon: 'warning',
-          confirmButtonColor: '#3085d6',
-          confirmButtonText: 'OK'
-        });
-        // Only keep the first 50 items
-        items.length = 50;
-      } else if (itemCount < 40) {
-        await Swal.fire({
-          title: 'Insufficient Items',
-          text: 'The number of items is less than the required minimum of 40. Please include at least 40 items.',
-          icon: 'warning',
-          confirmButtonColor: '#3085d6',
-          confirmButtonText: 'OK'
-        });
-        return; // Exit the function if the number of items is insufficient
-      }
-
-      // Update state if the number of items is valid (40 or 50)
-      setItemsInput(items);
-      setDirections(directionsText); // Set the directions state
-
-      // Update the dropdown value and answer sheet
-      setSelectedOption(itemCount);
-      setAnswerSheet(items.map(item => ({
-        selected: item.correctAnswer ? item.correctAnswer.charCodeAt(0) - 65 : null,
-        options: item.choices.map(choice => String.fromCharCode(65 + choice.id))
-      })));
-    }
-  };
-
-  const handleDropdownChange = (e) => {
-    const count = parseInt(e.target.value);
-    setSelectedOption(count);
-    // Ensure items input and answer sheet are updated to match the new dropdown value
-    setItemsInput(Array.from({ length: count }, (_, index) => ({
-      question: `Question ${index + 1}`,
-      choices: [
-        { id: 0, text: '' },
-        { id: 1, text: '' },
-        { id: 2, text: '' },
-        { id: 3, text: '' }
-      ],
-      correctAnswer: null
-    })));
-
-    const answerSet = Array.from({ length: count }, () => ['A', 'B', 'C', 'D']);
-    setAnswerSheet(answerSet.map(answer => ({ selected: null, options: answer })));
-  };
-
-  const handleDirectionsChange = (e) => {
-    setDirections(e.target.value);
-  };
-
-  const handleDateChange = (e) => {
-    setSelectedDate(e.target.value);
-  };
-
-  const handleNameChange = (e) => {
-    setTestName(e.target.value);
-  };
-
-  const handleDelete = async (index, testId) => {
-    const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: 'You won\'t be able to revert this!',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!'
-    });
-
-    if (result.isConfirmed) {
-      try {
-        const testDocRef = doc(db, 'tests', testId); // Get a reference to the document
-        await deleteDoc(testDocRef); // Delete the document
-        const updatedTests = savedTests.filter((_, idx) => idx !== index);
-        setSavedTests(updatedTests);
-        Swal.fire({
-          icon: 'success',
-          title: 'Deleted!',
-          text: 'The test has been deleted successfully.',
-        });
-      } catch (error) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error!',
-          text: `Error: ${error.message}`,
-        });
-      }
-    }
-  };
-
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const handleTestTypeFilterChange = (e) => {
-    setSelectedTestType(e.target.value);
-  };
-
-  const handleRandomize = () => {
-    // Randomize only the questions, keeping the choices unchanged
-    const randomizedQuestions = shuffleArray(itemsInput.map(item => ({
-      ...item,
-      // Keep choices in the original order
-      choices: item.choices
-    })));
-
-    setItemsInput(randomizedQuestions);
-  };
-
-  const readPdfFile = async (file) => {
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-    let text = '';
-
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-      const page = await pdf.getPage(pageNum);
-      const textContent = await page.getTextContent();
-      textContent.items.forEach(item => {
-        text += item.str + ' ';
-      });
-    }
-
-    return text;
-  };
-
-  const readDocxFile = async (file) => {
-    const arrayBuffer = await file.arrayBuffer();
-    const { value } = await mammoth.extractRawText({ arrayBuffer });
-    return value;
-  };
-
-  const readExcelFile = async (file) => {
-    const data = await file.arrayBuffer();
-    const workbook = XLSX.read(data, { type: 'array' });
-    let text = '';
-
-    workbook.SheetNames.forEach(sheetName => {
-      const worksheet = workbook.Sheets[sheetName];
-      text += XLSX.utils.sheet_to_csv(worksheet);
-    });
-
-    return text;
   };
 
   const generatePDF = async (questions, testName, directions, subject, quarter, selectedTestSetA,selectedTestSetB) => {
@@ -878,7 +627,7 @@ function CreateQuestions(props) {
       pdfDoc.text(`NAME: ${student.name}`, marginLeft, marginTop + 5);
       pdfDoc.text(`SECTION: ${student.section}`, marginLeft, marginTop + 11);
       pdfDoc.text('DATE:____________________________________________', marginLeft, marginTop + 16.5);
-      pdfDoc.text('SUBJECT:_________________________________________', marginLeft, marginTop + 21.5);
+      pdfDoc.text(`SUBJECT:_________________________________________`, marginLeft, marginTop + 21.5);
       pdfDoc.text(`LRN:`, marginLeft, marginTop + 30.5);
       
       // Define the starting position and spacing for LRN digits
@@ -995,6 +744,291 @@ function CreateQuestions(props) {
     });
     // Save the PDF
     pdfDoc.save('answer_sheet.pdf');
+  };
+
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditIndex(null); // Reset edit index when modal is closed
+    resetForm(); // Reset form fields
+  };
+
+  const resetForm = () => {
+    setTestName('');
+    setSelectedDate('');
+    setSelectedOption('');
+    setDirections('');
+    setItemsInput([]);
+    setAnswerSheet('');
+    setSelectedSection('');
+    setSelectedSubject('');
+    setSelectedQuarter('');
+    setSelectedTestType('');
+    setEditIndex(null);
+    setSelectedFile(null);
+    setIsModalOpen(false); // Close the modal if it's open
+  };
+  
+
+  const handleDropdownChange = (e) => {
+    const count = parseInt(e.target.value);
+    setSelectedOption(count);
+    // Ensure items input and answer sheet are updated to match the new dropdown value
+    setItemsInput(Array.from({ length: count }, (_, index) => ({
+      question: `Question ${index + 1}`,
+      choices: [
+        { id: 0, text: '' },
+        { id: 1, text: '' },
+        { id: 2, text: '' },
+        { id: 3, text: '' }
+      ],
+      correctAnswer: null
+    })));
+
+    const answerSet = Array.from({ length: count }, () => ['A', 'B', 'C', 'D']);
+    setAnswerSheet(answerSet.map(answer => ({ selected: null, options: answer })));
+  };
+
+  const handleDateChange = (e) => {
+    setSelectedDate(e.target.value);
+  };
+
+  const handleNameChange = (e) => {
+    setTestName(e.target.value);
+  };
+
+  const handleDelete = async (index, testId) => {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'You won\'t be able to revert this!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const testDocRef = doc(db, 'tests', testId); // Get a reference to the document
+        await deleteDoc(testDocRef); // Delete the document
+        const updatedTests = savedTests.filter((_, idx) => idx !== index);
+        setSavedTests(updatedTests);
+        Swal.fire({
+          icon: 'success',
+          title: 'Deleted!',
+          text: 'The test has been deleted successfully.',
+        });
+      } catch (error) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: `Error: ${error.message}`,
+        });
+      }
+    }
+  };
+
+  const handleEdit = (index) => {
+    const test = savedTests[index] || {};
+  
+    setTestName(test.name || '');
+    setSelectedDate(test.date || '');
+    setSelectedOption(test.items || '');
+    setDirections(test.directions || '');
+    setSelectedSection(test.section || '');
+    setSelectedSubject(test.subject || '');
+    setSelectedQuarter(test.quarter || '');
+    setAnswerSheet(test.answerSheet || '');
+  
+    // Ensure test.questions is an object with A and B arrays
+    const questionsA = Array.isArray(test.questions?.A) ? test.questions.A : [];
+    const questionsB = Array.isArray(test.questions?.B) ? test.questions.B : [];
+  
+    // Combine questions A and B into one array for editing
+    const combinedQuestions = [...questionsA, ...questionsB];
+  
+    setItemsInput(
+      combinedQuestions.map((q) => ({
+        question: q.question || '',
+        choices: Array.isArray(q.choices)
+          ? q.choices.map((choice, index) => ({
+              id: choice.id || index, // Default to index if id is missing
+              text: choice.text || '',
+              checked: choice.checked || false,
+            }))
+          : [], // Default to empty array if q.choices is not an array
+        correctAnswer: q.correctAnswer || '', // Ensure correctAnswer is set
+      }))
+    );
+  
+    setEditIndex(index);
+    setIsModalOpen(true); // Open the modal for editing
+  };
+
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleTestTypeFilterChange = (e) => {
+    setSelectedTestType(e.target.value);
+  };
+
+  const handleRandomize = () => {
+    // Randomize only the questions, keeping the choices unchanged
+    const randomizedQuestions = shuffleArray(itemsInput.map(item => ({
+      ...item,
+      // Keep choices in the original order
+      choices: item.choices
+    })));
+
+    setItemsInput(randomizedQuestions);
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const fileType = file.name.split('.').pop().toLowerCase();
+      let content = '';
+
+      try {
+        if (fileType === 'pdf') {
+          content = await readPdfFile(file);
+        } else if (fileType === 'docx') {
+          content = await readDocxFile(file);
+        } else if (fileType === 'xlsx' || fileType === 'xls') {
+          content = await readExcelFile(file);
+        } else {
+          throw new Error('Unsupported file type');
+        }
+      } catch (error) {
+        console.error('Error reading file:', error);
+        return;
+      }
+
+      const lines = content.split('\n')
+        .map(line => line.trim())
+        .filter(line => line !== '');
+
+      const items = [];
+      let currentQuestion = null;
+      let directionsText = '';
+
+      lines.forEach(line => {
+        if (/^directions:/i.test(line)) {
+          directionsText = line.replace(/^directions:/i, '').trim();
+        } else if (/^\d+\.\s/.test(line) || /^\d+\s/.test(line)) {
+          if (currentQuestion) {
+            currentQuestion.choices = currentQuestion.choices.filter(choice => choice.text.trim() !== '');
+            items.push(currentQuestion);
+          }
+          const questionWithoutNumber = line.replace(/^\d+\.\s*/, '').replace(/^\d+\s*/, '').trim();
+          currentQuestion = {
+            question: questionWithoutNumber,
+            choices: Array.from({ length: 4 }, (_, index) => ({ id: index, text: '', checked: false })),
+            correctAnswer: null
+          };
+        } else if (/^[A-D][.)]\s/.test(line)) {
+          if (currentQuestion) {
+            const choiceIndex = line.charCodeAt(0) - 65;
+            const choiceText = line.replace(/^[A-D][.)]\s*/, '').trim();
+            currentQuestion.choices[choiceIndex] = {
+              id: choiceIndex,
+              text: choiceText,
+              checked: false
+            };
+          }
+        } else if (/^(Answer:|answer:|Correct Answer:|correct answer:|Right Answer:|right answer:)\s*/i.test(line)) {
+          if (currentQuestion) {
+            const correctAnswer = line.replace(/^(Answer:|answer:|Correct Answer:|correct answer:|Right Answer:|right answer:)\s*/i, '').trim().replace(/[^A-D]/g, '');
+            currentQuestion.correctAnswer = correctAnswer;
+            const correctIndex = correctAnswer.charCodeAt(0) - 65;
+            currentQuestion.choices[correctIndex].checked = true;
+          }
+        }
+      });
+
+      if (currentQuestion) {
+        currentQuestion.choices = currentQuestion.choices.slice(0, 4);
+        items.push(currentQuestion);
+      }
+
+      const itemCount = items.length;
+
+      if (itemCount > 50) {
+        await Swal.fire({
+          title: 'Items Exceeded',
+          text: 'The number of items exceeds the maximum limit of 50. Only the first 50 items will be included.',
+          icon: 'warning',
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: 'OK'
+        });
+        // Only keep the first 50 items
+        items.length = 50;
+      } else if (itemCount < 40) {
+        await Swal.fire({
+          title: 'Insufficient Items',
+          text: 'The number of items is less than the required minimum of 40. Please include at least 40 items.',
+          icon: 'warning',
+          confirmButtonColor: '#3085d6',
+          confirmButtonText: 'OK'
+        });
+        return; // Exit the function if the number of items is insufficient
+      }
+
+      // Update state if the number of items is valid (40 or 50)
+      setItemsInput(items);
+      setDirections(directionsText); // Set the directions state
+
+      // Update the dropdown value and answer sheet
+      setSelectedOption(itemCount);
+      setAnswerSheet(items.map(item => ({
+        selected: item.correctAnswer ? item.correctAnswer.charCodeAt(0) - 65 : null,
+        options: item.choices.map(choice => String.fromCharCode(65 + choice.id))
+      })));
+    }
+  };
+
+  const readPdfFile = async (file) => {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+    let text = '';
+
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const textContent = await page.getTextContent();
+      textContent.items.forEach(item => {
+        text += item.str + ' ';
+      });
+    }
+
+    return text;
+  };
+
+  const readDocxFile = async (file) => {
+    const arrayBuffer = await file.arrayBuffer();
+    const { value } = await mammoth.extractRawText({ arrayBuffer });
+    return value;
+  };
+
+  const readExcelFile = async (file) => {
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data, { type: 'array' });
+    let text = '';
+
+    workbook.SheetNames.forEach(sheetName => {
+      const worksheet = workbook.Sheets[sheetName];
+      text += XLSX.utils.sheet_to_csv(worksheet);
+    });
+
+    return text;
+  };
+
+  const handleDirectionsChange = (e) => {
+    setDirections(e.target.value);
   };
   
   const shuffleArray = (array) => {
@@ -1163,23 +1197,46 @@ function CreateQuestions(props) {
               shrink: true,
             }}
           />
-          <TextField
-            label="Section"
-            value={selectedSection}
-            onChange={(e) => setSelectedSection(e.target.value)}
+          <Grid container spacing={2}>
+          {/* Section Dropdown */}
+          <Grid item xs={12} sm={6}>
+          {/* Section Selection */}
+          <InputLabel sx={{ mt: 2, color: 'black', fontWeight: 'bold' }}>Select Section</InputLabel>
+          <Select
             fullWidth
-            sx={{ mt: 2 }}
-          />
-          <TextField
-              label="Subject"
-              value={selectedSubject}
-              onChange={(e) => setSelectedSubject(e.target.value)}
-              fullWidth
-              sx={{ mt: 2 }}
-          />
+            value={selectedSection}
+            onChange={handleSectionChange}
+            variant="outlined"
+            sx={{ mt: 1 }}
+          >
+            {sections.map((section) => (
+              <MenuItem key={section.id} value={section.id}>
+                {section.section}
+              </MenuItem>
+            ))}
+          </Select>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+          {/* Subject Selection */}
+          <InputLabel sx={{ mt: 2, color: 'black', fontWeight: 'bold' }}>Select Subject</InputLabel>
+          <Select
+            fullWidth
+            value={selectedSubject}
+            onChange={(e) => setSelectedSubject(e.target.value)}
+            variant="outlined"
+            sx={{ mt: 1 }}
+            disabled={!selectedSection}
+          >
+            {filteredSubjects.map((subject, index) => (
+              <MenuItem key={index} value={subject}>
+                {subject}
+              </MenuItem>
+            ))}
+          </Select>
+          </Grid>
+          </Grid>
 
-
-          <InputLabel>Quarter</InputLabel>
+          <InputLabel sx={{ mt: 2, color: 'black', fontWeight: 'bold' }}>Quarter</InputLabel>
           <Select
             value={selectedQuarter}
             onChange={(e) => setSelectedQuarter(e.target.value)}
